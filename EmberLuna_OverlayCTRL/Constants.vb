@@ -16,6 +16,8 @@ Module Constants
     Public JH_FullARefresh As String
     Public OBSsocketString As String
     Public OBSsocketPassword As String
+    Public WebUsername As String
+    Public WebPword As String
 
     Public ProgramSettingsFile As String = "\\StreamPC-V2\OBS Assets\Auth\Program Settings.txt"
     Public Sub ReadProgramSettings(FileString)
@@ -50,6 +52,10 @@ Module Constants
                         OBSsocketString = InputString(1)
                     Case = "OBSsocketPassword"
                         OBSsocketPassword = InputString(1)
+                    Case = "WebUsername"
+                        WebUsername = InputString(1)
+                    Case = "WebPword"
+                        WebPword = InputString(1)
                 End Select
             Loop
             Reader.Close()

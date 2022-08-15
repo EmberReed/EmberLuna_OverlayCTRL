@@ -25,7 +25,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>3</ApplicationRevision>
+    <ApplicationRevision>5</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -64,10 +64,10 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>07BD59F03A6D444BAB4BD54AE2428E3F82B057B0</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>2A09996B724F99D98D0C153B607ED4D51F0C069F</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>EmberLuna_OverlayCTRL_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>EmberLuna_OverlayCTRL_1_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateManifests>true</GenerateManifests>
@@ -194,7 +194,6 @@
     <Compile Include="ChannelPointsEditor.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ChatFunctions.vb" />
     <Compile Include="CommonFunctions.vb" />
     <Compile Include="Constants.vb" />
     <Compile Include="AddCounter.Designer.vb">
@@ -221,21 +220,19 @@
     <Compile Include="OBScharacters.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OBScounterFunctions.vb" />
     <Compile Include="OBScounters.Designer.vb">
       <DependentUpon>OBScounters.vb</DependentUpon>
     </Compile>
     <Compile Include="OBScounters.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OBSaudio.vb" />
     <Compile Include="OBSMusicPlayer.Designer.vb">
       <DependentUpon>OBSMusicPlayer.vb</DependentUpon>
     </Compile>
     <Compile Include="OBSMusicPlayer.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OBSsceneFunctions.vb" />
+    <Compile Include="OBSfunctions.vb" />
     <Compile Include="OBSSoundBoard.Designer.vb">
       <DependentUpon>OBSSoundBoard.vb</DependentUpon>
     </Compile>
@@ -248,8 +245,6 @@
     <Compile Include="AddSound.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OBSspriteControls.vb" />
-    <Compile Include="OBStimerFunctions.vb" />
     <Compile Include="SceneSelector.Designer.vb">
       <DependentUpon>SceneSelector.vb</DependentUpon>
     </Compile>
@@ -290,7 +285,7 @@
     <Compile Include="TimerControls.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="TwitchAPIfunctions.vb" />
+    <Compile Include="TwitchFunctions.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="AddCounter.resx">
@@ -343,6 +338,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="EmberLuna_OverlayCTRL_1_TemporaryKey.pfx" />
     <None Include="EmberLuna_OverlayCTRL_TemporaryKey.pfx" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>

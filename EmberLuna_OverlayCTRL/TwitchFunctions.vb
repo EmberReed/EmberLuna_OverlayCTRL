@@ -5,9 +5,13 @@ Imports System.Collections.Concurrent
 Imports System.Net
 Imports System.Collections.Generic
 Imports System.Linq
+Imports System.Net.Sockets
 
+Public Module TwitchFunctions
 
-Public Module TwitchAPIfunctions
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    '////////////////////////////////////////////////////API FUNCTIONS////////////////////////////////////////////////////////
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Public Class APIfunctions
         Public Authorized As Boolean
@@ -90,11 +94,11 @@ Public Module TwitchAPIfunctions
                     If AccessToken = "" Then
                         GetAMotherFukkenToken()
                     Else
-                        Dim CheckToken As Task = New Task(AddressOf CheckTheFukkenToken)
-                        CheckToken.Start()
+                        Dim CheckToken As Task = CheckTheFukkenToken()
+                        'CheckToken.Start()
                     End If
                 Else
-                    Dim FreshToken As Task = New Task(AddressOf RefreshTheFukkenToken)
+                    Dim FreshToken As New Task(AddressOf RefreshTheFukkenToken)
                     FreshToken.Start()
                 End If
             Else
@@ -112,18 +116,18 @@ Public Module TwitchAPIfunctions
 
         Public Sub GetStreamInfoSub()
             If Authorized = True Then
-                Dim TaskMaster As New Task(AddressOf GetStreamInfo)
-                TaskMaster.Start()
+                Dim TaskMaster As Task = GetStreamInfo()
+                'TaskMaster.Start()
             End If
         End Sub
         Public Sub SetStreamInfoSub()
             If Authorized = True Then
-                Dim TaskMaster As New Task(AddressOf SetStreamInfo)
-                TaskMaster.Start()
+                Dim TaskMaster As Task = SetStreamInfo()
+                'TaskMaster.Start()
             End If
         End Sub
 
-        Private Async Sub SetStreamInfo()
+        Private Async Function SetStreamInfo() As Task
             Dim InfoRequest As New Helix.Models.Channels.ModifyChannelInformation.ModifyChannelInformationRequest
             InfoRequest.BroadcasterLanguage = GamesList.StreamLanguage
             InfoRequest.GameId = GamesList.StreamGameID
@@ -142,9 +146,9 @@ Public Module TwitchAPIfunctions
                 End If
             End If
             RaiseEvent StreamInfoUpdated()
-        End Sub
+        End Function
 
-        Private Async Sub GetStreamInfo()
+        Private Async Function GetStreamInfo() As Task
             Dim InputData As Helix.Models.Channels.GetChannelInformation.GetChannelInformationResponse = Await api.Helix.Channels.GetChannelInformationAsync(JHID)
             Dim ChannelData As Helix.Models.Channels.GetChannelInformation.ChannelInformation = InputData.Data(0)
             GamesList.StreamLanguage = ChannelData.BroadcasterLanguage
@@ -161,7 +165,7 @@ Public Module TwitchAPIfunctions
             'OUTPUTSTRING = OUTPUTSTRING & TagDataString
             'SendMessage(OUTPUTSTRING)
             RaiseEvent StreamInfoAvailable(OUTPUTSTRING)
-        End Sub
+        End Function
 
         Public Async Sub RefreshTheFukkenToken()
             Dim OutputString As String = ""
@@ -187,7 +191,7 @@ Public Module TwitchAPIfunctions
             End If
         End Sub
 
-        Public Async Sub CheckTheFukkenToken()
+        Public Async Function CheckTheFukkenToken() As Task
             Dim fff As Auth.ValidateAccessTokenResponse = Await api.Auth.ValidateAccessTokenAsync(AccessToken)
             Dim OutputString As String = ""
             If fff IsNot Nothing Then
@@ -203,14 +207,14 @@ Public Module TwitchAPIfunctions
                     api.Settings.AccessToken = AccessToken
                     RaiseEvent TokenAcquired(OutputString)
                 Else
-                    Dim FreshToken As Task = New Task(AddressOf RefreshTheFukkenToken)
+                    Dim FreshToken As New Task(AddressOf RefreshTheFukkenToken)
                     FreshToken.Start()
                 End If
             Else
-                Dim FreshToken As Task = New Task(AddressOf RefreshTheFukkenToken)
+                Dim FreshToken As New Task(AddressOf RefreshTheFukkenToken)
                 FreshToken.Start()
             End If
-        End Sub
+        End Function
 
         Public Async Sub GetAFuckingToken()
             Dim TokenResponse As Auth.AuthCodeResponse = Await api.Auth.GetAccessTokenFromCodeAsync(CodeString, JHsecret, "http://localhost:8080")
@@ -286,7 +290,7 @@ Public Module TwitchAPIfunctions
                     New Task(
                     Async Sub()
                         Await api.Helix.ChannelPoints.DeleteCustomReward(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id)
-                        GetChannelPointData()
+                        Await GetChannelPointData()
                     End Sub)
                 TaskMaster.Start()
             Else
@@ -318,7 +322,7 @@ Public Module TwitchAPIfunctions
                         Dim Response As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsResponse =
                         Await api.Helix.ChannelPoints.CreateCustomRewards(JHID, Request)
                         ChannelPoints.RewardCreated()
-                        GetChannelPointData()
+                        Await GetChannelPointData()
                     End Sub)
                 TaskMaster.Start()
             Else
@@ -328,38 +332,34 @@ Public Module TwitchAPIfunctions
 
         Public Sub UpdateChannelPointData(RewardIndex As Integer)
             If Authorized = True Then
-                Dim TaskMaster As Task =
-                    New Task(
-                    Sub()
-                        UpdateChannelPointReward(RewardIndex)
-                    End Sub)
-                TaskMaster.Start()
+                Dim TaskMaster As Task = UpdateChannelPointReward(RewardIndex)
             Else
                 SendMessage("Not Authorized")
             End If
         End Sub
 
-        Private Async Sub UpdateChannelPointReward(RewardIndex As Integer)
+        Private Async Function UpdateChannelPointReward(RewardIndex As Integer) As Task
             Dim Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest =
                 ChannelPoints.Rewards(RewardIndex).GetUpdateData
             Dim Response As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardResponse =
                  Await api.Helix.ChannelPoints.UpdateCustomReward(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id, Request)
             ChannelPoints.Rewards(RewardIndex).ReadResponse(Response)
             ChannelPoints.RewardUpdated(RewardIndex)
-        End Sub
+        End Function
 
-        Public Sub SyncChannelRedemptions()
+        Public Async Function SyncChannelRedemptions() As Task
             If Authorized = True Then
-                Dim TaskMaster As New Task(AddressOf GetChannelPointData)
-                TaskMaster.Start()
-                TaskMaster.Wait()
+                Await GetChannelPointData()
+                'TaskMaster.Start()
+                'TaskMaster.Wait()
             Else
                 SendMessage("Not Authorized")
             End If
-        End Sub
+        End Function
 
-        Private Async Sub GetChannelPointData()
-            Dim ChannelPointData As Helix.Models.ChannelPoints.GetCustomReward.GetCustomRewardsResponse = Await api.Helix.ChannelPoints.GetCustomReward(JHID)
+        Private Async Function GetChannelPointData() As Task
+            Dim ChannelPointData As Helix.Models.ChannelPoints.GetCustomReward.GetCustomRewardsResponse =
+                Await api.Helix.ChannelPoints.GetCustomReward(JHID)
 
             ChannelPoints.InitRewardData(ChannelPointData.Data.Length)
             Dim RewardData As Helix.Models.ChannelPoints.CustomReward
@@ -380,7 +380,7 @@ Public Module TwitchAPIfunctions
 
             ChannelPoints.RewardsUpdated()
             'SendMessage("Reward Data Synced")
-        End Sub
+        End Function
 
         Private Async Sub Getchanfollows()
             'Get Specified Channel Follows
@@ -631,7 +631,8 @@ Public Module TwitchAPIfunctions
         End Sub
 
         Public Sub RewardCreated()
-            myAPI.SyncChannelRedemptions()
+            Dim SyncTask As Task = myAPI.SyncChannelRedemptions()
+            SyncTask.Wait()
         End Sub
 
         Public Sub RewardsUpdated()
@@ -671,7 +672,7 @@ Public Module TwitchAPIfunctions
         Public StreamGameIndex As Integer
         Public StreamGameID As Integer
         Public StreamLanguage As String
-        Public Const MaxGames As Integer = 6
+        Public Const MaxGames As Integer = 8
 
         Public Sub New()
             ReDim Games(0 To MaxGames - 1)
@@ -681,6 +682,8 @@ Public Module TwitchAPIfunctions
             Games(3).InitMHR()
             Games(4).InitMHW()
             Games(5).InitSoftwareDev()
+            Games(6).InitAnimalCrossing()
+            Games(7).InitDRG()
         End Sub
 
         Public Sub SetGameIndexByName(GameName As String)
@@ -787,6 +790,38 @@ Public Module TwitchAPIfunctions
             Tags.Add(StreamTags.SoftwareDev)
             Tags.Add(StreamTags.Engineering)
         End Sub
+
+        Public Sub InitAnimalCrossing()
+            Name = "Animal Crossing"
+            Code = StreamGames.AnimalCrossingNH
+            Tags = New List(Of String)
+            Tags.Add(StreamTags.CasualPlaythrough)
+            Tags.Add(StreamTags.MentalHealth)
+            Tags.Add(StreamTags.FirstPlaythrough)
+
+        End Sub
+
+        Public Sub InitDRG()
+            Name = "Deep Rock Galactic"
+            Code = StreamGames.DRG
+            Tags = New List(Of String)
+            Tags.Add(StreamTags.Multiplayer)
+            Tags.Add(StreamTags.Cooperative)
+            Tags.Add(StreamTags.Programming)
+
+        End Sub
+
+        Public Sub InitFitness()
+            Name = "Fitness Training"
+            Code = StreamGames.FitnessAndHealth
+            Tags = New List(Of String)
+            Tags.Add(StreamTags.EnduranceTraining)
+            Tags.Add(StreamTags.StrengthTraining)
+            Tags.Add(StreamTags.MentalHealth)
+            Tags.Add(StreamTags.Programming)
+
+        End Sub
+
     End Structure
 
     Public Structure StreamTags
@@ -874,6 +909,469 @@ Public Module TwitchAPIfunctions
         End Sub
 
     End Class
+
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    '///////////////////////////////////////////////////CHAT FUNCTIONS////////////////////////////////////////////////////////
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    Public Class IrcClient
+
+        Public SendBuffer As ConcurrentQueue(Of String)
+
+        Public UserName As String
+        Public Event IRCconnected()
+        Public Event IRCdisconnected()
+        Public Event IRCeventRecieved(IRCmessage As String)
+        Public Event IRCmessageRecieved(IRCmessage As String)
+        Private Channel As String
+        Private ChatActive As Boolean
+        Private ChannelPart As Boolean
+        Private VarTcpClient As TcpClient
+        Private Inputstream As StreamReader
+        Private Outputstream As StreamWriter
+        Private MyIPaddress As String
+        Private MyPort As Integer
+        Private MyPassword As String
+
+        Public Sub New(IPaddress As String, IntPort As Integer, ThisUserName As String, Password As String, ThisChannel As String)
+            UserName = ThisUserName
+            Channel = ThisChannel
+            MyPort = IntPort
+            MyIPaddress = IPaddress
+            MyPassword = Password
+            ChannelPart = False
+            ChatActive = False
+        End Sub
+
+        Public Sub ChatReady()
+            If ChatActive = True Then
+                SendBuffer.Enqueue("/emoteonlyoff")
+                SendBuffer.Enqueue("/subscribersoff")
+            End If
+        End Sub
+
+        Public Sub ChatOff()
+            If ChatActive = True Then
+                SendBuffer.Enqueue("/emoteonly")
+                SendBuffer.Enqueue("/subscribers")
+            End If
+        End Sub
+
+        Private Async Function ChatSpeaker() As Task
+            SendBuffer = New ConcurrentQueue(Of String)
+            Dim OutputMessage As String = ""
+            Do Until ChannelPart = True
+                If SendBuffer.Count <> 0 Then
+                    If SendBuffer.TryDequeue(OutputMessage) = True Then
+                        If OutputMessage <> "" Then SendPublicChatMessage(OutputMessage)
+                        Await Task.Delay(333)
+                    End If
+                Else
+                    Await Task.Delay(20)
+                End If
+            Loop
+            SendIrcMessage("PART #" & Broadcastername)
+            ChannelPart = False
+        End Function
+
+        Private Async Function ChatReader() As Task
+            Dim InputMessage As String = ""
+            Do Until ChatActive = False
+                InputMessage = Await ReadMessage()
+                If InputMessage = "PING :tmi.twitch.tv" Then SendIrcMessage("PONG :tmi.twitch.tv")
+                If InputMessage <> "" Then ReadChat(InputMessage)
+                If InputMessage = ":" & BotName & "!" & BotName & "@" & BotName & ".tmi.twitch.tv PART #" & Broadcastername Then _
+            ChatActive = False
+            Loop
+            Close()
+            RaiseEvent IRCdisconnected()
+        End Function
+
+        Public Sub DisconnectChat()
+            If ChatActive = True Then
+                ChannelPart = True
+            End If
+        End Sub
+
+        Public Sub SendChat(ChatMessage As String)
+            SendBuffer.Enqueue(ChatMessage)
+        End Sub
+
+        Public Sub ConnectChat()
+            Try
+                VarTcpClient = New TcpClient(MyIPaddress, MyPort)
+                Inputstream = New StreamReader(VarTcpClient.GetStream())
+                Outputstream = New StreamWriter(VarTcpClient.GetStream())
+
+                Outputstream.WriteLine("PASS " & MyPassword)
+                Outputstream.WriteLine("NICK " & UserName)
+                Outputstream.WriteLine("USER " & UserName & " 8 * :" & UserName)
+                Outputstream.WriteLine("JOIN #" & Channel)
+                Outputstream.Flush()
+            Catch ex As Exception
+                MsgBox(ex.Message)
+                Exit Sub
+            End Try
+            ChannelPart = False
+            ChatActive = True
+            RaiseEvent IRCconnected()
+            Dim Reader As Task = ChatReader()
+            Dim Speaker As Task = ChatSpeaker()
+        End Sub
+
+        Private Sub ReadChat(InputString As String)
+
+            Dim UserName As String, ChatText As String = "", Index As Integer, Findstring As String = "PRIVMSG #jerinhaus :"
+            UserName = DataExtract(InputString, ":", "!")
+
+            Index = InStr(InputString, Findstring)
+
+            If Index <> 0 Then
+                Index = Index + Len(Findstring)
+                ChatText = Mid(InputString, Index, Len(InputString) - Index + 1)
+            End If
+            If UserName <> "" And ChatText <> "" Then
+                If UserName = "nightbot" Then
+                    Select Case ChatText
+                        Case = "We have llamas: https://www.deviantart.com/drawingwithjerin"
+                        Case = "Beware of doggos: https://discord.gg/nG7PTTY"
+                        Case = "ok boomer: https://www.facebook.com/DrawingWithJerin"
+                        Case = "Come see our pretty pictures ^_^: https://www.instagram.com/drawingwithjerin/"
+                        Case = "All the things!!! Website(www.drawingwithjerin.com),  Store(https://drawingwithjerin.com/jerinhaus/shop/), Youtube(https://www.youtube.com/channel/UCrDFqdGFty2YkM57fSE0VOg), Insta(https://www.instagram.com/jerinhaus/), Twitter(https://twitter.com/Jerinhaus), DA(https://www.deviantart.com/drawingwithjerin),  FB(https://www.facebook.com/Jerinhaus/)"
+                        Case = "Have fun storming the castle: https://twitter.com/JerinDrawing"
+                        Case = "And this is a website! It's dot com: https://drawingwithjerin.com/"
+                        Case = "*In Bro Speak: ""Please subscribe To my youtube channel"" https://www.youtube.com/channel/UCrDFqdGFty2YkM57fSE0VOg"
+                        Case Else
+                            'EventOutputBuffer.Enqueue(ChatText)
+                            'Call UpdateEventBox(ChatText)
+                            RaiseEvent IRCeventRecieved(ChatText)
+                    End Select
+                Else
+                    If ChatText.Substring(0, 1) <> "!" Then
+                        ChatUserInfo.RecieveChatMessage(UserName, ChatText, DateAndTime.Now.ToString)
+                        'ChatOutputBuffer.Enqueue(UserName & ": " & ChatText)
+                        'Call UpdateChatBox()
+                    Else
+
+                        Dim Splitstring() As String = ChatText.Split(" ")
+                        Splitstring(0) = Splitstring(0).Replace("!", "")
+                        Select Case Splitstring(0)
+
+                            '[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+                            '[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[CHAT COMMANDS]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+                            '[][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][][]
+
+                            Case = "counts"
+                                SendBuffer.Enqueue("@" & UserName & " " & CounterData.ReadPublicCounters)
+
+                            Case = "count"
+                                If Splitstring.Length > 1 Then
+                                    If CheckOBSconnect() = True Then
+                                        If CounterData.UserCount(Splitstring(1)) = True Then
+                                            SendBuffer.Enqueue("@" & UserName & " Counted " & Splitstring(1))
+                                        End If
+                                    End If
+                                End If
+
+                            Case = "soundlist"
+                                AudioControl.UpdatePublicSoundFileIndex()
+                                SendBuffer.Enqueue("@" & UserName & " " & AudioControl.PublicSoundListLink)
+
+                        End Select
+                    End If
+                End If
+                RaiseEvent IRCmessageRecieved(UserName & ": " & ChatText)
+                'BeginInvoke(Sub() DatastreamBox.Text = UserName & ": " & ChatText & vbCrLf & DatastreamBox.Text)
+            Else
+                RaiseEvent IRCmessageRecieved(InputString)
+                'BeginInvoke(Sub() DatastreamBox.Text = InputString & vbCrLf & DatastreamBox.Text)
+            End If
+
+        End Sub
+
+        Private Sub SendIrcMessage(InputString As String)
+            Try
+                Outputstream.WriteLine(InputString)
+                Outputstream.Flush()
+            Catch ex As Exception
+                MsgBox(ex.Message)
+            End Try
+        End Sub
+
+        Private Sub SendPublicChatMessage(InputString As String)
+            Try
+                SendIrcMessage(":" & UserName & "!" & UserName & "@" + UserName +
+                    ".tmi.twitch.tv PRIVMSG #" & Channel & " :" + InputString)
+            Catch ex As Exception
+                MsgBox(ex.Message)
+            End Try
+        End Sub
+
+        Private Async Function ReadMessage() As Task(Of String)
+            Dim Outputstring As String = "" ', IntWat As Integer
+            Try
+                Outputstring = Await Inputstream.ReadLineAsync
+                Return Outputstring
+            Catch ex As Exception
+                Return "Error recieving message: " & ex.Message
+            End Try
+        End Function
+
+        Private Sub Close()
+            Outputstream.Close()
+            Outputstream.Dispose()
+
+            Inputstream.Close()
+            Inputstream.Dispose()
+
+            VarTcpClient.Close()
+            VarTcpClient.Dispose()
+        End Sub
+    End Class
+
+    'Public Class PingSender
+
+    '    Private ThisIRC As IrcClient
+    '    Private PingSenderThread As Thread
+
+    '    Public Sub New(IRC As IrcClient)
+    '        ThisIRC = IRC
+    '        PingSenderThread = New Thread(New ThreadStart(AddressOf Run))
+    '    End Sub
+
+    '    Public Sub Start()
+    '        PingSenderThread.IsBackground = True
+    '        PingSenderThread.Start()
+    '    End Sub
+
+    '    Public Sub Run()
+    '        Do While True
+    '            ThisIRC.SendIrcMessage("PING irc.twitch.tv")
+    '            Thread.Sleep(300000)
+    '        Loop
+    '    End Sub
+
+    '    Public Sub StopPing()
+    '        'PingSenderThread.Suspend()
+    '        PingSenderThread.Abort()
+    '    End Sub
+    'End Class
+
+    Public ChatLogDirectory As String = "\\StreamPC-V2\OBS Assets\Chat Log"
+
+    Public Class UserData
+
+        Public ChatColor() As Color
+        Public AllChatUsers As List(Of ChatUser)
+        Public CurrentChatUsers As List(Of String)
+        Public CurrentAccess As Mutex
+        Public LogAccess As Mutex
+        Public Event ChatUserDetected(UserName As String, NewUser As Boolean)
+        Public Event MessageRecieved(UserName As String, MessageData As String, TimeString As String, ColorIndex As Integer)
+        Public Colorizer As Integer
+
+        Public Function GetColorIndex() As Integer
+            If Colorizer > 19 Then
+                Colorizer = 0
+            Else
+                Colorizer = Colorizer + 1
+            End If
+            Return Colorizer
+            File.WriteAllText(ChatLogDirectory & "\" & "Color Index.txt", Colorizer)
+        End Function
+
+        Public Sub New()
+            Dim NewChatColors(0 To 19) As Color
+            InitializeColorizer()
+            CurrentAccess = New Mutex
+            LogAccess = New Mutex
+            AllChatUsers = New List(Of ChatUser)
+            CurrentChatUsers = New List(Of String)
+            ImportAllUsers()
+            ImportCurrentUsers()
+            NewChatColors(0) = Color.FromArgb(255, 245, 252, 200)
+            NewChatColors(1) = Color.FromArgb(255, 65, 172, 0)
+            NewChatColors(2) = Color.FromArgb(255, 248, 135, 11)
+            NewChatColors(3) = Color.FromArgb(255, 168, 164, 85)
+            NewChatColors(4) = Color.FromArgb(255, 248, 94, 11)
+            NewChatColors(5) = Color.FromArgb(255, 255, 176, 0)
+            NewChatColors(6) = Color.FromArgb(255, 255, 25, 0)
+            NewChatColors(7) = Color.FromArgb(255, 180, 220, 17)
+            NewChatColors(8) = Color.FromArgb(255, 66, 113, 38)
+            NewChatColors(9) = Color.FromArgb(255, 126, 182, 92)
+            NewChatColors(10) = Color.FromArgb(255, 176, 111, 39)
+            NewChatColors(11) = Color.FromArgb(255, 255, 0, 62)
+            NewChatColors(12) = Color.FromArgb(255, 65, 175, 79)
+            NewChatColors(13) = Color.FromArgb(255, 150, 74, 48)
+            NewChatColors(14) = Color.FromArgb(255, 255, 229, 0)
+            NewChatColors(15) = Color.FromArgb(255, 231, 119, 146)
+            NewChatColors(16) = Color.FromArgb(255, 223, 237, 126)
+            NewChatColors(17) = Color.FromArgb(255, 46, 101, 175)
+            NewChatColors(18) = Color.FromArgb(255, 142, 20, 0)
+            NewChatColors(19) = Color.FromArgb(255, 178, 59, 190)
+            ChatColor = NewChatColors
+        End Sub
+
+        Private Sub InitializeColorizer()
+            If File.Exists(ChatLogDirectory & "\" & "Color Index.txt") Then
+                Dim InputString As String = File.ReadAllText(ChatLogDirectory & "\" & "Color Index.txt")
+                If IsNumeric(InputString) Then
+                    Colorizer = InputString
+                Else
+                    Colorizer = 0
+                End If
+            Else
+                Colorizer = 0
+            End If
+        End Sub
+
+        Private Function CheckAllChatUsers(InputUserName As String) As Integer
+            For i As Integer = 0 To AllChatUsers.Count - 1
+                If AllChatUsers(i).UserName = InputUserName Then
+                    Return i
+                    Exit Function
+                End If
+            Next
+            Return -1
+        End Function
+
+        Private Sub LogChatMessage(Username As String, ChatString As String, TimeString As String)
+            LogAccess.WaitOne()
+            Dim FileString As String = "\" & DateFileString() & ".txt"
+            If File.Exists(ChatLogDirectory & FileString) = False Then File.Create(ChatLogDirectory & FileString).Dispose()
+            Dim Writer As StreamWriter = File.AppendText(ChatLogDirectory & FileString)
+            Writer.WriteLine(TimeString & ": " & Username & ": " & ChatString)
+            Writer.Close()
+            Writer.Dispose()
+            LogAccess.ReleaseMutex()
+        End Sub
+
+        Public Sub RecieveChatMessage(UserName As String, ChatString As String, TimeString As String)
+            Dim ChatUserIndex As Integer = CheckAllChatUsers(UserName)
+            LogChatMessage(UserName, ChatString, TimeString)
+            If ChatUserIndex < 0 Then
+                Dim ChatUserData As New ChatUser
+                ChatUserData.CreateUserData(UserName, GetColorIndex)
+                ChatUserData.AppendChatLog(ChatString, TimeString)
+                AllChatUsers.Add(ChatUserData)
+                ChatUserIndex = AllChatUsers.Count - 1
+                AppendCurrentUsers(UserName)
+                RaiseEvent ChatUserDetected(UserName, True)
+            Else
+                AllChatUsers(ChatUserIndex).AppendChatLog(ChatString, TimeString)
+                If CurrentChatUsers.Contains(UserName) = False Then
+                    AppendCurrentUsers(UserName)
+                    RaiseEvent ChatUserDetected(UserName, False)
+                End If
+            End If
+            RaiseEvent MessageRecieved(UserName, ChatString, TimeString, AllChatUsers(ChatUserIndex).ColorIndex)
+        End Sub
+
+        Public Sub ResetCurrentUsers()
+            CurrentAccess.WaitOne()
+            CurrentChatUsers = New List(Of String)
+            File.Create(ChatLogDirectory & "\Current Chat Users.txt").Dispose()
+            CurrentAccess.ReleaseMutex()
+        End Sub
+
+        Public Sub AppendCurrentUsers(UserName As String)
+            CurrentAccess.WaitOne()
+            If File.Exists(ChatLogDirectory & "\Current Chat Users.txt") = False Then
+                File.Create(ChatLogDirectory & "\Current Chat Users.txt").Dispose()
+            End If
+            Dim Writer As StreamWriter = File.AppendText(ChatLogDirectory & "\Current Chat Users.txt")
+            Writer.WriteLine(UserName)
+            Writer.Close()
+            Writer.Dispose()
+            CurrentChatUsers.Add(UserName)
+            CurrentAccess.ReleaseMutex()
+        End Sub
+
+        Public Sub ImportCurrentUsers()
+            CurrentAccess.WaitOne()
+            If File.Exists(ChatLogDirectory & "\Current Chat Users.txt") Then
+                Dim Reader As StreamReader = File.OpenText(ChatLogDirectory & "\Current Chat Users.txt")
+                Do Until Reader.EndOfStream = True
+                    CurrentChatUsers.Add(Reader.ReadLine)
+                Loop
+            End If
+            CurrentAccess.ReleaseMutex()
+        End Sub
+
+        Public Sub ImportAllUsers()
+            Dim ReplaceSearch As String = ChatLogDirectory & "\"
+            Dim NameString As String = ""
+            Dim ChatUserData As New ChatUser
+            For Each Dir As String In Directory.GetDirectories(ChatLogDirectory)
+                NameString = Replace(Dir, ReplaceSearch, "")
+                ChatUserData.ImportUserData(NameString)
+                AllChatUsers.Add(ChatUserData)
+            Next
+        End Sub
+
+    End Class
+
+    Public Structure ChatUser
+
+        Public ColorIndex As Integer
+        Public UserName As String
+        'Public UserID As String
+        Public Access As Mutex
+
+
+        Public Sub AddJHpoints(PointValue As String)
+            Dim PointsValue As Double = GetJHpoints()
+            PointsValue = PointsValue + PointValue
+            File.WriteAllText(ChatLogDirectory & "\" & UserName & "\JHpoints.txt", PointsValue.ToString)
+        End Sub
+
+        Public Function GetJHpoints() As Double
+            If Access Is Nothing Then Access = New Mutex
+            Access.WaitOne()
+            Dim PointsValue As Double, InputString As String
+            InputString = File.ReadAllText(ChatLogDirectory & "\" & UserName & "\JHpoints.txt")
+            If IsNumeric(InputString) Then
+                PointsValue = InputString
+            Else
+                PointsValue = 0
+            End If
+            Access.ReleaseMutex()
+            Return PointsValue
+        End Function
+
+        Public Sub CreateUserData(InputUserName As String, InputColorIndex As Integer)
+            If Access Is Nothing Then Access = New Mutex
+            Access.WaitOne()
+            UserName = InputUserName
+            My.Computer.FileSystem.CreateDirectory(ChatLogDirectory & "\" & UserName)
+            ColorIndex = InputColorIndex
+            File.WriteAllText(ChatLogDirectory & "\" & UserName & "\ColorIndex.txt", ColorIndex)
+            File.WriteAllText(ChatLogDirectory & "\" & UserName & "\JHpoints.txt", 0)
+            File.Create(ChatLogDirectory & "\" & UserName & "\ChatLog.txt").Dispose()
+            Access.ReleaseMutex()
+        End Sub
+
+
+        Public Sub AppendChatLog(ChatString As String, TimeString As String)
+            If Access Is Nothing Then Access = New Mutex
+            Access.WaitOne()
+            Dim ChatWriter As StreamWriter = File.AppendText(ChatLogDirectory & "\" & UserName & "\ChatLog.txt")
+            ChatWriter.WriteLine(TimeString & ": " & ChatString)
+            ChatWriter.Close()
+            ChatWriter.Dispose()
+            Access.ReleaseMutex()
+        End Sub
+
+        Public Sub ImportUserData(Optional InputUserName As String = "")
+            If Access Is Nothing Then Access = New Mutex
+            Access.WaitOne()
+            If InputUserName <> "" Then UserName = InputUserName
+            Dim ColorString = File.ReadAllText(ChatLogDirectory & "\" & UserName & "\ColorIndex.txt")
+            If IsNumeric(ColorString) Then ColorIndex = ColorString
+            Access.ReleaseMutex()
+        End Sub
+
+    End Structure
 
 
 End Module

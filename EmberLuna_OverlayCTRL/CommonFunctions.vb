@@ -9,7 +9,6 @@ Public Module CommonFunctions
     Public Const WM_SETREDRAW As Integer = 11
 
     Public PubSub As TwitchPubSub
-    Public OBS As OBSWebsocket
     Public SceneChanger As SceneSelector
     Public ChatManager As Chat
     Public SourceWindow As MainWindow
@@ -28,6 +27,7 @@ Public Module CommonFunctions
     Public WithEvents AudioControl As OBSaudioPlayer
     Public WithEvents CounterData As OBScounterData
     Public WithEvents ChatUserInfo As UserData
+    Public WithEvents IRC As IrcClient
 
     'COLORS
     Public ActiveBUTT As Color = Color.FromArgb(255, 255, 82, 0)
@@ -69,9 +69,6 @@ Public Module CommonFunctions
         End Select
     End Function
 
-    Public OBSmutex As Mutex
-
-
     Public Function GetFormHeight(ButtonCount As Integer, ButtonsWide As Integer, ButtonsHigh As Integer,
                                   BaseHeight As Integer, HeightIncrement As Integer) As Integer
         Dim OutputHeight As Integer = BaseHeight - HeightIncrement
@@ -112,30 +109,6 @@ Public Module CommonFunctions
         Return InputString
     End Function
 
-    Public Function BuildMusicList(Optional DirectoryString As String = "\\StreamPC-V2\OBS Assets\Music",
-                                   Optional ShuffleList As Boolean = True,
-                                   Optional Randoms As Boolean = False) As List(Of String)
-        Dim di As New IO.DirectoryInfo(DirectoryString)
-        Dim aryFi As IO.FileInfo() = di.GetFiles("*.wav")
-        Dim fi As IO.FileInfo
-        Dim OutputList As New List(Of String)
-        For Each fi In aryFi
-            OutputList.Add(fi.Name)
-        Next
-        aryFi = di.GetFiles("*.mp3")
-        For Each fi In aryFi
-            If fi.Name <> "" Then OutputList.Add(fi.Name)
-        Next
-        If Randoms = True Then
-            For Each Dir As String In Directory.GetDirectories(DirectoryString)
-                OutputList.Add(Replace(Dir, DirectoryString & "\", ""))
-            Next
-        End If
-        If ShuffleList = True Then OutputList = Shuffle(OutputList)
-        Return OutputList
-
-    End Function
-
     Function Shuffle(Of T)(collection As IEnumerable(Of T)) As List(Of T)
         Dim r As Random = New Random()
         Shuffle = collection.OrderBy(Function(a) r.Next()).ToList()
@@ -153,93 +126,6 @@ Public Module CommonFunctions
         Dim Time As DateTime
         Time = New DateTime(TimeSpan.FromSeconds(TimeInSeconds).Ticks)
         Return Time.ToString(FormatString)
-    End Function
-
-    Public Structure MediaFcode
-        Public Const Play As Integer = 1
-        Public Const Pause As Integer = 2
-        Public Const Stopp As Integer = 3
-        Public Const Restart As Integer = 4
-    End Structure
-
-
-    Public Function MediaSourceChange(SourceName As String, Optional ActionType As Integer = 0, Optional FileName As String = "") As String
-        OBSmutex.WaitOne()
-        Dim Settings As MediaSourceSettings = OBS.GetMediaSourceSettings(SourceName)
-        Dim OutputFile As String = Settings.Media.LocalFile
-        If FileName <> "" Then
-
-            Settings.Media.LocalFile = FileName
-            OBS.SetMediaSourceSettings(Settings)
-            OutputFile = Settings.Media.LocalFile
-        Else
-            Select Case ActionType
-                Case = MediaFcode.Play
-                    OBS.PlayPauseMedia(SourceName, False)
-                Case = MediaFcode.Pause
-                    OBS.PlayPauseMedia(SourceName, True)
-                Case = MediaFcode.Stopp
-                    OBS.StopMedia(SourceName)
-                Case = MediaFcode.Restart
-                    OBS.RestartMedia(SourceName)
-            End Select
-        End If
-        OBSmutex.ReleaseMutex()
-        Return OutputFile
-    End Function
-
-    Public Function OBSstreamState() As Boolean
-        OBSmutex.WaitOne()
-        If OBS.GetStreamingStatus.IsStreaming = True Then
-            OBSmutex.ReleaseMutex()
-            Return True
-        Else
-            OBSmutex.ReleaseMutex()
-            Return False
-        End If
-    End Function
-
-    Public Sub SetOBSsourceText(SourceName As String, TextData As String, Optional BypassMutex As Boolean = False)
-        If BypassMutex = False Then OBSmutex.WaitOne()
-        Dim SourceSettings As Newtonsoft.Json.Linq.JObject = OBS.GetSourceSettings(SourceName).Settings
-        SourceSettings.Property("text").Value = TextData
-        OBS.SetSourceSettings(SourceName, SourceSettings)
-        If BypassMutex = False Then OBSmutex.ReleaseMutex()
-    End Sub
-
-    Public Sub SetOBSscene(SceneString As String)
-        OBSmutex.WaitOne()
-        If OBS.IsConnected = True Then
-            OBS.SetCurrentScene(SceneString)
-        End If
-        OBSmutex.ReleaseMutex()
-    End Sub
-
-    Public Sub DisconnectOBS()
-        OBSmutex.WaitOne()
-        If OBS.IsConnected = True Then
-            OBS.Disconnect()
-        End If
-        OBSmutex.ReleaseMutex()
-    End Sub
-
-    Public Function CheckOBSconnect() As Boolean
-        OBSmutex.WaitOne()
-        If OBS.IsConnected = False Then
-            Try
-                SendMessage(OBSsocketString & " " & OBSsocketPassword)
-                OBS.Connect(OBSsocketString, OBSsocketPassword)
-                CurrentScene = OBS.GetCurrentScene
-                OBSmutex.ReleaseMutex()
-                Return True
-            Catch ex As Exception
-                OBSmutex.ReleaseMutex()
-                Return False
-            End Try
-        Else
-            OBSmutex.ReleaseMutex()
-            Return True
-        End If
     End Function
 
     Public Function DataExtract(InputText As String, PreTEXT As String, PostTEXT As String, Optional InstanceCT As Integer = 1) As String
@@ -308,109 +194,8 @@ Public Module CommonFunctions
     End Class
 
 
-    Public Class IrcClient
-
-
-        Public UserName As String
-        Private Channel As String
-
-        Private VarTcpClient As TcpClient
-        Private Inputstream As StreamReader
-        Private Outputstream As StreamWriter
-
-        Public Sub New(IPaddress As String, IntPort As Integer, ThisUserName As String, Password As String, ThisChannel As String)
-
-            Try
-                UserName = ThisUserName
-                Channel = ThisChannel
-
-                VarTcpClient = New TcpClient(IPaddress, IntPort)
-                Inputstream = New StreamReader(VarTcpClient.GetStream())
-                Outputstream = New StreamWriter(VarTcpClient.GetStream())
-
-                Outputstream.WriteLine("PASS " & Password)
-                Outputstream.WriteLine("NICK " & UserName)
-                Outputstream.WriteLine("USER " & UserName & " 8 * :" & UserName)
-                Outputstream.WriteLine("JOIN #" & Channel)
-                Outputstream.Flush()
-            Catch ex As Exception
-                MsgBox(ex.Message)
-            End Try
-
-        End Sub
 
 
 
-
-        Public Sub SendIrcMessage(InputString As String)
-            Try
-                Outputstream.WriteLine(InputString)
-                Outputstream.Flush()
-            Catch ex As Exception
-                MsgBox(ex.Message)
-            End Try
-        End Sub
-
-        Public Sub SendPublicChatMessage(InputString As String)
-            Try
-                SendIrcMessage(":" & UserName & "!" & UserName & "@" + UserName +
-                    ".tmi.twitch.tv PRIVMSG #" & Channel & " :" + InputString)
-            Catch ex As Exception
-                MsgBox(ex.Message)
-            End Try
-        End Sub
-
-        Public Function ReadMessage() As String
-            Dim Outputstring As String = "" ', IntWat As Integer
-            Try
-                Outputstring = Inputstream.ReadLine
-                Return Outputstring
-            Catch ex As Exception
-                Return "Error recieving message: " & ex.Message
-            End Try
-        End Function
-
-        Public Sub Close()
-
-            Outputstream.Close()
-            Outputstream.Dispose()
-
-            Inputstream.Close()
-            Inputstream.Dispose()
-
-            VarTcpClient.Close()
-            VarTcpClient.Dispose()
-
-        End Sub
-
-    End Class
-
-    Public Class PingSender
-
-        Private ThisIRC As IrcClient
-        Private PingSenderThread As Thread
-
-        Public Sub New(IRC As IrcClient)
-            ThisIRC = IRC
-            PingSenderThread = New Thread(New ThreadStart(AddressOf Run))
-        End Sub
-
-        Public Sub Start()
-            PingSenderThread.IsBackground = True
-            PingSenderThread.Start()
-        End Sub
-
-        Public Sub Run()
-            Do While True
-                ThisIRC.SendIrcMessage("PING irc.twitch.tv")
-                Thread.Sleep(300000)
-            Loop
-        End Sub
-
-        Public Sub StopPing()
-            'PingSenderThread.Suspend()
-            PingSenderThread.Abort()
-        End Sub
-    End Class
 
 End Module

@@ -596,7 +596,7 @@ Partial Class SceneSelector
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(741, 451)
+        Me.ClientSize = New System.Drawing.Size(742, 451)
         Me.Controls.Add(Me.SoundListBox)
         Me.Controls.Add(Me.Button1)
         Me.Controls.Add(Me.DisableAllBUTT)

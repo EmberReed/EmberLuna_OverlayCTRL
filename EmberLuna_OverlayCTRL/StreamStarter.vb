@@ -9,7 +9,7 @@
     End Sub
 
     Public Sub LetsaGo()
-        SourceWindow.BeginInvoke(Sub() SourceWindow.ChatReady())
+        'SourceWindow.BeginInvoke(Sub() SourceWindow.ChatReady())
         OBS.StartStreaming()
 TryAgain:
         Try

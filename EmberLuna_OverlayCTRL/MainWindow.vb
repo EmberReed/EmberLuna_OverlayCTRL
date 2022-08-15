@@ -8,15 +8,12 @@ Imports System.Collections.Concurrent
 Imports OBSWebsocketDotNet
 Imports OBSWebsocketDotNet.Types
 Imports TwitchLib.PubSub
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar
 
 Public Class MainWindow
 
     Private CurrentSceneName As String = ""
-    Private MainProgramRunning As Boolean = False, Estream1 As NetworkStream, Estream2 As NetworkStream, OpenPort1 As ToTcpClient,
-        OpenPort2 As ToTcpClient, MessageBuffer As ConcurrentQueue(Of String), 'ChatBuffer As ConcurrentQueue(Of String),
-        Port1Active As Boolean = False, Port2Active As Boolean = False, ChatActive As Boolean = False, ChannelPart As Boolean = False,
-        SendBuffer As ConcurrentQueue(Of String), PONG As Boolean = False, 'ChatOutputBuffer As ConcurrentQueue(Of String), 
-        PubSubState As Boolean = False, StrimStarter As StreamStarter
+    Private StrimStarter As StreamStarter
     Private StrimStarterState As Boolean = False
     Private PubSubStarterState As Boolean = False
     Private ChannelPointStarterState As Boolean
@@ -40,13 +37,14 @@ Public Class MainWindow
         OBSTimers = New TimerControls
         TimerCollection = New OBSTimerData
         SpriteControls = New OBScharacters
-        MessageBuffer = New ConcurrentQueue(Of String)
+        'MessageBuffer = New ConcurrentQueue(Of String)
         AudioControl = New OBSaudioPlayer
         MusicPlayer = New OBSMusicPlayer
         SoundBoard = New OBSSoundBoard
         Counters = New OBScounters
         CounterData = New OBScounterData
         ChatUserInfo = New UserData
+        IRC = New IrcClient("irc.twitch.tv", 6667, BotName, twitchOAuth, Broadcastername)
         Ember = New CharacterControls
         Ember.initEMBER()
         Luna = New CharacterControls
@@ -58,11 +56,21 @@ Public Class MainWindow
         AddHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
         AddHandler OBS.SceneChanged, AddressOf SceneChangeDetected
         AddHandler OBS.StreamingStateChanged, AddressOf StreamStartHandler
+        AddHandler OBS.Connected, AddressOf OBSisConnected
+        AddHandler OBS.Disconnected, AddressOf OBSdisConnected
+
+        AddHandler IRC.IRCconnected, AddressOf IRCisConnected
+        AddHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
+        AddHandler IRC.IRCeventRecieved, AddressOf IRCevent
+        AddHandler IRC.IRCmessageRecieved, AddressOf IRCmessage
+
         AddHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
         AddHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
         AddHandler myAPI.TokenAcquired, AddressOf Authorized
+
         AddHandler Ember.Said, AddressOf GenericNotification
         AddHandler Luna.Said, AddressOf GenericNotification
+
         AddHandler ChatUserInfo.ChatUserDetected, AddressOf NewUserHandler
         AddHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
         AddHandler CounterData.CounterStarted, AddressOf CounterUpdated
@@ -86,32 +94,50 @@ Public Class MainWindow
         Me.Refresh()
     End Sub
 
+    Private Sub MainWindow_Shown(sender As Object, e As EventArgs) Handles MyBase.Shown
+        Dim STARTYOURENGINES As Task = Startup()
+    End Sub
 
     Private Sub MainWindow_Closing(sender As Object, e As EventArgs) Handles MyBase.Closing
+        Me.Enabled = False
         CounterData.SaveCounterData()
         OBStimerObject(TimerIDs.Ember).State = False
         OBStimerObject(TimerIDs.Luna).State = False
         OBStimerObject(TimerIDs.GlobalCC).State = False
         If AudioControl.MusicPlayer.Active = True Then AudioControl.StopMusic()
 
-        MainProgramRunning = False
-        Port1Active = False
-        Port2Active = False
-        If ChatActive = True Then
-            ChannelPart = True
-            Do Until ChatActive = False
-                Application.DoEvents()
-            Loop
-        End If
-        If PubSubState = True Then PubSub.Disconnect()
+        'MainProgramRunning = False
+        'Port1Active = False
+        'Port2Active = False
+        'If ChatActive = True Then
+        '    ChannelPart = True
+        '    Do Until ChatActive = False
+        '        Application.DoEvents()
+        '    Loop
+        'End If
+        If PSubConnected Then PubSub.Disconnect()
+        If IRCconnected Then IRC.DisconnectChat()
+        If OBSconnected Then DisconnectOBS()
+        Do Until AmIdisconnected()
+            Application.DoEvents()
+            Thread.Sleep(100)
+        Loop
 
         RemoveHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
+        RemoveHandler OBS.SceneChanged, AddressOf SceneChangeDetected
         RemoveHandler OBS.StreamingStateChanged, AddressOf StreamStartHandler
+        RemoveHandler OBS.Connected, AddressOf OBSisConnected
+
         RemoveHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
         RemoveHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
         RemoveHandler myAPI.TokenAcquired, AddressOf Authorized
+
+        RemoveHandler IRC.IRCconnected, AddressOf IRCisConnected
+        RemoveHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
+
         RemoveHandler Ember.Said, AddressOf GenericNotification
         RemoveHandler Luna.Said, AddressOf GenericNotification
+
         RemoveHandler ChatUserInfo.ChatUserDetected, AddressOf NewUserHandler
         RemoveHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
         RemoveHandler CounterData.CounterStarted, AddressOf CounterUpdated
@@ -131,13 +157,132 @@ Public Class MainWindow
         RemoveHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
         RemoveHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
 
-        Call DisconnectOBS()
+        'Call DisconnectOBS()
         Application.DoEvents()
         Thread.Sleep(500)
 
     End Sub
+
+    Private PSubConnected As Boolean = False
+    Private IRCconnected As Boolean = False
+    Private OBSconnected As Boolean = False
+    Private TwitchAuthorized As Boolean = False
+    Private APIconnected As Boolean = False
+
+    Private Async Function Startup() As Task
+        Me.Enabled = False
+        CheckOBSconnect()
+        IRC.ConnectChat()
+        myAPI.APIauthorization(True)
+
+        Dim StartupCounter As Integer = 0
+        Do Until AmIconnected()
+            Await Task.Delay(100)
+            StartupCounter = StartupCounter + 1
+            If StartupCounter > 10 Then
+                SendMessage("Failed to Start...", "UH OH")
+                Me.Close()
+            End If
+        Loop
+
+        Me.Enabled = True
+    End Function
+    Private Function AmIconnected() As Boolean
+        If PSubConnected And IRCconnected And OBSconnected And APIconnected And TwitchAuthorized Then
+            Return True
+        Else
+            Return False
+        End If
+    End Function
+
+    Private Function AmIdisconnected() As Boolean
+        If PSubConnected = False And IRCconnected = False And OBSconnected = False Then
+            Return True
+        Else
+            Return False
+        End If
+    End Function
+
+    Private Sub IRCstateChanged(IRCState As Boolean)
+        If IRCState <> IRCconnected Then
+            IRCconnected = IRCState
+            If IRCconnected = True Then
+                IRCdisplay.BackColor = ActiveBUTT
+                LogEventString("IRC Connected")
+            Else
+                IRCdisplay.BackColor = StandardBUTT
+                LogEventString("IRC Disconnected")
+            End If
+        End If
+    End Sub
+
+    Private Sub IRCisConnected()
+        BeginInvoke(Sub() IRCstateChanged(True))
+    End Sub
+    Private Sub IRCdisConnected()
+        BeginInvoke(Sub() IRCstateChanged(False))
+    End Sub
+
+    Private Sub OBSstateChanged(OBSState As Boolean)
+        If OBSState <> OBSconnected Then
+            OBSconnected = OBSState
+            If OBSconnected = True Then
+                OBSdisplay.BackColor = ActiveBUTT
+                LogEventString("OBS Connected")
+            Else
+                OBSdisplay.BackColor = StandardBUTT
+                LogEventString("OBS Disconnected")
+            End If
+        End If
+    End Sub
+
+    Private Sub OBSisConnected()
+        BeginInvoke(Sub() OBSstateChanged(True))
+    End Sub
+    Private Sub OBSdisConnected()
+        BeginInvoke(Sub() OBSstateChanged(False))
+    End Sub
+
+    Private Sub PubSubStateChanged(PubSubState As Boolean)
+        If PubSubState <> PSubConnected Then
+            PSubConnected = PubSubState
+            If PSubConnected = True Then
+                PUBSUBdisplay.BackColor = ActiveBUTT
+                LogEventString("PubSub Connected")
+            Else
+                PUBSUBdisplay.BackColor = StandardBUTT
+                LogEventString("PubSub Disconnected")
+            End If
+        End If
+    End Sub
+    Private Sub PubSubConnected(sender As Object, e As EventArgs)
+        BeginInvoke(Sub() PubSubStateChanged(True))
+    End Sub
+
+    Public Sub PubSubDisconnect(sender As Object, e As EventArgs)
+        BeginInvoke(Sub() PubSubStateChanged(False))
+    End Sub
+
     Private Sub Authorized(TokenMessage As String)
-        BeginInvoke(Sub() LogEventString(TokenMessage))
+        BeginInvoke(Sub()
+                        LogEventString(TokenMessage)
+                    End Sub)
+    End Sub
+    Public Sub LaunchStreamStarter(CurrentStreamInfo As String)
+
+        BeginInvoke(Sub()
+                        APIconnected = True
+                        APIdisplay.BackColor = ActiveBUTT
+                        LogEventString(CurrentStreamInfo)
+                    End Sub)
+
+    End Sub
+
+    Private Sub SceneChanged(SceneName As String)
+        If SceneName <> CurrentSceneName Then
+            CurrentSceneName = SceneName
+            BeginInvoke(Sub() LogEventString("OBS Scene Change: " & SceneName))
+        End If
     End Sub
 
     Private Sub StreamStartHandler()
@@ -189,8 +334,8 @@ Public Class MainWindow
                         If EmberSpriteB = True And LunaSpriteB = False Then Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
                         If EmberSpriteB = False And LunaSpriteB = True Then Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
                         If EmberSpriteB = False And LunaSpriteB = False Then
-                            SendBuffer.Enqueue(RandomMessage(UserName, MessageType))
-                            AudioControl.PlaySoundAlert(AudioControl.GetSoundFileDataByName("Hello"))
+                            IRC.SendChat(RandomMessage(UserName, MessageType))
+                            AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName("Hello"), True)
                         End If
                     End If
                 End If
@@ -199,7 +344,15 @@ Public Class MainWindow
     End Sub
 
     Private Sub LogEventString(Message As String)
-        DatastreamBox.Text = Message & vbCrLf & DatastreamBox.Text
+        DatastreamBox.Text = "- " & Message & vbCrLf & vbCrLf & DatastreamBox.Text
+    End Sub
+
+    Private Sub IRCmessage(IRCstring As String)
+        BeginInvoke(Sub() LogEventString(IRCstring))
+    End Sub
+
+    Private Sub IRCevent(IRCstring As String)
+        BeginInvoke(Sub() UpdateEventBox(IRCstring))
     End Sub
 
     Private Sub GenericNotification(InputString As String)
@@ -239,51 +392,14 @@ Public Class MainWindow
 
     Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
         If e.KeyChar = Chr(13) Then
-            If ChatActive = True Then
-                Dim InputText As String
-                InputText = TextBox3.Text
-                SendBuffer.Enqueue(InputText)
-                TextBox3.Text = ""
-            End If
+            'If ChatActive = True Then
+            Dim InputText As String
+            InputText = TextBox3.Text
+            IRC.SendChat(InputText)
+            TextBox3.Text = ""
+            'End If
             e.Handled = True
         End If
-    End Sub
-
-    Private Sub PortConnect2_Click(sender As Object, e As EventArgs) Handles PortConnect2.Click
-
-    End Sub
-
-    Private Sub ChatSpeaker(ThisIRC As IrcClient)
-        SendBuffer = New ConcurrentQueue(Of String)
-        Do Until ChannelPart = True
-            Dim OutputMessage As String = ""
-            If SendBuffer.Count <> 0 Then
-                If SendBuffer.TryDequeue(OutputMessage) = True Then
-                    If OutputMessage <> "" Then ThisIRC.SendPublicChatMessage(OutputMessage)
-                End If
-            End If
-        Loop
-        ThisIRC.SendIrcMessage("PART #" & Broadcastername)
-        ChannelPart = False
-    End Sub
-
-    Private Sub ConnectChat()
-        Dim InputMessage As String = ""
-        Dim IRC As New IrcClient("irc.twitch.tv", 6667, BotName, twitchOAuth, Broadcastername)
-
-        Dim SenderThread As Thread
-        SenderThread = New Thread(AddressOf ChatSpeaker)
-        SenderThread.Start(IRC)
-
-        Do Until ChatActive = False
-            InputMessage = IRC.ReadMessage
-            If InputMessage = "PING :tmi.twitch.tv" Then IRC.SendIrcMessage("PONG :tmi.twitch.tv")
-            If InputMessage <> "" Then ReadChat(InputMessage)
-            If InputMessage = ":" & BotName & "!" & BotName & "@" & BotName & ".tmi.twitch.tv PART #" & Broadcastername Then _
-            ChatActive = False
-        Loop
-
-        IRC.Close()
     End Sub
 
     Private Sub CountersButt_Click(sender As Object, e As EventArgs) Handles CountersButt.Click
@@ -312,17 +428,17 @@ Public Class MainWindow
         If ChannelPointsDisplay.Visible = True Then
             ChannelPointsDisplay.BeginInvoke(Sub() ChannelPointsDisplay.Select())
         Else
-            If myAPI.Authorized = True Then
-                If ChannelPoints.Rewards IsNot Nothing Then
-                    LaunchChannelPointsControls()
-                Else
-                    ChannelPointStarterState = True
-                    myAPI.SyncChannelRedemptions()
-                End If
+            'If myAPI.Authorized = True Then
+            If ChannelPoints.Rewards IsNot Nothing Then
+                LaunchChannelPointsControls()
             Else
                 ChannelPointStarterState = True
-                myAPI.APIauthorization(True)
+                Dim SyncTask As Task = myAPI.SyncChannelRedemptions()
             End If
+            'Else
+            'ChannelPointStarterState = True
+            'myAPI.APIauthorization(True)
+            'End If
         End If
     End Sub
 
@@ -372,10 +488,10 @@ Public Class MainWindow
 
     Private Sub ChatBUTT_Click(sender As Object, e As EventArgs) Handles ChatBUTT.Click
         If ChatManager.Visible = False Then
-            If ChatActive = True Then
-                ChatManager = New Chat
-                ChatManager.Show()
-            End If
+            'If ChatActive = True Then
+            ChatManager = New Chat
+            ChatManager.Show()
+            ' End If
         Else
             ChatManager.BeginInvoke(Sub() ChatManager.Select())
         End If
@@ -392,87 +508,6 @@ Public Class MainWindow
         'Call UpdateEventBox()
     End Sub
 
-    Private Sub IRCclientConnect()
-        ChatConnect.Enabled = False
-        ChatConnect.Text = "Connecting to Chat"
-        Application.DoEvents()
-        ChatActive = True
-        Dim ChatThread As Thread
-        ChatThread = New Thread(AddressOf ConnectChat)
-        ChatThread.Start()
-        ChatConnect.Text = "Disconnect Chat"
-        ChatConnect.BackColor = ActiveBUTT
-        ChatConnect.Enabled = True
-        If MainProgramRunning = False Then
-            MainProgramRunning = True
-            Call RunMainProgram()
-        End If
-    End Sub
-
-    Private Sub IRCclientDisconnect()
-        ChatConnect.Enabled = False
-        ChannelPart = True
-        Do Until ChatActive = False
-            Application.DoEvents()
-        Loop
-        If Port2Active = False And Port1Active = False Then
-            MainProgramRunning = False
-        End If
-        Thread.Sleep(500)
-        ChatConnect.Text = "Connect Chat"
-        ChatConnect.BackColor = StandardBUTT
-        ChatConnect.Enabled = True
-    End Sub
-
-    Private Sub ChatConnect_Click(sender As Object, e As EventArgs) Handles ChatConnect.Click
-        If ChatConnect.Text = "Connect Chat" Then
-            IRCclientConnect()
-        ElseIf ChatConnect.Text = "Disconnect Chat" Then
-            IRCclientDisconnect()
-        End If
-    End Sub
-
-    Private Sub PortConnect1_Click(sender As Object, e As EventArgs) Handles PortConnect1.Click
-        If PortConnect1.Text = "Connect Port 1" Then
-            PortConnect1.Enabled = False
-            PortConnect1.Text = "Connecting to Port 1"
-            Application.DoEvents()
-            Port1Active = IsPort1Open(IPaddress1.Text, 23)
-            If Port1Active = True Then
-                Dim Port1Thread As Thread
-                Port1Thread = New Thread(AddressOf ReadStream1)
-                Port1Thread.Start()
-                PortConnect1.Text = "Disconnect Port 1"
-                PortConnect1.BackColor = ActiveBUTT
-                PortConnect1.Enabled = True
-                If MainProgramRunning = False Then
-                    Dim RunThread As New Thread(
-                        Sub()
-                            MainProgramRunning = True
-                            Call RunMainProgram()
-                        End Sub)
-                    RunThread.Start()
-                End If
-            Else
-                SendMessage("Connection Failed", "FML")
-                PortConnect1.Text = "Connect Port 1"
-                PortConnect1.Enabled = True
-            End If
-        ElseIf PortConnect1.Text = "Disconnect Port 1" Then
-            PortConnect1.Enabled = False
-            PortConnect1.Text = "Disconnecting Port 1"
-            Application.DoEvents()
-            Port1Active = False
-            If Port2Active = False And ChatActive = False Then
-                MainProgramRunning = False
-            End If
-            Thread.Sleep(500)
-            PortConnect1.Text = "Connect Port 1"
-            PortConnect1.BackColor = StandardBUTT
-            PortConnect1.Enabled = True
-        End If
-    End Sub
-
     Private Sub SoundBoardClosed()
         SOUND_BOARD.BackColor = StandardBUTT
     End Sub
@@ -481,45 +516,13 @@ Public Class MainWindow
         SOUND_BOARD.BackColor = ActiveBUTT
     End Sub
 
-    Private Sub PubSubConnected(sender As Object, e As EventArgs)
-        BeginInvoke(
-            Sub()
-                Button1.BackColor = ActiveBUTT
-                Button1.Text = "Disconnect PubSub"
-                PubSubState = True
-                DatastreamBox.Text = "PubSub Connected" & vbCrLf & DatastreamBox.Text
-            End Sub)
-    End Sub
-
-    Public Sub ChatReady()
-        If ChatActive = True Then
-            SendBuffer.Enqueue("/emoteonlyoff")
-            SendBuffer.Enqueue("/subscribersoff")
-        End If
-    End Sub
-
-    Public Sub ChatOff()
-        If ChatActive = True Then
-            SendBuffer.Enqueue("/emoteonly")
-            SendBuffer.Enqueue("/subscribers")
-        End If
-    End Sub
-
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
-
-    End Sub
-
-    Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
-
-    End Sub
-
     Private Sub Button6_Click(sender As Object, e As EventArgs) Handles Button6.Click
         myAPI.SyncChannelRedemptions()
     End Sub
 
     Private Sub Button8_Click(sender As Object, e As EventArgs) Handles Button8.Click
-        If ChatActive = True Then
-            Dim FD As OpenFileDialog = New OpenFileDialog
+        'If ChatActive = True Then
+        Dim FD As OpenFileDialog = New OpenFileDialog
             FD.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*"
             FD.FilterIndex = 2
 
@@ -532,7 +535,7 @@ Public Class MainWindow
                         Dim Outputtext As String
                         Do Until Reader.EndOfStream = True
                             Outputtext = "/ban " & Reader.ReadLine
-                            SendBuffer.Enqueue(Outputtext)
+                            IRC.SendChat(Outputtext)
                             Thread.Sleep(1000)
                         Loop
                         Reader.Close()
@@ -541,39 +544,26 @@ Public Class MainWindow
                 End Sub)
                 BanThread.Start()
             End If
-        End If
+        'End If
     End Sub
 
-    Private Sub TextBox3_TextChanged(sender As Object, e As EventArgs) Handles TextBox3.TextChanged
 
-    End Sub
-
-    Public Sub PubSubDisconnect(sender As Object, e As EventArgs)
-        BeginInvoke(
-            Sub()
-                Button1.BackColor = StandardBUTT
-                Button1.Text = "Connect PubSub"
-                PubSubState = False
-                DatastreamBox.Text = "PubSub Disconnected" & vbCrLf & DatastreamBox.Text
-            End Sub)
-    End Sub
-
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
-        If myAPI.Authorized = True Then
-            Button1.Enabled = False
-            If Button1.Text = "Connect PubSub" Then
-                ConnectPubSub()
-            Else
-                PubSub.Disconnect()
-            End If
-            Button1.Enabled = True
-        Else
-            Button1.Enabled = False
-            PubSubStarterState = True
-            myAPI.APIauthorization(True)
-            'SendMessage("Need Authorization")
-        End If
-    End Sub
+    'Private Sub ConnectmYPubSub()
+    '    If myAPI.Authorized = True Then
+    '        'Button1.Enabled = False
+    '        'If Button1.Text = "Connect PubSub" Then
+    '        ConnectPubSub()
+    '        'Else
+    '        PubSub.Disconnect()
+    '        'End If
+    '        'Button1.Enabled = True
+    '    Else
+    '        'Button1.Enabled = False
+    '        PubSubStarterState = True
+    '        myAPI.APIauthorization(True)
+    '        'SendMessage("Need Authorization")
+    '    End If
+    'End Sub
 
     Public Sub ConnectPubSub()
         PubSub.ListenToChannelPoints(JHID)
@@ -586,47 +576,53 @@ Public Class MainWindow
         PubSub.SendTopics(myAPI.AccessToken)
     End Sub
 
-    Private Sub Button12_Click(sender As Object, e As EventArgs) Handles Button12.Click
-        myAPI.APIauthorization(True)
-    End Sub
+    'Private Sub Button12_Click(sender As Object, e As EventArgs) Handles Button12.Click
+    'myAPI.APIauthorization(True)
+    'End Sub
 
     Private Sub WaitforAuthorization()
-        If StrimStarterState = True Then
-            Dim GoThread As New Thread(
-            Sub()
-                BeginInvoke(Sub() LogEventString("Authorization Recieved"))
-                If PubSubState = False Then
-                    ConnectPubSub()
-                End If
-                myAPI.GetStreamInfoSub()
-            End Sub)
-            GoThread.Start()
+        'If StrimStarterState = True Then
+        'Dim GoThread As New Thread(
+        'Sub()
+        TwitchAuthorized = True
+        AUTHdisplay.BackColor = ActiveBUTT
+        BeginInvoke(Sub() LogEventString("Authorization Recieved"))
+        If PSubConnected = False Then
+            ConnectPubSub()
         End If
-        If PubSubStarterState = True Then
-            Dim GoThread As New Thread(
-                Sub()
-                    BeginInvoke(Sub() LogEventString("Authorization Recieved"))
-                    If PubSubState = False Then
-                        ConnectPubSub()
-                    End If
-                    BeginInvoke(Sub() Button1.Enabled = True)
-                    PubSubStarterState = False
-                End Sub)
-            GoThread.Start()
-        End If
-        If ChannelPointStarterState = True Then
-            Dim GoThread As New Thread(
-                Sub()
-                    BeginInvoke(Sub() LogEventString("Authorization Recieved"))
-                    If ChannelPoints.Rewards IsNot Nothing Then
-                        LaunchChannelPointsControls()
-                        ChannelPointStarterState = False
-                    Else
-                        myAPI.SyncChannelRedemptions()
-                    End If
-                End Sub)
-            GoThread.Start()
-        End If
+        myAPI.GetStreamInfoSub()
+        'End Sub)
+        'GoThread.Start()
+        'End If
+        'If PubSubStarterState = True Then
+        'Dim GoThread As New Thread(
+        'Sub()
+        'TwitchAuthorized = True
+        'AUTHdisplay.BackColor = ActiveBUTT
+        'BeginInvoke(Sub() LogEventString("Authorization Recieved"))
+        'If PubSubState = False Then
+        'ConnectPubSub()
+        'End If
+        'BeginInvoke(Sub() Button1.Enabled = True)
+        'PubSubStarterState = False
+        'End Sub)
+        'GoThread.Start()
+        'End If
+        'If ChannelPointStarterState = True Then
+        'Dim GoThread As New Thread(
+        'Sub()
+        'TwitchAuthorized = True
+        'AUTHdisplay.BackColor = ActiveBUTT
+        'BeginInvoke(Sub() LogEventString("Authorization Recieved"))
+        'If ChannelPoints.Rewards IsNot Nothing Then
+        'LaunchChannelPointsControls()
+        'ChannelPointStarterState = False
+        'Else
+        'myAPI.SyncChannelRedemptions()
+        'End If
+        'End Sub)
+        'GoThread.Start()
+        'End If
     End Sub
 
     Private Sub ChannelPointsStarter()
@@ -646,37 +642,38 @@ Public Class MainWindow
         If CheckOBSconnect() = True Then
             If OBSstreamState() = False Then
                 If Button13.Text = "START STREAM" Then
-                    StrimStarterState = True
-                    Dim StartStream As Thread = New Thread(
-                        Sub()
-                            If ChatActive = False Then
-                                BeginInvoke(Sub() IRCclientConnect())
-                            End If
-                            If myAPI.Authorized = False Then
-                                BeginInvoke(Sub() LogEventString("Getting Authorization"))
-                                myAPI.APIauthorization(True)
-                            Else
-                                If PubSubState = False Then
-                                    ConnectPubSub()
-                                End If
-                                myAPI.GetStreamInfoSub()
-                            End If
-                        End Sub)
-                    StartStream.Start()
+                    'StrimStarterState = True
+                    'Dim StartStream As Thread = New Thread(
+                    'Sub()
+                    'If ChatActive = False Then
+                    'BeginInvoke(Sub() IRCclientConnect())
+                    'End If
+                    'If myAPI.Authorized = False Then
+                    'BeginInvoke(Sub() LogEventString("Getting Authorization"))
+                    'myAPI.APIauthorization(True)
+                    'Else
+                    'If PubSubState = False Then
+                    'ConnectPubSub()
+                    'End If
+                    'myAPI.GetStreamInfoSub()
+                    'End If
+                    'End Sub)
+                    'StartStream.Start()
+                    ShowStrimStarter()
                 Else
                     Button13.Text = "START STREAM"
                     Button13.BackColor = StandardBUTT
                 End If
             Else
                 If Button13.Text = "END STREAM" Then
-                    If ChatActive = True Then
-                        ChatOff()
-                        Thread.Sleep(300)
-                        BeginInvoke(Sub() IRCclientDisconnect())
-                    End If
-                    If PubSubState = True Then
-                        PubSub.Disconnect()
-                    End If
+                    'If ChatActive = True Then
+                    '    IRC.ChatOff()
+                    '    Thread.Sleep(300)
+                    '    BeginInvoke(Sub() IRCclientDisconnect())
+                    'End If
+                    'If PubSubState = True Then
+                    'PubSub.Disconnect()
+                    'End If
                     OBS.StopStreaming()
                 Else
                     Button13.Text = "END STREAM"
@@ -686,17 +683,7 @@ Public Class MainWindow
         End If
     End Sub
 
-    Public Sub LaunchStreamStarter(CurrentStreamInfo As String)
-        If StrimStarterState = True Then
-            Dim GoThread As New Thread(
-            Sub()
-                BeginInvoke(Sub() LogEventString(CurrentStreamInfo))
-                BeginInvoke(Sub() ShowStrimStarter())
-                StrimStarterState = False
-            End Sub)
-            GoThread.Start()
-        End If
-    End Sub
+
 
     Private Sub ShowStrimStarter()
         StrimStarter = New StreamStarter
@@ -705,15 +692,9 @@ Public Class MainWindow
 
     Private Sub ListenResponse(sender As Object, e As Events.OnListenResponseArgs)
         If e.Successful = False Then
-            BeginInvoke(
-                Sub()
-                    DatastreamBox.Text = "Failed to Listen: " & e.Response.Error & vbCrLf & DatastreamBox.Text
-                End Sub)
+            BeginInvoke(Sub() LogEventString("Failed to Listen: " & e.Response.Error))
         Else
-            BeginInvoke(
-                Sub()
-                    DatastreamBox.Text = e.Topic & " Message Recieved" & vbCrLf & DatastreamBox.Text
-                End Sub)
+            BeginInvoke(Sub() LogEventString(e.Topic & " Message Recieved"))
         End If
     End Sub
 
@@ -724,10 +705,10 @@ Public Class MainWindow
             Case = "Ember's Hats"
                 Call MediaSourceChange("Embers Hats", MediaFcode.Restart)
             Case = "Play Random Sound-Alert"
-                AudioControl.PlaySoundAlert(AudioControl.GetRandomPublicSoundFile)
+                Dim AlertTask As Task = AudioControl.PlaySoundAlert(AudioControl.GetRandomPublicSoundFile)
             Case = "Play Sound-Alert"
                 Dim SoundFileName As String = Replace(e.RewardRedeemed.Redemption.UserInput, "_", " ")
-                AudioControl.PlaySoundAlert(AudioControl.GetSoundFileDataByName(SoundFileName))
+                Dim AlertTask As Task = AudioControl.PlaySoundAlert(AudioControl.GetSoundFileDataByName(SoundFileName))
             Case Else
                 Rewardstring = "#CHPTS " & e.RewardRedeemed.Redemption.User.DisplayName & " Redeemed: " &
                 e.RewardRedeemed.Redemption.Reward.Title & " for " &
@@ -760,75 +741,19 @@ Public Class MainWindow
 
 
 
-    Private Sub RunMainProgram()
-        Dim MessageString As String = ""
-        Do Until MainProgramRunning = False
-            If MessageBuffer.Count <> 0 Then
-                If MessageBuffer.TryDequeue(MessageString) = True Then
-                    Call ReadMessage(MessageString)
-                End If
-            End If
-            Application.DoEvents()
-        Loop
-    End Sub
+    'Private Sub RunMainProgram()
+    '    Dim MessageString As String = ""
+    '    Do Until MainProgramRunning = False
+    '        If MessageBuffer.Count <> 0 Then
+    '            If MessageBuffer.TryDequeue(MessageString) = True Then
+    '                Call ReadMessage(MessageString)
+    '            End If
+    '        End If
+    '        Application.DoEvents()
+    '    Loop
+    'End Sub
 
-    Private Sub ReadChat(InputString As String)
 
-        Dim UserName As String, ChatText As String = "", Index As Integer, Findstring As String = "PRIVMSG #jerinhaus :"
-        UserName = DataExtract(InputString, ":", "!")
-
-        Index = InStr(InputString, Findstring)
-
-        If Index <> 0 Then
-            Index = Index + Len(Findstring)
-            ChatText = Mid(InputString, Index, Len(InputString) - Index + 1)
-        End If
-        If UserName <> "" And ChatText <> "" Then
-            If UserName = "nightbot" Then
-                Select Case ChatText
-                    Case = "We have llamas: https://www.deviantart.com/drawingwithjerin"
-                    Case = "Beware of doggos: https://discord.gg/nG7PTTY"
-                    Case = "ok boomer: https://www.facebook.com/DrawingWithJerin"
-                    Case = "Come see our pretty pictures ^_^: https://www.instagram.com/drawingwithjerin/"
-                    Case = "All the things!!! Website(www.drawingwithjerin.com),  Store(https://drawingwithjerin.com/jerinhaus/shop/), Youtube(https://www.youtube.com/channel/UCrDFqdGFty2YkM57fSE0VOg), Insta(https://www.instagram.com/jerinhaus/), Twitter(https://twitter.com/Jerinhaus), DA(https://www.deviantart.com/drawingwithjerin),  FB(https://www.facebook.com/Jerinhaus/)"
-                    Case = "Have fun storming the castle: https://twitter.com/JerinDrawing"
-                    Case = "And this is a website! It's dot com: https://drawingwithjerin.com/"
-                    Case = "*In Bro Speak: ""Please subscribe To my youtube channel"" https://www.youtube.com/channel/UCrDFqdGFty2YkM57fSE0VOg"
-                    Case Else
-                        'EventOutputBuffer.Enqueue(ChatText)
-                        Call UpdateEventBox(ChatText)
-                End Select
-            Else
-                If ChatText.Substring(0, 1) <> "!" Then
-                    ChatUserInfo.RecieveChatMessage(UserName, ChatText, DateAndTime.Now.ToString)
-                    'ChatOutputBuffer.Enqueue(UserName & ": " & ChatText)
-                    'Call UpdateChatBox()
-                Else
-                    Dim Splitstring() As String = ChatText.Split(" ")
-                    Splitstring(0) = Splitstring(0).Replace("!", "")
-                    Select Case Splitstring(0)
-                        Case = "counts"
-                            SendBuffer.Enqueue("@" & UserName & " " & CounterData.ReadPublicCounters)
-                        Case = "count"
-                            If Splitstring.Length > 1 Then
-                                If CheckOBSconnect() = True Then
-                                    If CounterData.UserCount(Splitstring(1)) = True Then
-                                        SendBuffer.Enqueue("@" & UserName & " Counted " & Splitstring(1))
-                                    End If
-                                End If
-                            End If
-                        Case = "soundlist"
-                            AudioControl.UpdatePublicSoundFileIndex()
-                            SendBuffer.Enqueue("@" & UserName & " " & AudioControl.PublicSoundListLink)
-                    End Select
-                End If
-            End If
-            BeginInvoke(Sub() DatastreamBox.Text = UserName & ": " & ChatText & vbCrLf & DatastreamBox.Text)
-        Else
-            BeginInvoke(Sub() DatastreamBox.Text = InputString & vbCrLf & DatastreamBox.Text)
-        End If
-
-    End Sub
 
     Private Sub UpdateChatBox(UserName As String, MessageData As String, TimeString As String, ColorIndex As Integer)
         BeginInvoke(
@@ -868,99 +793,8 @@ Public Class MainWindow
             End Sub)
     End Sub
 
-    Private Sub ReadMessage(InputString As String)
-
-        DatastreamBox.Text = InputString & vbCrLf & DatastreamBox.Text
-        Select Case InputString
-            Case = "Ember, Standard"
-                'EmberBox.Image = My.Resources.ResourceManager.GetObject("ember_blink")
-            Case = "Ember, Happy"
-                'EmberBox.Image = My.Resources.ResourceManager.GetObject("ember_happy")
-            Case = "Ember, Wumpy"
-                'EmberBox.Image = My.Resources.ResourceManager.GetObject("ember_annoyed")
-        End Select
-
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+        NewUserHandler("Itsame", True)
     End Sub
-
-    Private Sub ReadStream1()
-
-        Dim InputBytes(1) As Byte, OutputString As String = ""
-
-        Do Until Port1Active = False
-            If OpenPort1.Connected = True Then
-                If Estream1.DataAvailable = True Then
-                    Do Until Estream1.DataAvailable = False
-                        Estream1.Read(InputBytes, 0, 1)
-                        OutputString = OutputString & Chr(InputBytes(0))
-                    Loop
-                    OutputString = MessageQueue(OutputString)
-                End If
-            Else
-                GoTo EndPort1
-            End If
-        Loop
-
-        OpenPort1.Close()
-EndPort1:
-        OpenPort1.Dispose()
-        OpenPort1 = Nothing
-    End Sub
-
-    Private Function MessageQueue(InputString As String) As String
-        Dim SplitString() As String
-        SplitString = Split(InputString, vbCrLf)
-        If SplitString.Length > 1 Then
-            For I As Integer = 0 To SplitString.Length - 2
-                'SendMessage(SplitString(I))
-                If SplitString(I) <> "" Then MessageBuffer.Enqueue(SplitString(I))
-            Next
-            Return SplitString.Last
-        Else
-            Return InputString
-        End If
-    End Function
-
-    'Public Sub OnSceneChanged(Sender As OBSWebsocket, newSceneName As String)
-
-    'Call SceneChanged(newSceneName)
-    'RaiseEvent OBSSceneChanged(newSceneName)
-
-    'End Sub
-
-    Private Function IsPort1Open(ByVal Host As String, ByVal PortNumber As Integer) As Boolean
-
-        OpenPort1 = New ToTcpClient
-
-        OpenPort1.BeginConnectWithTimeout(Host, PortNumber, Nothing, 500)
-        Thread.Sleep(500)
-        If OpenPort1.Connected = True Then
-            Try
-                Estream1 = OpenPort1.GetStream
-                Return True
-            Catch
-                Return False
-            End Try
-        Else
-            Return False
-            OpenPort1.Close()
-            OpenPort1.Dispose()
-            OpenPort1 = Nothing
-        End If
-
-    End Function
-
-    Private Sub SceneChanged(SceneName As String)
-        If SceneName <> CurrentSceneName Then
-            CurrentSceneName = SceneName
-            BeginInvoke(
-            Sub()
-                DatastreamBox.Text = "OBS Scene Change: " & SceneName & vbCrLf & DatastreamBox.Text
-            End Sub)
-        End If
-    End Sub
-
-
-
-
 End Class
 
