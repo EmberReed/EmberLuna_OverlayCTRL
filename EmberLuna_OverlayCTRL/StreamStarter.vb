@@ -1,6 +1,7 @@
 ﻿Public Class StreamStarter
+
+    Private Starting As Boolean = False
     Private Sub StreamStarter_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        AddHandler myAPI.StreamInfoUpdated, AddressOf LetsaGo
         StrimTitle.Text = GamesList.StreamTitle
         StrimCat.Text = GamesList.GetGameName
         For i As Integer = 0 To GamesList.Games.Length - 1
@@ -8,18 +9,7 @@
         Next
     End Sub
 
-    Public Sub LetsaGo()
-        'SourceWindow.BeginInvoke(Sub() SourceWindow.ChatReady())
-        OBS.StartStreaming()
-TryAgain:
-        Try
-            BeginInvoke(Sub() Close())
-        Catch
-            GoTo TryAgain
-        End Try
-    End Sub
-
-    Private Sub StartBUTT_Click(sender As Object, e As EventArgs) Handles StartBUTT.Click
+    Private Async Function StartMyStream() As Task
         If StrimTitle.Text <> "" And StrimCat.Text <> "" Then
             StartBUTT.Enabled = False
             GamesList.StreamTitle = StrimTitle.Text
@@ -27,7 +17,20 @@ TryAgain:
             If UsrReset.Checked = True Then
                 ChatUserInfo.ResetCurrentUsers()
             End If
-            myAPI.SetStreamInfoSub()
+            Await myAPI.SetStreamInfo()
+            OBS.StartStreaming()
+            Starting = True
+            Close()
+        Else
+            SendMessage("Title and Category can't be blank")
         End If
+    End Function
+
+    Private Sub StreamStarter_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        If Starting = False Then SourceWindow.Button13.Enabled = True
+    End Sub
+
+    Private Sub StartBUTT_Click(sender As Object, e As EventArgs) Handles StartBUTT.Click
+        Dim StartTask As Task = StartMyStream()
     End Sub
 End Class

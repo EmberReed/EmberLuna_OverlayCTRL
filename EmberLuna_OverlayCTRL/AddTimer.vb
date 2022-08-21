@@ -119,9 +119,9 @@
 
     Private Sub PlaySoundButt_Click(sender As Object, e As EventArgs) Handles PlaySoundButt.Click
         If AudioControl.SoundPlayer.Active = True Then
-            AudioControl.SoundPlayer.Stopp(True)
+            AudioControl.SoundPlayer.Stopp()
         Else
-            If SoundPicker.Text <> "" Then AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(SoundPicker.Text), True)
+            If SoundPicker.Text <> "" Then AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(SoundPicker.Text))
         End If
     End Sub
 

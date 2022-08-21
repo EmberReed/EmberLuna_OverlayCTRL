@@ -13,13 +13,10 @@ Public Module OBSfunctions
 
     Public Function OBSstreamState() As Boolean
         OBSmutex.WaitOne()
-        If OBS.GetStreamingStatus.IsStreaming = True Then
-            OBSmutex.ReleaseMutex()
-            Return True
-        Else
-            OBSmutex.ReleaseMutex()
-            Return False
-        End If
+        Dim MyStatus As OutputStatus = OBS.GetStreamingStatus
+        'SendMessage("Stream State: " & MyStatus.IsStreaming)
+        OBSmutex.ReleaseMutex()
+        Return MyStatus.IsStreaming
     End Function
 
     Public Sub SetOBSsourceText(SourceName As String, TextData As String, Optional BypassMutex As Boolean = False)
@@ -1020,7 +1017,7 @@ TryAgain:
                         Optional MessageMood As String = "",
                         Optional MessageSound As String = "") As Task
             If MessageSound <> "" Then
-                AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(MessageSound), True)
+                AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(MessageSound))
             End If
             Dim TempMood As String = CurrentMood
             If MessageMood <> "" Then
@@ -1129,20 +1126,21 @@ TryAgain:
         Call UpdateSceneDisplay()
         RaiseEvent CountersUpdated()
 
-        Await Task.Delay(2000)
+        Await Task.Delay(1800)
         If NewValue < 10 Then
             OBScounterObject(CounterSelection).Value = "0" & NewValue
         Else
             OBScounterObject(CounterSelection).Value = NewValue
         End If
         SetOBSsourceText(OBScounterObject(CounterSelection).ValueSource, OBScounterObject(CounterSelection).Value)
-        If CounterSound <> "" Then AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(CounterSound), True)
+        If CounterSound <> "" Then AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(CounterSound))
 
-        Await Task.Delay(3000)
+        Await Task.Delay(2400)
         OBScounterObject(CounterSelection).Title = ""
         OBScounterObject(CounterSelection).State = False
         Call UpdateSceneDisplay()
         RaiseEvent CountersUpdated()
+        Await Task.Delay(500)
 
     End Function
 
@@ -1154,18 +1152,26 @@ TryAgain:
         OBScounterObject(CounterIDs.Glob).Value = "00"
         OBScounterObject(CounterIDs.Glob).TitleSource = "GlobalCounterTitle"
         OBScounterObject(CounterIDs.Glob).ValueSource = "GlobalCounterValue"
+        OBScounterObject(CounterIDs.Glob).Name = "Global Counter"
+        OBScounterObject(CounterIDs.Glob).ResourceID = ResourceIDs.GlobalCounter
+
 
         OBScounterObject(CounterIDs.Ember).State = False
         OBScounterObject(CounterIDs.Ember).Title = ""
         OBScounterObject(CounterIDs.Ember).Value = "00"
         OBScounterObject(CounterIDs.Ember).TitleSource = "EmberCounterTitle"
         OBScounterObject(CounterIDs.Ember).ValueSource = "EmberCounterValue"
+        OBScounterObject(CounterIDs.Ember).Name = "Ember Counter"
+        OBScounterObject(CounterIDs.Ember).ResourceID = ResourceIDs.EmberCounter
 
         OBScounterObject(CounterIDs.Luna).State = False
         OBScounterObject(CounterIDs.Luna).Title = ""
         OBScounterObject(CounterIDs.Luna).Value = "00"
         OBScounterObject(CounterIDs.Luna).TitleSource = "LunaCounterTitle"
         OBScounterObject(CounterIDs.Luna).ValueSource = "LunaCounterValue"
+        OBScounterObject(CounterIDs.Luna).Name = "Luna Counter"
+        OBScounterObject(CounterIDs.Luna).ResourceID = ResourceIDs.LunaCounter
+
     End Sub
 
     Public Structure TimerCounterData
@@ -1174,23 +1180,16 @@ TryAgain:
         Public TitleSource As String
         Public Value As String
         Public ValueSource As String
+        Public Name As String
+        Public ResourceID As Integer
     End Structure
 
     Public Class OBScounterData
         Public Counters() As CounterProperties
-        Public CountQueue As ConcurrentQueue(Of Integer)
         Public Total As Integer
-        Public Active As Boolean
-        Public Current As Integer
-        Public Event CounterStarted(CurrentCounter As Integer)
-        Public Event CounterStopped(CurrentCounter As Integer)
 
         Public Sub New()
             InitializeCountersObjects()
-            AddHandler CountersUpdated, AddressOf CounterEventHandler
-            Active = False
-            Current = -1
-            CountQueue = New ConcurrentQueue(Of Integer)
             Call LoadCounterData()
         End Sub
 
@@ -1203,33 +1202,6 @@ TryAgain:
             Next
             Return -1
         End Function
-
-        Public Sub CounterEventHandler()
-            If OBScounterObject(CounterIDs.Ember).State = True Or
-                OBScounterObject(CounterIDs.Luna).State = True Or
-                OBScounterObject(CounterIDs.Glob).State = True Then
-
-                If Active = False Then
-                    Active = True
-                    RaiseEvent CounterStarted(Current)
-                End If
-            Else
-                If Active = True Then
-                    Dim InputValue As Integer = -1
-TryAgain:
-                    If CountQueue.Count <> 0 Then
-                        CountQueue.TryDequeue(InputValue)
-                        If InputValue = -1 Then
-                            GoTo TryAgain
-                        End If
-                    End If
-                    Active = False
-                    RaiseEvent CounterStopped(Current)
-                    Current = -1
-                    If InputValue > -1 Then RunCounter(InputValue)
-                End If
-            End If
-        End Sub
 
         Public Sub CounterSub(CounterIndex As Integer)
             If CounterIndex < Total Then
@@ -1251,27 +1223,26 @@ TryAgain:
             Dim ReturnValue As Boolean = False
             If CounterIndex < Total Then
                 Counters(CounterIndex).AddCount()
-                If OBScounterObject(Counters(CounterIndex).Type).State = False And Active = False Then
-                    RunCounter(CounterIndex)
-                    ReturnValue = True
-                Else
-                    If Not (UserGenerated = True And CounterIndex = Current) Then
-                        CountQueue.Enqueue(CounterIndex)
-                        ReturnValue = True
-                    End If
-                End If
+                RunCounter(CounterIndex)
+                ReturnValue = True
             End If
             Return ReturnValue
         End Function
 
         Public Sub RunCounter(CounterIndex As Integer)
             If CounterIndex < Total Then
-                Current = CounterIndex
-                Dim TheCount As Task = RunOBScounter(Counters(CounterIndex).Type,
-                                                     Counters(CounterIndex).PrevValue,
-                                                     Counters(CounterIndex).Count,
-                                                     Counters(CounterIndex).Label,
-                                                     Counters(CounterIndex).Sound)
+                Dim CountMe As New Task(Of Task) _
+                (Async Function() As Task
+                     Await RunOBScounter(Counters(CounterIndex).Type,
+                                         Counters(CounterIndex).PrevValue,
+                                         Counters(CounterIndex).Count,
+                                         Counters(CounterIndex).Label,
+                                         Counters(CounterIndex).Sound)
+                 End Function)
+
+                Dim TheCount As Task =
+                    MyResourceManager.RequestResource({OBScounterObject(Counters(CounterIndex).Type).ResourceID},
+                                                      CountMe, "CountIndex#(" & CounterIndex & ") " & Counters(CounterIndex).Name)
             End If
         End Sub
 
@@ -1345,7 +1316,6 @@ TryAgain:
         Public Function PrevValue() As Integer
             Dim InputValue = Count
             InputValue = InputValue - Increment
-            'SendMessage(InputValue)
             Return InputValue
         End Function
 
@@ -1353,7 +1323,6 @@ TryAgain:
             If Count > 0 Then
                 Count = Count - Increment
             End If
-            'SendMessage(Count)
         End Sub
 
         Public Sub AddCount()
@@ -1363,7 +1332,6 @@ TryAgain:
             If Count > 100 Then
                 Count = 100
             End If
-            'SendMessage(Count)
         End Sub
 
         Public Sub ReadCounterData(DataLine As String)
@@ -1462,6 +1430,9 @@ TryAgain:
             AlertPlayer = New AudioPlayer
             AlertPlayer.Name = "Alert Player"
             AlertPlayer.Path = "\\StreamPC-V2\OBS Assets\Sounds\SFX\"
+
+
+
             AlertActive = False
             AlertQueue = New ConcurrentQueue(Of String)
 
@@ -1469,9 +1440,6 @@ TryAgain:
             SoundList = BuildMusicList("\\StreamPC-V2\OBS Assets\Sounds\SFX", False, True)
             SongIndex = 0
             PublicSoundListLink = "https://drawingwithjerin.com/jerinsfx/"
-            AddHandler OBS.MediaEnded, AddressOf MediaStopped
-            AddHandler OBS.MediaStarted, AddressOf MediaStarted
-            AddHandler OBS.MediaPaused, AddressOf MediaPaused
             AddHandler MusicPlayer.Stopped, AddressOf ContinueMusic
         End Sub
 
@@ -1481,7 +1449,7 @@ TryAgain:
 PlayNextSound:
                 SoundAlertDisplay = True
                 Call UpdateSceneDisplay()
-                AlertPlayer.Play(SoundFile, True)
+                AlertPlayer.Play(SoundFile)
                 Await Task.Delay(4000)
                 'Thread.Sleep(4000)
                 SoundAlertDisplay = False
@@ -1875,7 +1843,7 @@ FoundIt:
         Public Sub PlayMusic(Optional Replay As Boolean = False)
             If MusicPlayer.Active = False Or Replay = True Then
                 If SongList(SongIndex) <> "" Then
-                    MusicPlayer.Play(SongList(SongIndex), Replay)
+                    MusicPlayer.Play(SongList(SongIndex))
                     MusicRunning = True
                 End If
             End If
@@ -1884,14 +1852,13 @@ FoundIt:
         Public Sub StopMusic()
             If MusicPlayer.Active = True Then
                 MusicRunning = False
-                MusicPlayer.Stopp(True, True)
+                MusicPlayer.Stopp()
             End If
-
         End Sub
 
         Public Sub PauseMusic()
             If MusicPlayer.Active = True Then
-                MusicPlayer.Pausing(True)
+                MusicPlayer.Pausing()
             End If
         End Sub
 
@@ -1904,7 +1871,7 @@ FoundIt:
 
             If SongList(SongIndex) <> "" Then
                 'SendMessage(SongList(SongIndex))
-                MusicPlayer.Play(SongList(SongIndex), True)
+                MusicPlayer.Play(SongList(SongIndex))
                 MusicRunning = True
             End If
         End Sub
@@ -1917,7 +1884,7 @@ FoundIt:
             End If
             If SongList(SongIndex) <> "" Then
                 'SendMessage(SongList(SongIndex))
-                MusicPlayer.Play(SongList(SongIndex), True)
+                MusicPlayer.Play(SongList(SongIndex))
                 MusicRunning = True
             End If
         End Sub
@@ -1938,32 +1905,7 @@ FoundIt:
             End If
         End Function
 
-        Private Sub MediaStopped(Sender As OBSWebsocket, MediaName As String, MediaType As String)
-            Select Case MediaName
-                Case = MusicPlayer.Name
-                    MusicPlayer.Stopp()
-                Case = SoundPlayer.Name
-                    SoundPlayer.Stopp()
-            End Select
-        End Sub
 
-        Private Sub MediaStarted(Sender As OBSWebsocket, MediaName As String, MediaType As String)
-            Select Case MediaName
-                Case = MusicPlayer.Name
-                    MusicPlayer.Play()
-                Case = SoundPlayer.Name
-                    SoundPlayer.Play()
-            End Select
-        End Sub
-
-        Private Sub MediaPaused(Sender As OBSWebsocket, MediaName As String, MediaType As String)
-            Select Case MediaName
-                Case = MusicPlayer.Name
-                    MusicPlayer.Pausing()
-                Case = SoundPlayer.Name
-                    SoundPlayer.Pausing()
-            End Select
-        End Sub
 
 
     End Class
@@ -2211,105 +2153,108 @@ FoundIt:
 
         Public Name As String
         Public Path As String
-        'Public RNDpath As String
-        Public FileQueue As ConcurrentQueue(Of String)
         Public Active As Boolean
         Public Pause As Boolean
         Public Access As Mutex
         Public Current As String
+        Private AsyncTrigg As Boolean
+        Private AsyncSigg As TaskCompletionSource(Of Boolean)
         Public Event Started()
         Public Event Stopped()
         Public Event Paused()
+
+
 
         Public Sub New()
             Access = New Mutex
             Access.WaitOne()
             Name = ""
-            FileQueue = New ConcurrentQueue(Of String)
             Active = False
             Pause = False
             Access.ReleaseMutex()
+            AsyncTrigg = False
+            AddHandler OBS.MediaEnded, AddressOf MediaStopped
+            AddHandler OBS.MediaStarted, AddressOf mediastarted
+            AddHandler OBS.MediaPaused, AddressOf mediapaused
         End Sub
 
-        Public Sub Stopp(Optional Immediate As Boolean = False, Optional FullStop As Boolean = False)
-            Dim filename As String = ""
-            If Immediate = True Then
-                Access.WaitOne()
-                If Active = True Then
-                    Current = Replace(MediaSourceChange(Name, 3), Path, "")
-                    If InStr(Current, "(RND) ") Then
-                        Dim SplitString() As String = Current.Split("\")
-                        Current = SplitString(0)
-                    End If
-                    If FullStop = True Then
-                        FileQueue = New ConcurrentQueue(Of String)
-                    Else
-TryAgain:
-                        If FileQueue.Count <> 0 Then
-                            FileQueue.TryDequeue(filename)
-                            If filename <> "" Then GoTo TryAgain
-                            Play(filename)
-                        End If
-                    End If
-                End If
-                Access.ReleaseMutex()
-            Else
+        Private Sub mediastopped(sender As OBSWebsocket, medianame As String, mediatype As String)
+            If medianame = Name Then
                 Active = False
                 Pause = False
                 RaiseEvent Stopped()
+                If AsyncTrigg = True Then AsyncSigg.SetResult(False)
             End If
         End Sub
 
-        Public Sub Pausing(Optional Immediate As Boolean = False)
+        Private Sub mediastarted(sender As OBSWebsocket, medianame As String, mediatype As String)
+            If medianame = Name Then
+                Pause = False
+                Active = True
+                RaiseEvent Started()
+            End If
+        End Sub
 
-            If Immediate = True Then
-                Access.WaitOne()
-                If Pause = True Then
-                    Current = Replace(MediaSourceChange(Name, 1), Path, "")
-                    If InStr(Current, "(RND) ") Then
-                        Dim SplitString() As String = Current.Split("\")
-                        Current = SplitString(0)
-                    End If
-                Else
-                    Current = Replace(MediaSourceChange(Name, 2), Path, "")
-                    If InStr(Current, "(RND) ") Then
-                        Dim SplitString() As String = Current.Split("\")
-                        Current = SplitString(0)
-                    End If
-                End If
-                Access.ReleaseMutex()
-            Else
+        Private Sub mediapaused(sender As OBSWebsocket, medianame As String, mediatype As String)
+            If medianame = Name Then
                 Pause = True
                 RaiseEvent Paused()
             End If
         End Sub
 
-        Public Sub Play(Optional FileName As String = "", Optional Immediate As Boolean = False)
-            If FileName <> "" Then
-                Access.WaitOne()
-                If Active = False Then
-                    Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
-                    If InStr(Current, "(RND) ") Then
-                        Dim SplitString() As String = Current.Split("\")
-                        Current = SplitString(0)
-                    End If
-                Else
-                    If Immediate = True Then
-                        Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
-                        If InStr(Current, "(RND) ") Then
-                            Dim SplitString() As String = Current.Split("\")
-                            Current = SplitString(0)
-                        End If
-                    Else
-                        FileQueue.Enqueue(FileName)
-                    End If
+        Public Sub Stopp()
+            Access.WaitOne()
+            If Active = True Then
+                Current = Replace(MediaSourceChange(Name, 3), Path, "")
+                If InStr(Current, "(RND) ") Then
+                    Dim SplitString() As String = Current.Split("\")
+                    Current = SplitString(0)
                 End If
-                Access.ReleaseMutex()
-            Else
-                Pause = False
-                Active = True
-                RaiseEvent Started()
             End If
+            Access.ReleaseMutex()
+        End Sub
+
+        Public Sub Pausing()
+            Access.WaitOne()
+            If Pause = True Then
+                Current = Replace(MediaSourceChange(Name, 1), Path, "")
+                If InStr(Current, "(RND) ") Then
+                    Dim SplitString() As String = Current.Split("\")
+                    Current = SplitString(0)
+                End If
+            Else
+                Current = Replace(MediaSourceChange(Name, 2), Path, "")
+                If InStr(Current, "(RND) ") Then
+                    Dim SplitString() As String = Current.Split("\")
+                    Current = SplitString(0)
+                End If
+            End If
+            Access.ReleaseMutex()
+        End Sub
+
+        Public Async Function PlayAsync(FileName As String) As Task
+            Access.WaitOne()
+            AsyncTrigg = True
+            AsyncSigg = New TaskCompletionSource(Of Boolean)
+            Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
+            If InStr(Current, "(RND) ") Then
+                Dim SplitString() As String = Current.Split("\")
+                Current = SplitString(0)
+            End If
+            Access.ReleaseMutex()
+            AsyncTrigg = Await AsyncSigg.Task
+        End Function
+
+
+        Public Sub Play(FileName As String)
+            If AsyncTrigg = True Then AsyncSigg.SetResult(False)
+            Access.WaitOne()
+            Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
+            If InStr(Current, "(RND) ") Then
+                Dim SplitString() As String = Current.Split("\")
+                Current = SplitString(0)
+            End If
+            Access.ReleaseMutex()
         End Sub
 
     End Class
@@ -2326,6 +2271,7 @@ TryAgain:
     Public Structure OBSTimer
         Public State As Boolean
         Public Pause As Boolean
+        Public Name As String
         Public Title As String
         Public TitleSource As String
         Public Clock As String
@@ -2333,6 +2279,7 @@ TryAgain:
         Public Sounds As List(Of TimerSound)
         'Public Alarm As String
         Public SoundSource As String
+        Public ResourceID As Integer
         Public Event TimerStarted()
         Public Event TimerStopped()
         Public Sub StartTimer()
@@ -2361,6 +2308,7 @@ TryAgain:
 
         OBStimerObject(TimerIDs.GlobalCC).State = False
         OBStimerObject(TimerIDs.GlobalCC).Pause = False
+        OBStimerObject(TimerIDs.GlobalCC).Name = "Global Timer"
         OBStimerObject(TimerIDs.GlobalCC).Title = ""
         OBStimerObject(TimerIDs.GlobalCC).TitleSource = "GlobalTimerTitle"
         OBStimerObject(TimerIDs.GlobalCC).Clock = "5:00"
@@ -2368,9 +2316,12 @@ TryAgain:
         'OBStimerObject(TimerIDs.GlobalCC).Alarm = ""
         OBStimerObject(TimerIDs.GlobalCC).Sounds = New List(Of TimerSound)
         OBStimerObject(TimerIDs.GlobalCC).SoundSource = "TimerAudio"
+        OBStimerObject(TimerIDs.GlobalCC).ResourceID = ResourceIDs.GlobalTimer
+
 
         OBStimerObject(TimerIDs.Ember).State = False
         OBStimerObject(TimerIDs.Ember).Pause = False
+        OBStimerObject(TimerIDs.Ember).Name = "Ember Timer"
         OBStimerObject(TimerIDs.Ember).Title = ""
         OBStimerObject(TimerIDs.Ember).TitleSource = "EmberTimerTitle"
         OBStimerObject(TimerIDs.Ember).Clock = "5:00"
@@ -2378,9 +2329,11 @@ TryAgain:
         'OBStimerObject(TimerIDs.Ember).Alarm = ""
         OBStimerObject(TimerIDs.Ember).Sounds = New List(Of TimerSound)
         OBStimerObject(TimerIDs.Ember).SoundSource = "TimerAudio"
+        OBStimerObject(TimerIDs.Ember).ResourceID = ResourceIDs.EmberTimer
 
         OBStimerObject(TimerIDs.Luna).State = False
         OBStimerObject(TimerIDs.Luna).Pause = False
+        OBStimerObject(TimerIDs.Luna).Name = "Luna Timer"
         OBStimerObject(TimerIDs.Luna).Title = ""
         OBStimerObject(TimerIDs.Luna).TitleSource = "LunaTimerTitle"
         OBStimerObject(TimerIDs.Luna).Clock = "5:00"
@@ -2388,6 +2341,7 @@ TryAgain:
         'OBStimerObject(TimerIDs.Luna).Alarm = ""
         OBStimerObject(TimerIDs.Luna).Sounds = New List(Of TimerSound)
         OBStimerObject(TimerIDs.Luna).SoundSource = "TimerAudio"
+        OBStimerObject(TimerIDs.Luna).ResourceID = ResourceIDs.LunaTimer
 
         'OBStimerObject(TimerIDs.GlobalUL).State = False
         'OBStimerObject(TimerIDs.GlobalUL).Pause = False
@@ -2408,11 +2362,14 @@ TryAgain:
         'OBStimerObject(TimerIDs.GlobalLR).SoundSource = "Aux2TimerAlert"
     End Sub
 
-    Public Async Function RunTimer(TimeInSeconds As Integer, TimerSelection As Integer, Optional StopTime As Integer = 0) As Task
+    Public Async Function RunTimer(TimeInSeconds As Integer, TimerSelection As Integer, Optional StopTime As Integer = 0,
+                                   Optional Label As String = "", Optional tSounds As List(Of TimerSound) = Nothing) As Task
+        'SendMessage("Starting Timer")
 
-        If OBStimerObject(TimerSelection).Title <> "" Then
-            OBStimerObject(TimerSelection).Title =
-        Replace(OBStimerObject(TimerSelection).Title, " ", "  ")
+        OBStimerObject(TimerSelection).State = True
+        'OBStimerObject(TimerSelection).Sounds
+        If Label <> "" Then
+            OBStimerObject(TimerSelection).Title = Replace(Label, " ", "  ")
         End If
 
         SetOBSsourceText(OBStimerObject(TimerSelection).TitleSource, OBStimerObject(TimerSelection).Title)
@@ -2428,13 +2385,13 @@ TryAgain:
 
         Await Task.Delay(1000)
         Do Until OBStimerObject(TimerSelection).State = False
-            If OBStimerObject(TimerSelection).Sounds IsNot Nothing Then
-                If OBStimerObject(TimerSelection).Sounds.Count > 0 Then
-                    For I As Integer = 0 To OBStimerObject(TimerSelection).Sounds.Count - 1
-                        If OBStimerObject(TimerSelection).Sounds(I).SoundTime = TimeInSeconds Then
-                            If OBStimerObject(TimerSelection).Sounds(I).SoundObject <> "" Then
+            If tSounds IsNot Nothing Then
+                If tSounds.Count > 0 Then
+                    For I As Integer = 0 To tSounds.Count - 1
+                        If tSounds(I).SoundTime = TimeInSeconds Then
+                            If tSounds(I).SoundObject <> "" Then
                                 MediaSourceChange(OBStimerObject(TimerSelection).SoundSource, MediaFcode.Play,
-                            AudioControl.GetSoundFileDataByName(OBStimerObject(TimerSelection).Sounds(I).SoundObject, True))
+                            AudioControl.GetSoundFileDataByName(tSounds(I).SoundObject, True))
                                 GoTo SoundPlayed1
                             End If
                         End If
@@ -2455,13 +2412,13 @@ SoundPlayed1:
             End If
 
             If TimeInSeconds = StopTime Then
-                If OBStimerObject(TimerSelection).Sounds IsNot Nothing Then
-                    If OBStimerObject(TimerSelection).Sounds.Count > 0 Then
-                        For I As Integer = 0 To OBStimerObject(TimerSelection).Sounds.Count - 1
-                            If OBStimerObject(TimerSelection).Sounds(I).SoundTime = TimeInSeconds Then
-                                If OBStimerObject(TimerSelection).Sounds(I).SoundObject <> "" Then
+                If tSounds IsNot Nothing Then
+                    If tSounds.Count > 0 Then
+                        For I As Integer = 0 To tSounds.Count - 1
+                            If tSounds(I).SoundTime = TimeInSeconds Then
+                                If tSounds(I).SoundObject <> "" Then
                                     MediaSourceChange(OBStimerObject(TimerSelection).SoundSource, MediaFcode.Play,
-                                AudioControl.GetSoundFileDataByName(OBStimerObject(TimerSelection).Sounds(I).SoundObject, True))
+                                AudioControl.GetSoundFileDataByName(tSounds(I).SoundObject, True))
                                     GoTo SoundPlayed2
                                 End If
                             End If
@@ -2478,6 +2435,7 @@ SoundPlayed2:
 
         Call UpdateSceneDisplay()
         RaiseEvent TimersUpdated(TimerSelection)
+        Await Task.Delay(500)
     End Function
 
     Public Structure TimerButton
@@ -2625,33 +2583,32 @@ SoundPlayed2:
         End Sub
 
         Public Sub RunTimerbyData(TimeInSeconds As Integer, TimerID As Integer)
-            If OBStimerObject(TimerID).State = False Then
-                OBStimerObject(TimerID).State = True
-                'SendMessage(OBStimerObject(TimerID).State & ", " & TimerID)
-                Dim GoTimer As Task = RunTimer(TimeInSeconds, TimerID)
-            Else
-                SendMessage("Requested Timer is In Use", "I'M SORRY DAVE...")
-            End If
+            Dim GoTimer As New Task(Of Task)(Async Function() As Task
+                                                 Await RunTimer(TimeInSeconds, TimerID, , OBStimerObject(TimerID).Title)
+                                             End Function)
+            Dim RunThyTimer As Task = MyResourceManager.RequestResource({OBStimerObject(TimerID).ResourceID},
+                                                                    GoTimer, OBStimerObject(TimerID).Name)
         End Sub
 
 
 
-        Public Sub RunTimerbyIndex(TimerIndex As Integer)
-            'SendMessage(Timers(TimerIndex).TimertoString)
-            If OBStimerObject(Timers(TimerIndex).Type).State = False Then
-                OBStimerObject(Timers(TimerIndex).Type).State = True
-                OBStimerObject(Timers(TimerIndex).Type).Title = Timers(TimerIndex).Label
-                OBStimerObject(Timers(TimerIndex).Type).Sounds = Timers(TimerIndex).Sounds
-                'OBStimerObject(Timers(TimerIndex).Type).Alarm = Timers(TimerIndex).Alarm
-                Dim GoTimer As Task = RunTimer(Timers(TimerIndex).Time, Timers(TimerIndex).Type, Timers(TimerIndex).StopTime)
-            Else
-                SendMessage("Requested Timer is In Use", "I'M SORRY DAVE...")
-            End If
-        End Sub
+        Public Async Function RunTimerbyIndex(TimerIndex As Integer, Optional DontQueue As Boolean = True) As Task
 
-        Public Sub RunTimerbyName(TimerName As String)
+            Dim GoTimer As New Task(Of Task) _
+            (Async Function() As Task
+                 Await RunTimer(Timers(TimerIndex).Time, Timers(TimerIndex).Type, Timers(TimerIndex).StopTime,
+                                Timers(TimerIndex).Label, Timers(TimerIndex).Sounds)
+             End Function)
+
+
+            Dim RunThyTimer As Boolean = Await MyResourceManager.RequestResource({OBStimerObject(Timers(TimerIndex).Type).ResourceID},
+                                                                       GoTimer, OBStimerObject(Timers(TimerIndex).Type).Name, DontQueue)
+            If RunThyTimer = False Then SendMessage("Timer is in Use", "UH OH!")
+        End Function
+
+        Public Sub RunTimerbyName(TimerName As String, Optional DontQueue As Boolean = True)
             Dim TimerIndex As Integer = GetTimerIndexByName(TimerName)
-            RunTimerbyIndex(TimerIndex)
+            Dim TimerTask As Task = RunTimerbyIndex(TimerIndex, DontQueue)
         End Sub
 
         Public Sub PauseTimerByID(TimerID As Integer)
@@ -2800,5 +2757,141 @@ FoundIt:
 
     End Class
 
+
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    '/////////////////////////////////////////////////////RESOURCE MANAGER////////////////////////////////////////////////////
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    Public MyReourceManager As ResourceManager
+
+    Public Structure ResourceIDs
+        Public Const SoundPlayer As Integer = 0
+        Public Const AlertPlayer As Integer = 1
+        Public Const MusicPlayer As Integer = 2
+        Public Const EmberSprite As Integer = 3
+        Public Const LunaSprite As Integer = 4
+        Public Const EmberTimer As Integer = 5
+        Public Const LunaTimer As Integer = 6
+        Public Const GlobalTimer As Integer = 7
+        Public Const EmberCounter As Integer = 8
+        Public Const LunaCounter As Integer = 9
+        Public Const GlobalCounter As Integer = 10
+
+        Public Const LastID As Integer = 10
+    End Structure
+
+    Public Structure RMtaskStates
+        Public Const Started As Integer = 0
+        Public Const Ended As Integer = 1
+        Public Const Queued As Integer = 2
+        Public Const Abandoned As Integer = 3
+    End Structure
+
+    Public Class ResourceManager
+        Private Rqueue As List(Of ResourceRequest)
+        Private Reservations() As Boolean
+        Private QueueTex As Mutex
+        Public Event TaskEvent(TaskString As String, StateID As Integer)
+
+        Public Sub New()
+            QueueTex = New Mutex
+            Rqueue = New List(Of ResourceRequest)
+            ReDim Reservations(0 To ResourceIDs.LastID)
+            For i As Integer = 0 To ResourceIDs.LastID
+                Reservations(i) = False
+            Next
+        End Sub
+
+        Private Function OKtoGO(RIDs() As Integer) As Boolean
+            For i As Integer = 0 To RIDs.Length - 1
+                If Reservations(RIDs(i)) = True Then
+                    Return False
+                    Exit Function
+                End If
+            Next
+            Return True
+        End Function
+
+        Private Sub SetRIDs(RIDs() As Integer, Value As Boolean)
+            For i As Integer = 0 To RIDs.Length - 1
+                Reservations(RIDs(i)) = Value
+            Next
+        End Sub
+
+        Public Sub CancelAllRequests(Optional SpecifyRIDs() As Integer = Nothing)
+            QueueTex.WaitOne()
+            If Rqueue.Count > 0 Then
+
+            Else
+
+            End If
+            QueueTex.ReleaseMutex()
+        End Sub
+
+        Public Async Function RequestResource(RIDs() As Integer, TaskToRun As Task(Of Task), TaskInfo As String,
+                                         Optional RejectIfUnavailable As Boolean = False) As Task(Of Boolean)
+            If OKtoGO(RIDs) Then
+                SetRIDs(RIDs, True)
+                RaiseEvent TaskEvent(TaskInfo, RMtaskStates.Started)
+
+                TaskToRun.Start()
+                Await TaskToRun.Result
+
+                RaiseEvent TaskEvent(TaskInfo, RMtaskStates.Ended)
+                SetRIDs(RIDs, False)
+            Else
+                If RejectIfUnavailable Then
+                    RaiseEvent TaskEvent(TaskInfo, RMtaskStates.Abandoned)
+                    Return False
+                Else
+                    QueueTex.WaitOne()
+                    Rqueue.Add(New ResourceRequest(RIDs, TaskToRun, TaskInfo, Rqueue.Count + 1))
+                    Dim QueueCount As Integer = Rqueue.Count
+                    QueueTex.ReleaseMutex()
+                    RaiseEvent TaskEvent(TaskInfo & " (Queue# " & QueueCount & ")", RMtaskStates.Queued)
+                    Return True
+                End If
+                Exit Function
+            End If
+            Dim MyRequest As ResourceRequest
+            Dim ReleaseMe As Boolean
+FromTheTop:
+            QueueTex.WaitOne()
+            ReleaseMe = True
+            If Rqueue.Count > 0 Then
+                For I As Integer = 0 To Rqueue.Count - 1
+                    If OKtoGO(Rqueue(I).RIDs) Then
+                        MyRequest = Rqueue(I)
+                        Rqueue.RemoveAt(I)
+                        QueueTex.ReleaseMutex()
+                        ReleaseMe = False
+                        SetRIDs(MyRequest.RIDs, True)
+                        RaiseEvent TaskEvent(MyRequest.TaskString & " (Q#" & MyRequest.QID & ")", RMtaskStates.Started)
+                        MyRequest.MyTask.Start()
+                        Await MyRequest.MyTask.Result
+                        RaiseEvent TaskEvent(MyRequest.TaskString & " (Q#" & MyRequest.QID & ")", RMtaskStates.Ended)
+                        SetRIDs(MyRequest.RIDs, False)
+                        GoTo FromTheTop
+                    End If
+                Next
+            End If
+            If ReleaseMe Then QueueTex.ReleaseMutex()
+            Return True
+        End Function
+
+    End Class
+
+    Public Class ResourceRequest
+        Public RIDs() As Integer
+        Public MyTask As Task(Of Task)
+        Public TaskString As String
+        Public QID As Integer
+        Public Sub New(ResourceIDs() As Integer, TaskToRun As Task(Of Task), TaskTitle As String, QueueNum As Integer)
+            RIDs = ResourceIDs
+            MyTask = TaskToRun
+            TaskString = TaskTitle
+            QID = QueueNum
+        End Sub
+    End Class
 
 End Module

@@ -188,7 +188,7 @@ Partial Class AddTimer
         Me.Label10.Name = "Label10"
         Me.Label10.Size = New System.Drawing.Size(331, 54)
         Me.Label10.TabIndex = 105
-        Me.Label10.Text = "LABEL"
+        Me.Label10.Text = "LABEL (Appears in OBS)"
         Me.Label10.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'TimerName
@@ -214,7 +214,7 @@ Partial Class AddTimer
         Me.Label11.Name = "Label11"
         Me.Label11.Size = New System.Drawing.Size(331, 54)
         Me.Label11.TabIndex = 103
-        Me.Label11.Text = "NAME"
+        Me.Label11.Text = "NAME (Appears in List)"
         Me.Label11.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'SoundTimeDisplay

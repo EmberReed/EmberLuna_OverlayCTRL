@@ -157,7 +157,7 @@ tryagain:
     Private Sub SoundButtPreview_Click(sender As Object, e As EventArgs) Handles SoundButtPreview.Click
         GetSoundList()
         Dim SoundFile As String = ButtData.GetSoundFile
-        If SoundFile <> "" Then AudioControl.SoundPlayer.Play(SoundFile, True)
+        If SoundFile <> "" Then AudioControl.SoundPlayer.Play(SoundFile)
     End Sub
 
     Private Sub FilterSoundsButt_Click(sender As Object, e As EventArgs) Handles FilterSoundsButt.Click
@@ -179,9 +179,9 @@ tryagain:
 
     Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
         If AudioControl.SoundPlayer.Active = True Then
-            AudioControl.SoundPlayer.Stopp(True)
+            AudioControl.SoundPlayer.Stopp()
         Else
-            If SoundPicker.Text <> "" Then AudioControl.SoundPlayer.Play(SoundPicker.Text, True)
+            If SoundPicker.Text <> "" Then AudioControl.SoundPlayer.Play(SoundPicker.Text)
         End If
     End Sub
 

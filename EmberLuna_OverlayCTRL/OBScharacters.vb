@@ -26,11 +26,7 @@ Public Class OBScharacters
 
     Public Sub MoodChangeDetected(InputString As String)
 TryAgain:
-        'Try
         UpdateDisplay()
-        'Catch ex As Exception
-        'GoTo TryAgain
-        'End Try
     End Sub
 
     Public Sub UpdateDisplay()

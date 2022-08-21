@@ -28,6 +28,7 @@ Public Module CommonFunctions
     Public WithEvents CounterData As OBScounterData
     Public WithEvents ChatUserInfo As UserData
     Public WithEvents IRC As IrcClient
+    Public WithEvents MyResourceManager As ResourceManager
 
     'COLORS
     Public ActiveBUTT As Color = Color.FromArgb(255, 255, 82, 0)

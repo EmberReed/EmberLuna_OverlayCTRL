@@ -12,18 +12,31 @@
         DisplayTotal = ButtonsWide * ButtonsHigh
         SourceWindow.CountersButt.BackColor = ActiveBUTT
         Call DisplayCounters()
-        AddHandler CounterData.CounterStarted, AddressOf CounterStarted
-        AddHandler CounterData.CounterStopped, AddressOf CounterStopped
+        AddHandler MyResourceManager.TaskEvent, AddressOf CounterEvent
+        'AddHandler CounterData.CounterStarted, AddressOf CounterStarted
+        'AddHandler CounterData.CounterStopped, AddressOf CounterStopped
     End Sub
 
     Private Sub OBScounters_Closing(sender As Object, e As FormClosingEventArgs) Handles MyBase.Closing
-        RemoveHandler CounterData.CounterStarted, AddressOf CounterStarted
-        RemoveHandler CounterData.CounterStopped, AddressOf CounterStopped
+        'RemoveHandler CounterData.CounterStarted, AddressOf CounterStarted
+        'RemoveHandler CounterData.CounterStopped, AddressOf CounterStopped
+        RemoveHandler MyResourceManager.TaskEvent, AddressOf CounterEvent
         SourceWindow.CountersButt.BackColor = StandardBUTT
     End Sub
 
     Private Sub SAVE_Click(sender As Object, e As EventArgs) Handles SAVE.Click
         CounterData.SaveCounterData()
+    End Sub
+
+    Public Sub CounterEvent(TaskName As String, TaskEnum As Integer)
+        If InStr(TaskName, "CountIndex#(") > 0 Then
+            Select Case TaskEnum
+                Case = RMtaskStates.Started
+                    CounterStarted(DataExtract(TaskName, "CountIndex#(", ")"))
+                Case = RMtaskStates.Ended
+                    CounterStopped(DataExtract(TaskName, "CountIndex#(", ")"))
+            End Select
+        End If
     End Sub
 
     Public Sub DisplayCounters()

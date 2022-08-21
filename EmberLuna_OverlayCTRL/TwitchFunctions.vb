@@ -127,7 +127,7 @@ Public Module TwitchFunctions
             End If
         End Sub
 
-        Private Async Function SetStreamInfo() As Task
+        Public Async Function SetStreamInfo() As Task
             Dim InfoRequest As New Helix.Models.Channels.ModifyChannelInformation.ModifyChannelInformationRequest
             InfoRequest.BroadcasterLanguage = GamesList.StreamLanguage
             InfoRequest.GameId = GamesList.StreamGameID

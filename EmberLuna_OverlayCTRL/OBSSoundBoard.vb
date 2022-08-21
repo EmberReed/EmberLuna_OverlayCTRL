@@ -94,13 +94,19 @@ Public Class OBSSoundBoard
     'GoTo TryAgain
     'End If
     'End If
-    ' End Sub
+    'End Sub
     Private Sub PictureBox3_Click(sender As Object, e As EventArgs) Handles PictureBox3.Click
         Dim SoundString As String = GetSelectedSoundFromSoundList()
         If SoundString <> "" Then
-            AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(SoundString), True)
+            AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(SoundString))
+            'Dim SoundTask As Task = PlaySoundSyncTest(SoundString)
         End If
     End Sub
+
+    Private Async Function PlaySoundSyncTest(SoundString As String) As Task
+        Await AudioControl.SoundPlayer.PlayAsync(AudioControl.GetSoundFileDataByName(SoundString))
+        SendMessage("Success")
+    End Function
 
     Private Sub PictureBox2_Click(sender As Object, e As EventArgs) Handles PictureBox2.Click
         Dim ButtIndex As Integer = -1
@@ -285,7 +291,7 @@ Public Class OBSSoundBoard
 
     Private Sub STOPBUTT_Click(sender As Object, e As EventArgs) Handles STOPBUTT.Click
         If AudioControl.SoundPlayer.Active = True Then
-            AudioControl.SoundPlayer.Stopp(True)
+            AudioControl.SoundPlayer.Stopp()
         End If
     End Sub
 
@@ -435,7 +441,7 @@ Public Class OBSSoundBoard
 
     Private Sub SoundListBox_DClick(sender As Object, e As EventArgs) Handles SoundListBox.DoubleClick
         MouseIsDown = False
-        AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(GetSelectedSoundFromSoundList), True)
+        AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(GetSelectedSoundFromSoundList))
     End Sub
 
     Private Sub SoundListBox_MouseDown(ByVal sender As Object, ByVal e As MouseEventArgs) Handles SoundListBox.MouseDown
@@ -1010,7 +1016,7 @@ Public Class OBSSoundBoard
         If AudioControl.SoundBoards IsNot Nothing Then
             Dim SoundFile As String = AudioControl.GetSoundFileDataByName(AudioControl.SoundBoards(SourceIndex).Buttons(SoundIndex))
             If SoundFile <> "" Then
-                AudioControl.SoundPlayer.Play(SoundFile, True)
+                AudioControl.SoundPlayer.Play(SoundFile)
             End If
         End If
         ButtonHold(SoundIndex) = False

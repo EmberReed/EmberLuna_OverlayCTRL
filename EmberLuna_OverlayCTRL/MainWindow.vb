@@ -30,6 +30,7 @@ Public Class MainWindow
         OBSmutex = New Mutex
         SourceWindow = Me
         ChannelPointsDisplay = New ChannelPointsForm
+        MyResourceManager = New ResourceManager
         ChannelPoints = New ChannelPointData
         SceneChanger = New SceneSelector
         GamesList = New TwitchGames
@@ -63,6 +64,8 @@ Public Class MainWindow
         AddHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
         AddHandler IRC.IRCeventRecieved, AddressOf IRCevent
         AddHandler IRC.IRCmessageRecieved, AddressOf IRCmessage
+
+        AddHandler MyResourceManager.TaskEvent, AddressOf RMeventHandler
 
         AddHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
         AddHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
@@ -135,6 +138,8 @@ Public Class MainWindow
         RemoveHandler IRC.IRCconnected, AddressOf IRCisConnected
         RemoveHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
 
+        AddHandler MyResourceManager.TaskEvent, AddressOf RMeventHandler
+
         RemoveHandler Ember.Said, AddressOf GenericNotification
         RemoveHandler Luna.Said, AddressOf GenericNotification
 
@@ -179,7 +184,7 @@ Public Class MainWindow
         Do Until AmIconnected()
             Await Task.Delay(100)
             StartupCounter = StartupCounter + 1
-            If StartupCounter > 10 Then
+            If StartupCounter > 100 Then
                 SendMessage("Failed to Start...", "UH OH")
                 Me.Close()
             End If
@@ -187,6 +192,7 @@ Public Class MainWindow
 
         Me.Enabled = True
     End Function
+
     Private Function AmIconnected() As Boolean
         If PSubConnected And IRCconnected And OBSconnected And APIconnected And TwitchAuthorized Then
             Return True
@@ -217,12 +223,24 @@ Public Class MainWindow
     End Sub
 
     Private Sub IRCisConnected()
-        BeginInvoke(Sub() IRCstateChanged(True))
+        IRCstateChanged(True)
     End Sub
     Private Sub IRCdisConnected()
-        BeginInvoke(Sub() IRCstateChanged(False))
+        IRCstateChanged(False)
     End Sub
 
+    Private Sub RMeventHandler(TaskString As String, TaskState As Integer)
+        Select Case TaskState
+            Case = RMtaskStates.Started
+                LogEventString(TaskString & " Started")
+            Case = RMtaskStates.Queued
+                LogEventString("Added to Task Scheuler: " & TaskString)
+            Case = RMtaskStates.Ended
+                LogEventString(TaskString & " Ended")
+            Case = RMtaskStates.Abandoned
+                LogEventString(TaskString & " Abandoned")
+        End Select
+    End Sub
     Private Sub OBSstateChanged(OBSState As Boolean)
         If OBSState <> OBSconnected Then
             OBSconnected = OBSState
@@ -237,10 +255,10 @@ Public Class MainWindow
     End Sub
 
     Private Sub OBSisConnected()
-        BeginInvoke(Sub() OBSstateChanged(True))
+        OBSstateChanged(True)
     End Sub
     Private Sub OBSdisConnected()
-        BeginInvoke(Sub() OBSstateChanged(False))
+        OBSstateChanged(False)
     End Sub
 
     Private Sub PubSubStateChanged(PubSubState As Boolean)
@@ -256,53 +274,59 @@ Public Class MainWindow
         End If
     End Sub
     Private Sub PubSubConnected(sender As Object, e As EventArgs)
-        BeginInvoke(Sub() PubSubStateChanged(True))
+        PubSubStateChanged(True)
     End Sub
 
     Public Sub PubSubDisconnect(sender As Object, e As EventArgs)
-        BeginInvoke(Sub() PubSubStateChanged(False))
+        PubSubStateChanged(False)
     End Sub
 
     Private Sub Authorized(TokenMessage As String)
-        BeginInvoke(Sub()
-                        LogEventString(TokenMessage)
-                    End Sub)
+
+        LogEventString(TokenMessage)
+
     End Sub
     Public Sub LaunchStreamStarter(CurrentStreamInfo As String)
 
-        BeginInvoke(Sub()
-                        APIconnected = True
+
+        APIconnected = True
                         APIdisplay.BackColor = ActiveBUTT
                         LogEventString(CurrentStreamInfo)
-                    End Sub)
+
 
     End Sub
 
     Private Sub SceneChanged(SceneName As String)
         If SceneName <> CurrentSceneName Then
             CurrentSceneName = SceneName
-            BeginInvoke(Sub() LogEventString("OBS Scene Change: " & SceneName))
+            LogEventString("OBS Scene Change: " & SceneName)
         End If
     End Sub
 
     Private Sub StreamStartHandler()
         Dim StateThread As New Thread(
-            Sub()
-                'SendMessage("triggered")
-                If OBSstreamState() = True Then
-                    BeginInvoke(
-                        Sub()
-                            Button13.Text = "END STREAM"
-                            Button13.BackColor = ActiveBUTT
-                        End Sub)
-                Else
-                    BeginInvoke(
-                        Sub()
-                            Button13.Text = "START STREAM"
-                            Button13.BackColor = StandardBUTT
-                        End Sub)
-                End If
-            End Sub)
+        Sub()
+            'SendMessage("triggered")
+            If OBSstreamState() = True Then
+                BeginInvoke(
+                Sub()
+                    LogEventString("Streaming Started")
+                    Button13.Text = "END STREAM"
+                    Button13.BackColor = ActiveBUTT
+                    Button13.Enabled = True
+                    IRC.ChatReady()
+                End Sub)
+            Else
+                BeginInvoke(
+                Sub()
+                    LogEventString("Streaming Stopped")
+                    Button13.Text = "START STREAM"
+                    Button13.BackColor = StandardBUTT
+                    Button13.Enabled = True
+                    IRC.ChatOff()
+                End Sub)
+            End If
+        End Sub)
         StateThread.Start()
     End Sub
 
@@ -335,7 +359,7 @@ Public Class MainWindow
                         If EmberSpriteB = False And LunaSpriteB = True Then Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
                         If EmberSpriteB = False And LunaSpriteB = False Then
                             IRC.SendChat(RandomMessage(UserName, MessageType))
-                            AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName("Hello"), True)
+                            AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName("Hello"))
                         End If
                     End If
                 End If
@@ -344,50 +368,50 @@ Public Class MainWindow
     End Sub
 
     Private Sub LogEventString(Message As String)
-        DatastreamBox.Text = "- " & Message & vbCrLf & vbCrLf & DatastreamBox.Text
+        BeginInvoke(Sub() DatastreamBox.Text = "- " & Message & vbCrLf & vbCrLf & DatastreamBox.Text)
     End Sub
 
     Private Sub IRCmessage(IRCstring As String)
-        BeginInvoke(Sub() LogEventString(IRCstring))
+        LogEventString(IRCstring)
     End Sub
 
     Private Sub IRCevent(IRCstring As String)
-        BeginInvoke(Sub() UpdateEventBox(IRCstring))
+        UpdateEventBox(IRCstring)
     End Sub
 
     Private Sub GenericNotification(InputString As String)
-        BeginInvoke(Sub() LogEventString(InputString))
+        LogEventString(InputString)
     End Sub
 
     Private Sub CounterUpdated(CounterIndex As Integer)
-        BeginInvoke(Sub() LogEventString(CounterData.Counters(CounterIndex).Name & " Counter Updated"))
+        LogEventString(CounterData.Counters(CounterIndex).Name & " Counter Updated")
     End Sub
 
     Private Sub MediaStarted()
-        BeginInvoke(Sub() LogEventString("OBS Music player started playback: " & AudioControl.MusicPlayer.Current))
+        LogEventString("OBS Music player started playback: " & AudioControl.MusicPlayer.Current)
         File.WriteAllText("\\StreamPC-V2\OBS Assets\Text\NowPlaying.txt", "Now Playing:  " & MPstringFormat(AudioControl.MusicPlayer.Current))
     End Sub
 
     Private Sub MediaPaused()
-        BeginInvoke(Sub() LogEventString("OBS Music player paused"))
+        LogEventString("OBS Music player paused")
         File.WriteAllText("\\StreamPC-V2\OBS Assets\Text\NowPlaying.txt", "")
     End Sub
 
     Private Sub MediaEnded()
-        BeginInvoke(Sub() LogEventString("OBS Music player stopped"))
+        LogEventString("OBS Music player stopped")
         File.WriteAllText("\\StreamPC-V2\OBS Assets\Text\NowPlaying.txt", "")
     End Sub
 
     Private Sub SoundStarted()
-        BeginInvoke(Sub() LogEventString("OBS Sound-Board Played: " & AudioControl.SoundPlayer.Current))
+        LogEventString("OBS Sound-Board Played: " & AudioControl.SoundPlayer.Current)
     End Sub
 
     Private Sub SoundPaused()
-        BeginInvoke(Sub() LogEventString("OBS Sound-Board paused"))
+        LogEventString("OBS Sound-Board paused")
     End Sub
 
     Private Sub SoundEnded()
-        BeginInvoke(Sub() LogEventString("OBS Sound-Board stopped"))
+        LogEventString("OBS Sound-Board stopped")
     End Sub
 
     Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
@@ -409,7 +433,7 @@ Public Class MainWindow
                 Counters.Show()
             End If
         Else
-            Counters.BeginInvoke(Sub() Counters.Select())
+            Counters.Select()
         End If
     End Sub
 
@@ -420,13 +444,13 @@ Public Class MainWindow
                 SoundBoard.Show()
             End If
         Else
-            SoundBoard.BeginInvoke(Sub() SoundBoard.Select())
+            SoundBoard.Select()
         End If
     End Sub
 
     Private Sub CHANNEL_POINTS_Click(sender As Object, e As EventArgs) Handles CHANNEL_POINTS.Click
         If ChannelPointsDisplay.Visible = True Then
-            ChannelPointsDisplay.BeginInvoke(Sub() ChannelPointsDisplay.Select())
+            ChannelPointsDisplay.Select()
         Else
             'If myAPI.Authorized = True Then
             If ChannelPoints.Rewards IsNot Nothing Then
@@ -449,7 +473,7 @@ Public Class MainWindow
                 SceneChanger.Show()
             End If
         Else
-            SceneChanger.BeginInvoke(Sub() SceneChanger.Select())
+            SceneChanger.Select()
         End If
     End Sub
     Private Sub TimersButt_Click(sender As Object, e As EventArgs) Handles TimersButt.Click
@@ -459,7 +483,7 @@ Public Class MainWindow
                 OBSTimers.Show()
             End If
         Else
-            OBSTimers.BeginInvoke(Sub() OBSTimers.Select())
+            OBSTimers.Select()
         End If
     End Sub
 
@@ -470,7 +494,7 @@ Public Class MainWindow
                 SpriteControls.Show()
             End If
         Else
-            SpriteControls.BeginInvoke(Sub() SpriteControls.Select())
+            SpriteControls.Select()
         End If
     End Sub
 
@@ -482,7 +506,7 @@ Public Class MainWindow
                 MusicPlayer.Show()
             End If
         Else
-            MusicPlayer.BeginInvoke(Sub() MusicPlayer.Select())
+            MusicPlayer.Select()
         End If
     End Sub
 
@@ -493,7 +517,7 @@ Public Class MainWindow
             ChatManager.Show()
             ' End If
         Else
-            ChatManager.BeginInvoke(Sub() ChatManager.Select())
+            ChatManager.Select()
         End If
     End Sub
 
@@ -586,7 +610,7 @@ Public Class MainWindow
         'Sub()
         TwitchAuthorized = True
         AUTHdisplay.BackColor = ActiveBUTT
-        BeginInvoke(Sub() LogEventString("Authorization Recieved"))
+        LogEventString("Authorization Recieved")
         If PSubConnected = False Then
             ConnectPubSub()
         End If
@@ -626,10 +650,10 @@ Public Class MainWindow
     End Sub
 
     Private Sub ChannelPointsStarter()
-        BeginInvoke(Sub() LogEventString("Channel-Point Reward Data Updated"))
+        LogEventString("Channel-Point Reward Data Updated")
         If ChannelPointStarterState = True Then
             ChannelPointStarterState = False
-            BeginInvoke(Sub() LaunchChannelPointsControls())
+            LaunchChannelPointsControls()
         End If
     End Sub
 
@@ -659,6 +683,7 @@ Public Class MainWindow
                     'End If
                     'End Sub)
                     'StartStream.Start()
+                    Button13.Enabled = False
                     ShowStrimStarter()
                 Else
                     Button13.Text = "START STREAM"
@@ -674,6 +699,7 @@ Public Class MainWindow
                     'If PubSubState = True Then
                     'PubSub.Disconnect()
                     'End If
+                    Button13.Enabled = False
                     OBS.StopStreaming()
                 Else
                     Button13.Text = "END STREAM"
@@ -692,9 +718,9 @@ Public Class MainWindow
 
     Private Sub ListenResponse(sender As Object, e As Events.OnListenResponseArgs)
         If e.Successful = False Then
-            BeginInvoke(Sub() LogEventString("Failed to Listen: " & e.Response.Error))
+            LogEventString("Failed to Listen: " & e.Response.Error)
         Else
-            BeginInvoke(Sub() LogEventString(e.Topic & " Message Recieved"))
+            LogEventString(e.Topic & " Message Recieved")
         End If
     End Sub
 
@@ -735,8 +761,8 @@ Public Class MainWindow
     End Sub
 
     Private Sub ViewCountChanged(sender As Object, e As Events.OnViewCountArgs)
-        Dim OutputString As String = "View Count = " & e.Viewers
-        BeginInvoke(Sub() LogEventString(OutputString))
+        Dim OutputString As String = "View CouNt = " & e.Viewers
+        LogEventString(OutputString)
     End Sub
 
 
@@ -756,9 +782,8 @@ Public Class MainWindow
 
 
     Private Sub UpdateChatBox(UserName As String, MessageData As String, TimeString As String, ColorIndex As Integer)
-        BeginInvoke(
-            Sub()
-                Dim SplitString() As String = TimeString.Split(" ")
+
+        Dim SplitString() As String = TimeString.Split(" ")
                 Dim OutputText As String = UserName & "(" & SplitString(1) & "): " & MessageData
                 'Audio Notifications:
                 My.Computer.Audio.Play(My.Resources.LOZ_Alert_2, AudioPlayMode.Background)
@@ -766,31 +791,29 @@ Public Class MainWindow
                 ChatBox.Text = OutputText
                 ChatHighlighter.Image = My.Resources.gradient
                 NextMessage.Visible = True
-            End Sub)
+
     End Sub
 
     Private Sub UpdateEventBox(EventString As String)
-        BeginInvoke(
-            Sub()
-                Dim OutputText As String = ""
-                'Tryagain:
-                'If EventOutputBuffer.Count <> 0 Then
-                'If EventHighlighter.Image Is Nothing Then
-                'If ChatHighlighter.Image Is Nothing Then _
-                EventHighlighter.Image = My.Resources.gradient
-                NextEvent.Visible = True
-                'End If
-                'If EventOutputBuffer.TryDequeue(OutputText) = True Then
-                My.Computer.Audio.Play(My.Resources.LOZ_secret, AudioPlayMode.Background)
-                EventBox.Text = EventString
-                'Else
-                'GoTo Tryagain
-                'End If
-                'Else
-                'EventHighlighter.Image = Nothing
-                'NextEvent.Visible = False
-                'End If
-            End Sub)
+
+        Dim OutputText As String = ""
+        'Tryagain:
+        'If EventOutputBuffer.Count <> 0 Then
+        'If EventHighlighter.Image Is Nothing Then
+        'If ChatHighlighter.Image Is Nothing Then _
+        EventHighlighter.Image = My.Resources.gradient
+        NextEvent.Visible = True
+        'End If
+        'If EventOutputBuffer.TryDequeue(OutputText) = True Then
+        My.Computer.Audio.Play(My.Resources.LOZ_secret, AudioPlayMode.Background)
+        EventBox.Text = EventString
+        'Else
+        'GoTo Tryagain
+        'End If
+        'Else
+        'EventHighlighter.Image = Nothing
+        'NextEvent.Visible = False
+        'End If
     End Sub
 
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
