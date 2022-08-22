@@ -11,6 +11,7 @@
             NewCounter.Increment = 1
             NewCounter.Sound = ""
             NewCounter.OBSevent = ""
+            NewCounter.Tick = ""
             NewCounter.PublicCount = False
             NewCounter.NotificationType = False
         Else
@@ -22,6 +23,7 @@
             NumericUpDown1.Value = NewCounter.Increment
             ComboBox1.Text = NewCounter.Sound
             ComboBox2.Text = NewCounter.OBSevent
+            ComboBox3.Text = NewCounter.Tick
             If NewCounter.PublicCount Then
                 PubPriBUTT.Text = "PUBLIC"
             Else
@@ -33,7 +35,9 @@
         For i As Integer = 0 To SoundList.Count - 1
             ComboBox1.Items.Add(SoundList(i))
         Next
-
+        For i As Integer = 0 To AudioControl.TickList.Count - 1
+            ComboBox3.Items.Add(AudioControl.TickList(i))
+        Next
     End Sub
 
     Private Sub EmberTitle_TextChanged(sender As Object, e As EventArgs) Handles EmberTitle.TextChanged
@@ -109,5 +113,10 @@
 
     Private Sub ComboBox1_SelectedIndexChanged_1(sender As Object, e As EventArgs) Handles ComboBox1.SelectedIndexChanged
 
+    End Sub
+
+    Private Sub ComboBox3_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox3.SelectedIndexChanged
+        If ComboBox3.Text <> "" Then CounterTicker.Play(ComboBox3.Text)
+        NewCounter.Tick = ComboBox3.Text
     End Sub
 End Class

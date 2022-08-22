@@ -51,7 +51,7 @@
             'Call RunTimer(EmberClock.Value, TimerIDs.Ember)
         Else
             OBStimerObject(TimerIDs.Ember).State = False
-            OBStimerObject(TimerIDs.Ember).Pause = False
+            If OBStimerObject(TimerIDs.Ember).Pause = True Then TimerCollection.PauseTimerByID(TimerIDs.Ember)
         End If
     End Sub
 
@@ -60,11 +60,6 @@
             EmberPause.Enabled = False
             EmberPause.BackColor = ActiveBUTT
             TimerCollection.PauseTimerByID(TimerIDs.Ember)
-            'If OBStimerObject(TimerIDs.Ember).Pause = True Then
-            'OBStimerObject(TimerIDs.Ember).Pause = False
-            'Else
-            'OBStimerObject(TimerIDs.Ember).Pause = True
-            'End If
         End If
     End Sub
 
@@ -89,7 +84,8 @@
             TimerCollection.RunTimerbyData(LunaClock.Value, TimerIDs.Luna)
         Else
             OBStimerObject(TimerIDs.Luna).State = False
-            OBStimerObject(TimerIDs.Luna).Pause = False
+            'OBStimerObject(TimerIDs.Luna).Pause = False
+            If OBStimerObject(TimerIDs.Luna).Pause = True Then TimerCollection.PauseTimerByID(TimerIDs.Luna)
         End If
     End Sub
     Private Sub LunaPause_Click(sender As Object, e As EventArgs) Handles LunaPause.Click
@@ -121,7 +117,8 @@
             TimerCollection.RunTimerbyData(GlobalClock.Value, TimerIDs.GlobalCC)
         Else
             OBStimerObject(TimerIDs.GlobalCC).State = False
-            OBStimerObject(TimerIDs.GlobalCC).Pause = False
+            'OBStimerObject(TimerIDs.GlobalCC).Pause = False
+            If OBStimerObject(TimerIDs.GlobalCC).Pause = True Then TimerCollection.PauseTimerByID(TimerIDs.GlobalCC)
         End If
     End Sub
 
@@ -157,7 +154,8 @@ TryAgain:
                 End If
             Else
                 EmberLabel.BackColor = StandardBUTT
-                OBStimerObject(TimerIDs.Ember).Pause = False
+                'OBStimerObject(TimerIDs.Ember).Pause = False
+                If OBStimerObject(TimerIDs.Ember).Pause = True Then TimerCollection.PauseTimerByID(TimerIDs.Ember)
                 EmberPause.BackgroundImage = My.Resources.pause
                 EmberClock.Increment = 60
                 EmberTitle.ReadOnly = False
@@ -185,7 +183,8 @@ TryAgain:
                 End If
             Else
                 LunaLabel.BackColor = StandardBUTT
-                OBStimerObject(TimerIDs.Luna).Pause = False
+                'OBStimerObject(TimerIDs.Luna).Pause = False
+                If OBStimerObject(TimerIDs.Luna).Pause = True Then TimerCollection.PauseTimerByID(TimerIDs.Luna)
                 LunaPause.BackgroundImage = My.Resources.pause
                 LunaClock.Increment = 60
                 LunaTitle.ReadOnly = False
@@ -213,7 +212,8 @@ TryAgain:
                 End If
             Else
                 GlobalLabel.BackColor = StandardBUTT
-                OBStimerObject(TimerIDs.GlobalCC).Pause = False
+                If OBStimerObject(TimerIDs.GlobalCC).Pause = True Then TimerCollection.PauseTimerByID(TimerIDs.GlobalCC)
+                'OBStimerObject(TimerIDs.GlobalCC).Pause = False
                 GlobalPause.BackgroundImage = My.Resources.pause
                 GlobalClock.Increment = 60
                 GlobalTitle.ReadOnly = False

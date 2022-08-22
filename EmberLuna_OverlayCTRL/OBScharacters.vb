@@ -425,24 +425,24 @@ TryAgain:
 
     Private Sub NeutralBUTT_Click(sender As Object, e As EventArgs) Handles NeutralBUTT.Click
         If CharacterBool = SpriteID.Ember Then
-            Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+            Ember.ChangeMood(Ember.Mood.Neutral)
         Else
-            Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+            Luna.ChangeMood(Luna.Mood.Neutral)
         End If
     End Sub
 
     Private Sub happyBUTT_Click(sender As Object, e As EventArgs) Handles HappyBUTT.Click
         If HappyBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Happy)
+                Ember.ChangeMood(Ember.Mood.Happy)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Happy)
+                Luna.ChangeMood(Luna.Mood.Happy)
             End If
         End If
     End Sub
@@ -450,15 +450,15 @@ TryAgain:
     Private Sub sadgeBUTT_Click(sender As Object, e As EventArgs) Handles SadgeBUTT.Click
         If SadgeBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Sadge)
+                Ember.ChangeMood(Ember.Mood.Sadge)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Sadge)
+                Luna.ChangeMood(Luna.Mood.Sadge)
             End If
         End If
 
@@ -467,15 +467,15 @@ TryAgain:
     Private Sub angyBUTT_Click(sender As Object, e As EventArgs) Handles AngyBUTT.Click
         If AngyBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Angy)
+                Ember.ChangeMood(Ember.Mood.Angy)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Angy)
+                Luna.ChangeMood(Luna.Mood.Angy)
             End If
         End If
 
@@ -484,15 +484,15 @@ TryAgain:
     Private Sub wumpyBUTT_Click(sender As Object, e As EventArgs) Handles WumpyBUTT.Click
         If WumpyBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Wumpy)
+                Ember.ChangeMood(Ember.Mood.Wumpy)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Wumpy)
+                Luna.ChangeMood(Luna.Mood.Wumpy)
             End If
         End If
 
@@ -501,15 +501,15 @@ TryAgain:
     Private Sub cringeBUTT_Click(sender As Object, e As EventArgs) Handles CringeBUTT.Click
         If CringeBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Cringe)
+                Ember.ChangeMood(Ember.Mood.Cringe)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Cringe)
+                Luna.ChangeMood(Luna.Mood.Cringe)
             End If
         End If
 
@@ -518,15 +518,15 @@ TryAgain:
     Private Sub wowBUTT_Click(sender As Object, e As EventArgs) Handles WowBUTT.Click
         If WowBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Wow)
+                Ember.ChangeMood(Ember.Mood.Wow)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Wow)
+                Luna.ChangeMood(Luna.Mood.Wow)
             End If
         End If
 
@@ -535,15 +535,15 @@ TryAgain:
     Private Sub wtfBUTT_Click(sender As Object, e As EventArgs) Handles WtfBUTT.Click
         If WtfBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.WTF)
+                Ember.ChangeMood(Ember.Mood.WTF)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.WTF)
+                Luna.ChangeMood(Luna.Mood.WTF)
             End If
         End If
 
@@ -552,15 +552,15 @@ TryAgain:
     Private Sub omgBUTT_Click(sender As Object, e As EventArgs) Handles OmgBUTT.Click
         If OmgBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.OMG)
+                Ember.ChangeMood(Ember.Mood.OMG)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.OMG)
+                Luna.ChangeMood(Luna.Mood.OMG)
             End If
         End If
 
@@ -569,15 +569,15 @@ TryAgain:
     Private Sub sparkleBUTT_Click(sender As Object, e As EventArgs) Handles SparkleBUTT.Click
         If SparkleBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Sparkle)
+                Ember.ChangeMood(Ember.Mood.Sparkle)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Sparkle)
+                Luna.ChangeMood(Luna.Mood.Sparkle)
             End If
         End If
     End Sub
@@ -585,15 +585,15 @@ TryAgain:
     Private Sub handsBUTT_Click(sender As Object, e As EventArgs) Handles HandsBUTT.Click
         If HandsBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Hands)
+                Ember.ChangeMood(Ember.Mood.Hands)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Hands)
+                Luna.ChangeMood(Luna.Mood.Hands)
             End If
         End If
 
@@ -602,15 +602,15 @@ TryAgain:
     Private Sub lefthBUTT_Click(sender As Object, e As EventArgs) Handles LefthBUTT.Click
         If LefthBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.LeftH)
+                Ember.ChangeMood(Ember.Mood.LeftH)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.LeftH)
+                Luna.ChangeMood(Luna.Mood.LeftH)
             End If
         End If
     End Sub
@@ -618,15 +618,15 @@ TryAgain:
     Private Sub righthBUTT_Click(sender As Object, e As EventArgs) Handles RighthBUTT.Click
         If RighthBUTT.BackColor = ActiveBUTT Then
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.Neutral)
+                Ember.ChangeMood(Ember.Mood.Neutral)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.Neutral)
+                Luna.ChangeMood(Luna.Mood.Neutral)
             End If
         Else
             If CharacterBool = SpriteID.Ember Then
-                Dim MoodTask As Task = Ember.ChangeMood(Ember.Mood.RightH)
+                Ember.ChangeMood(Ember.Mood.RightH)
             Else
-                Dim MoodTask As Task = Luna.ChangeMood(Luna.Mood.RightH)
+                Luna.ChangeMood(Luna.Mood.RightH)
             End If
         End If
     End Sub

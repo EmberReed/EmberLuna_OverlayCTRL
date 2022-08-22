@@ -160,6 +160,10 @@ tryagain:
         If SoundFile <> "" Then AudioControl.SoundPlayer.Play(SoundFile)
     End Sub
 
+    Private Sub SoundPicker_SelectedIndexChanged(sender As Object, e As EventArgs) Handles SoundPicker.SelectedIndexChanged
+
+    End Sub
+
     Private Sub FilterSoundsButt_Click(sender As Object, e As EventArgs) Handles FilterSoundsButt.Click
         If FilterSoundsButt.BackColor = StandardBUTT Then
             FilterSoundsButt.BackColor = ActiveBUTT

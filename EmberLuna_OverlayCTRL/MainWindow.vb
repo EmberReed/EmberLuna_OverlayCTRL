@@ -76,7 +76,7 @@ Public Class MainWindow
 
         AddHandler ChatUserInfo.ChatUserDetected, AddressOf NewUserHandler
         AddHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
-        AddHandler CounterData.CounterStarted, AddressOf CounterUpdated
+        'AddHandler CounterData.CounterStarted, AddressOf CounterUpdated
 
         AddHandler PubSub.OnViewCount, AddressOf ViewCountChanged
         AddHandler PubSub.OnChannelPointsRewardRedeemed, AddressOf ChannelPointsNotification
@@ -145,7 +145,7 @@ Public Class MainWindow
 
         RemoveHandler ChatUserInfo.ChatUserDetected, AddressOf NewUserHandler
         RemoveHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
-        RemoveHandler CounterData.CounterStarted, AddressOf CounterUpdated
+        'RemoveHandler CounterData.CounterStarted, AddressOf CounterUpdated
 
         RemoveHandler PubSub.OnViewCount, AddressOf ViewCountChanged
         RemoveHandler PubSub.OnChannelPointsRewardRedeemed, AddressOf ChannelPointsNotification
@@ -331,40 +331,7 @@ Public Class MainWindow
     End Sub
 
     Private Sub NewUserHandler(UserName As String, FreshUser As Boolean)
-        If UserName <> Broadcastername Then
-            If CheckOBSconnect() = True Then
-                Dim MessageType As String
-                If FreshUser = True Then
-                    MessageType = "Greetings"
-                Else
-                    MessageType = "Returns"
-                End If
-                If CurrentScene.Name = "Center Screen Mode" Or CurrentScene.Name = "Dual Screen Mode" Then
-                    Dim CoinFlip As Integer = RandomInt(0, 1)
-                    If CoinFlip = 0 Then
-                        Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
-                    Else
-                        Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
-                    End If
-                Else
-                    If EmberSpriteB = True And LunaSpriteB = True Then
-                        Dim CoinFlip As Integer = RandomInt(0, 1)
-                        If CoinFlip = 0 Then
-                            Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
-                        Else
-                            Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
-                        End If
-                    Else
-                        If EmberSpriteB = True And LunaSpriteB = False Then Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
-                        If EmberSpriteB = False And LunaSpriteB = True Then Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
-                        If EmberSpriteB = False And LunaSpriteB = False Then
-                            IRC.SendChat(RandomMessage(UserName, MessageType))
-                            AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName("Hello"))
-                        End If
-                    End If
-                End If
-            End If
-        End If
+        WelcomeNewUser(UserName, FreshUser)
     End Sub
 
     Private Sub LogEventString(Message As String)
