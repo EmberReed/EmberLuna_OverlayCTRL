@@ -29,6 +29,7 @@ Public Module CommonFunctions
     Public WithEvents ChatUserInfo As UserData
     Public WithEvents IRC As IrcClient
     Public WithEvents MyResourceManager As ResourceManager
+    Public WithEvents MySceneCollection As SceneCollection
 
     'COLORS
     Public ActiveBUTT As Color = Color.FromArgb(255, 255, 82, 0)
@@ -46,6 +47,62 @@ Public Module CommonFunctions
         Public Const Gaming As Integer = 5
         Public Const Art As Integer = 6
     End Structure
+
+    Public Function ConvertStringToInteger(input As String) As Integer
+        Dim output As Integer
+        Integer.TryParse(input, output)
+        Return output
+    End Function
+    Public Function ConvertStringToBool(input As String) As Boolean
+        Dim output As Boolean
+        Boolean.TryParse(input, output)
+        Return output
+    End Function
+
+    Public Sub TextBoxScrollToEnd(Source As TextBox)
+        Source.SelectionStart = Source.TextLength
+        Source.ScrollToCaret()
+    End Sub
+
+    Public Function TextBoxLineRemover(Source As TextBox) As String
+        Dim OutputString As String
+        If Source.Text <> "" Then
+            If Source.SelectedText <> "" Then
+                OutputString = Source.SelectedText
+                Source.SelectionLength = Source.SelectionLength + 2
+                Source.SelectedText = ""
+                Return OutputString
+            Else
+                If InStr(Source.Text, vbCrLf) <> 0 Then
+                    Dim InputSTring() As String = Split(Source.Text, vbCrLf)
+                    OutputString = InputSTring.Last
+                    Array.Resize(InputSTring, InputSTring.Length - 1)
+                    Source.Text = String.Join(vbCrLf, InputSTring)
+                    Return OutputString
+                Else
+                    OutputString = Source.Text
+                    Source.Text = ""
+                    Return OutputString
+                End If
+            End If
+        Else
+            Return ""
+        End If
+    End Function
+
+    Public Function TextboxLineSelector(Source As TextBox) As String
+        If Source.SelectionStart <> 0 Then
+            Dim StartPoint As Integer = InStrRev(Source.Text, vbCrLf, Source.SelectionStart) + 1
+            If StartPoint = 1 Then StartPoint = 0
+            Dim EndPoint As Integer = InStr(Source.SelectionStart, Source.Text, vbCrLf) - 1
+            If EndPoint = -1 Then EndPoint = Source.Text.Length
+            Source.SelectionStart = StartPoint
+            Source.SelectionLength = EndPoint - StartPoint
+            Return Source.SelectedText
+        Else
+            Return ""
+        End If
+    End Function
 
     Public Function TypeName(TypeInt As Integer) As String
         Select Case TypeInt
@@ -114,6 +171,8 @@ Public Module CommonFunctions
         Dim r As Random = New Random()
         Shuffle = collection.OrderBy(Function(a) r.Next()).ToList()
     End Function
+
+
 
     Public Sub sendlist(InputList As List(Of String))
         Dim inputstring As String = ""

@@ -62,7 +62,7 @@ Partial Class SceneSelector
         Me.Button5 = New System.Windows.Forms.Button()
         Me.ScreensAway = New System.Windows.Forms.Button()
         Me.CamsAway = New System.Windows.Forms.Button()
-        Me.SoundListBox = New System.Windows.Forms.TextBox()
+        Me.SceneListBox = New System.Windows.Forms.TextBox()
         Me.SuspendLayout()
         '
         'DualScreenBUTT
@@ -575,21 +575,21 @@ Partial Class SceneSelector
         Me.CamsAway.Text = "CAMS AWAY"
         Me.CamsAway.UseVisualStyleBackColor = False
         '
-        'SoundListBox
+        'SceneListBox
         '
-        Me.SoundListBox.AllowDrop = True
-        Me.SoundListBox.BackColor = System.Drawing.Color.Black
-        Me.SoundListBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-        Me.SoundListBox.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.SoundListBox.ForeColor = System.Drawing.Color.White
-        Me.SoundListBox.HideSelection = False
-        Me.SoundListBox.Location = New System.Drawing.Point(542, 5)
-        Me.SoundListBox.Multiline = True
-        Me.SoundListBox.Name = "SoundListBox"
-        Me.SoundListBox.ReadOnly = True
-        Me.SoundListBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
-        Me.SoundListBox.Size = New System.Drawing.Size(194, 440)
-        Me.SoundListBox.TabIndex = 96
+        Me.SceneListBox.AllowDrop = True
+        Me.SceneListBox.BackColor = System.Drawing.Color.Black
+        Me.SceneListBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.SceneListBox.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.SceneListBox.ForeColor = System.Drawing.Color.White
+        Me.SceneListBox.HideSelection = False
+        Me.SceneListBox.Location = New System.Drawing.Point(542, 5)
+        Me.SceneListBox.Multiline = True
+        Me.SceneListBox.Name = "SceneListBox"
+        Me.SceneListBox.ReadOnly = True
+        Me.SceneListBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
+        Me.SceneListBox.Size = New System.Drawing.Size(194, 440)
+        Me.SceneListBox.TabIndex = 96
         '
         'SceneSelector
         '
@@ -597,7 +597,7 @@ Partial Class SceneSelector
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(742, 451)
-        Me.Controls.Add(Me.SoundListBox)
+        Me.Controls.Add(Me.SceneListBox)
         Me.Controls.Add(Me.Button1)
         Me.Controls.Add(Me.DisableAllBUTT)
         Me.Controls.Add(Me.EnableAllBUTT)
@@ -687,5 +687,5 @@ Partial Class SceneSelector
     Friend WithEvents Button5 As Button
     Friend WithEvents ScreensAway As Button
     Friend WithEvents CamsAway As Button
-    Friend WithEvents SoundListBox As TextBox
+    Friend WithEvents SceneListBox As TextBox
 End Class

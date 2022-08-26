@@ -72,8 +72,13 @@ tryagain:
         ButtData.Sounds = OutputList
     End Sub
 
-    Private Sub CHPprompt_TextChanged(sender As Object, e As EventArgs) Handles SoundListBox.TextChanged
+    Private Sub SoundListBox_Click(sender As Object, e As EventArgs) Handles SoundListBox.Click
+        TextboxLineSelector(sender)
+    End Sub
 
+    Private Sub SoundListBox_DClick(sender As Object, e As EventArgs) Handles SoundListBox.DoubleClick
+        Dim Soundstring As String = TextboxLineSelector(sender)
+        If Soundstring <> "" Then AudioControl.SoundPlayer.Play(Soundstring)
     End Sub
 
     Private Sub CHPcolor_Click(sender As Object, e As EventArgs) Handles ColorPicker.Click
@@ -86,15 +91,16 @@ tryagain:
     End Sub
 
     Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click
-        If SoundListBox.Text <> "" Then
-            If InStr(SoundListBox.Text, vbCrLf) <> 0 Then
-                Dim InputSTring() As String = Split(SoundListBox.Text, vbCrLf)
-                Array.Resize(InputSTring, InputSTring.Length - 1)
-                SoundListBox.Text = String.Join(vbCrLf, InputSTring)
-            Else
-                SoundListBox.Text = ""
-            End If
-        End If
+        TextBoxLineRemover(SoundListBox)
+        'If SoundListBox.Text <> "" Then
+        '    If InStr(SoundListBox.Text, vbCrLf) <> 0 Then
+        '        Dim InputSTring() As String = Split(SoundListBox.Text, vbCrLf)
+        '        Array.Resize(InputSTring, InputSTring.Length - 1)
+        '        SoundListBox.Text = String.Join(vbCrLf, InputSTring)
+        '    Else
+        '        SoundListBox.Text = ""
+        '    End If
+        'End If
     End Sub
 
     Private Sub SoundName_TextChanged(sender As Object, e As EventArgs) Handles SoundName.TextChanged
@@ -162,6 +168,10 @@ tryagain:
 
     Private Sub SoundPicker_SelectedIndexChanged(sender As Object, e As EventArgs) Handles SoundPicker.SelectedIndexChanged
 
+    End Sub
+
+    Private Sub SoundListBox_TextChanged(sender As Object, e As EventArgs) Handles SoundListBox.TextChanged
+        TextBoxScrollToEnd(sender)
     End Sub
 
     Private Sub FilterSoundsButt_Click(sender As Object, e As EventArgs) Handles FilterSoundsButt.Click

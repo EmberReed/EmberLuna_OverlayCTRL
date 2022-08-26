@@ -96,7 +96,7 @@ Public Class OBSSoundBoard
     'End If
     'End Sub
     Private Sub PictureBox3_Click(sender As Object, e As EventArgs) Handles PictureBox3.Click
-        Dim SoundString As String = GetSelectedSoundFromSoundList()
+        Dim SoundString As String = TextboxLineSelector(SoundListBox)
         If SoundString <> "" Then
             AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(SoundString))
             'Dim SoundTask As Task = PlaySoundSyncTest(SoundString)
@@ -110,7 +110,7 @@ Public Class OBSSoundBoard
 
     Private Sub PictureBox2_Click(sender As Object, e As EventArgs) Handles PictureBox2.Click
         Dim ButtIndex As Integer = -1
-        Dim SoundString As String = GetSelectedSoundFromSoundList()
+        Dim SoundString As String = TextboxLineSelector(SoundListBox)
         If SoundString <> "" Then
             ButtIndex = AudioControl.GetSoundFileIndexByName(SoundString)
         End If
@@ -125,7 +125,7 @@ Public Class OBSSoundBoard
     Private Sub DeleteToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles DeleteToolStripMenuItem.Click
         Dim ButtIndex As Integer = -1
         If ActiveSoundButtMenu.SourceControl.Name = "SoundListBox" Then
-            Dim SoundString As String = GetSelectedSoundFromSoundList()
+            Dim SoundString As String = TextboxLineSelector(SoundListBox)
             If SoundString <> "" Then
                 ButtIndex = AudioControl.GetSoundFileIndexByName(SoundString)
             End If
@@ -169,7 +169,7 @@ Public Class OBSSoundBoard
     Private Sub EditToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles EditToolStripMenuItem.Click
         If SoundEditor.Visible = False Then
             If ActiveSoundButtMenu.SourceControl.Name = "SoundListBox" Then
-                Dim SoundString As String = GetSelectedSoundFromSoundList()
+                Dim SoundString As String = TextboxLineSelector(SoundListBox)
                 If SoundString <> "" Then
                     SoundEditor = New AddSound
                     SoundEditor.SoundIndex = AudioControl.GetSoundFileIndexByName(SoundString)
@@ -412,45 +412,45 @@ Public Class OBSSoundBoard
 
 
 
-    Public Function GetSelectedSoundFromSoundList() As String
-        If SoundListBox.SelectionStart <> 0 Then
-            Dim StartPoint As Integer = InStrRev(SoundListBox.Text, vbCrLf, SoundListBox.SelectionStart) + 1
-            If StartPoint = 1 Then StartPoint = 0
-            Dim EndPoint As Integer = InStr(SoundListBox.SelectionStart, SoundListBox.Text, vbCrLf) - 1
-            If EndPoint = -1 Then EndPoint = SoundListBox.Text.Length
-            SoundListBox.SelectionStart = StartPoint
-            SoundListBox.SelectionLength = EndPoint - StartPoint
+    'Public Function GetSelectedSoundFromSoundList() As String
+    '    If SoundListBox.SelectionStart <> 0 Then
+    '        Dim StartPoint As Integer = InStrRev(SoundListBox.Text, vbCrLf, SoundListBox.SelectionStart) + 1
+    '        If StartPoint = 1 Then StartPoint = 0
+    '        Dim EndPoint As Integer = InStr(SoundListBox.SelectionStart, SoundListBox.Text, vbCrLf) - 1
+    '        If EndPoint = -1 Then EndPoint = SoundListBox.Text.Length
+    '        SoundListBox.SelectionStart = StartPoint
+    '        SoundListBox.SelectionLength = EndPoint - StartPoint
 
 
-            'Dim current_line As Integer = SoundListBox.GetLineFromCharIndex(SoundListBox.SelectionStart)
-            'Dim line_length As Integer = SoundListBox.Lines(current_line).Length
-            'SoundListBox.SelectionStart = SoundListBox.GetFirstCharIndexOfCurrentLine
-            'SoundListBox.SelectionLength = line_length
-            Return SoundListBox.SelectedText
-        Else
-            Return ""
-        End If
+    '        'Dim current_line As Integer = SoundListBox.GetLineFromCharIndex(SoundListBox.SelectionStart)
+    '        'Dim line_length As Integer = SoundListBox.Lines(current_line).Length
+    '        'SoundListBox.SelectionStart = SoundListBox.GetFirstCharIndexOfCurrentLine
+    '        'SoundListBox.SelectionLength = line_length
+    '        Return SoundListBox.SelectedText
+    '    Else
+    '        Return ""
+    '    End If
 
-    End Function
+    'End Function
 
-    Private Sub SoundListBox_Click(sender As Object, e As EventArgs) Handles SoundListBox.Click
+    Private Sub SoundListBox_Click(sender As TextBox, e As EventArgs) Handles SoundListBox.Click
         MouseIsDown = False
-        GetSelectedSoundFromSoundList()
+        TextboxLineSelector(sender)
         'TextVariable = SoundListBox.SelectedText
     End Sub
 
-    Private Sub SoundListBox_DClick(sender As Object, e As EventArgs) Handles SoundListBox.DoubleClick
+    Private Sub SoundListBox_DClick(sender As TextBox, e As EventArgs) Handles SoundListBox.DoubleClick
         MouseIsDown = False
-        AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(GetSelectedSoundFromSoundList))
+        AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(TextboxLineSelector(sender)))
     End Sub
 
-    Private Sub SoundListBox_MouseDown(ByVal sender As Object, ByVal e As MouseEventArgs) Handles SoundListBox.MouseDown
+    Private Sub SoundListBox_MouseDown(ByVal sender As TextBox, ByVal e As MouseEventArgs) Handles SoundListBox.MouseDown
         MouseIsDown = True
     End Sub
 
-    Private Sub SoundListBox_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs) Handles SoundListBox.MouseMove
+    Private Sub SoundListBox_MouseMove(ByVal sender As TextBox, ByVal e As MouseEventArgs) Handles SoundListBox.MouseMove
         If MouseIsDown Then
-            Dim SoundString As String = GetSelectedSoundFromSoundList()
+            Dim SoundString As String = TextboxLineSelector(sender)
             If SoundString <> "" Then
                 SoundListBox.DoDragDrop(SoundString, DragDropEffects.Copy)
             End If
@@ -458,7 +458,7 @@ Public Class OBSSoundBoard
         MouseIsDown = False
     End Sub
 
-    Private Sub SoundListBox_DragEnter(sender As Object, e As DragEventArgs) Handles SoundListBox.DragEnter
+    Private Sub SoundListBox_DragEnter(sender As TextBox, e As DragEventArgs) Handles SoundListBox.DragEnter
         If (e.Data.GetDataPresent(DataFormats.Text)) Then
             e.Effect = DragDropEffects.Copy
         Else
@@ -466,7 +466,7 @@ Public Class OBSSoundBoard
         End If
     End Sub
 
-    Private Sub SoundListBox_DragDrop(sender As Object, e As DragEventArgs) Handles SoundListBox.DragDrop
+    Private Sub SoundListBox_DragDrop(sender As TextBox, e As DragEventArgs) Handles SoundListBox.DragDrop
         If SourceButtonNumber > -1 Then
             AudioControl.UpdateSoundBoardButton(SourceIndex, SourceButtonNumber, "")
             SourceButtonNumber = -1
@@ -994,6 +994,9 @@ Public Class OBSSoundBoard
         ButtonHold(ButtNumb) = False
     End Sub
 
+    Private Sub SoundListBox_TextChanged(sender As Object, e As EventArgs) Handles SoundListBox.TextChanged
+
+    End Sub
 
     Private Sub ButtDragEnter(ButtNum As Integer, e As DragEventArgs)
         If (e.Data.GetDataPresent(DataFormats.Text)) Then

@@ -5,6 +5,7 @@ Imports System.Threading
 Imports System.IO
 Imports TwitchLib.PubSub
 Imports System.Collections.Concurrent
+Imports EmberLuna_OverlayCTRL.OBSfunctions
 
 Public Module OBSfunctions
 
@@ -123,7 +124,7 @@ Public Module OBSfunctions
     Public Cam1Setting As Integer = ScreenSetting.EmberCam
     Public Cam2Setting As Integer = ScreenSetting.LunaCam
 
-    Public OBSinputs() As OBSinput
+    'Public OBSinputs() As OBSinput
     Public InputsInitialized As Boolean = False
 
     Public Screen1AwayMode As Boolean = False
@@ -134,6 +135,254 @@ Public Module OBSfunctions
 
     Public Event SceneChangeInitiated()
     Public Event SceneChangeCompleted()
+
+
+    Public Structure SceneEnums
+        Public Const E_cam_Away As Integer = 0
+        Public Const E_scr_Away As Integer = 1
+        Public Const L_cam_Away As Integer = 2
+        Public Const L_scr_Away As Integer = 3
+
+        Public Const E_Sprite As Integer = 0
+        Public Const E_Camera As Integer = 1
+        Public Const L_Sprite As Integer = 2
+        Public Const L_Camera As Integer = 3
+
+        Public Const Screen1 As Integer = 0
+        Public Const Screen2 As Integer = 1
+        Public Const Camera1 As Integer = 2
+        Public Const Camera2 As Integer = 3
+    End Structure
+
+    Public Class SceneCollection
+        Public Const SceneDirectory As String = "\\StreamPC-V2\OBS Assets\Scenes"
+        Public SceneCollection() As SceneFile
+        Public Event ScenesUpdated(NameList() As String)
+
+        Public Sub New()
+            RefreshSceneCollection()
+        End Sub
+
+        Public Sub RefreshSceneCollection()
+            Dim SceneList() As String = Nothing
+            If Directory.Exists(SceneDirectory) Then
+                Dim di As New IO.DirectoryInfo(SceneDirectory)
+                Dim aryFi As IO.FileInfo() = di.GetFiles("*.txt")
+                If aryFi.Length <> 0 Then
+                    ReDim SceneCollection(0 To aryFi.Length - 1)
+                    ReDim SceneList(0 To aryFi.Length - 1)
+                    For i As Integer = 0 To aryFi.Length - 1
+                        SceneCollection(i) = New SceneFile(aryFi(i).FullName)
+                        SceneList(i) = SceneCollection(i).Fname
+                        'Timers(i).ReadTimerButt(TimerDirectory, Replace(aryFi(i).Name, ".txt", ""))
+                    Next
+                Else
+                    SceneCollection = Nothing
+                End If
+            End If
+            RaiseEvent ScenesUpdated(SceneList)
+        End Sub
+
+        Public Function GetSceneList() As String()
+            If SceneCollection IsNot Nothing Then
+                Dim SceneNames(0 To SceneCollection.Length - 1) As String
+                For I As Integer = 0 To SceneCollection.Length - 1
+                    SceneNames(I) = SceneCollection(I).Fname
+                Next
+                Return SceneNames
+            Else
+                Return {}
+            End If
+        End Function
+
+        Public Function CheckName(InputName) As Boolean
+            If SceneCollection IsNot Nothing Then
+                For i As Integer = 0 To SceneCollection.Length - 1
+                    If SceneCollection(i).Fname = InputName Then
+                        Return False
+                        Exit Function
+                    End If
+                Next
+            End If
+            Return true
+        End Function
+
+        Public Function IndexByName(SceneName As String)
+            If SceneCollection IsNot Nothing Then
+                For i As Integer = 0 To SceneCollection.Length - 1
+                    If SceneCollection(i).Fname = SceneName Then
+                        Return i
+                        Exit Function
+                    End If
+                Next
+            End If
+            Return -1
+        End Function
+
+        Public Sub DeleteScene(SceneIndex As Integer)
+            SceneCollection(SceneIndex).DeleteSceneFile(SceneDirectory)
+            RefreshSceneCollection()
+        End Sub
+
+        Public Sub UpdateScene(SceneIndex As Integer)
+            Dim NewScene As New SceneFile(, SceneCollection(SceneIndex).Fname,
+                                            {EmberAwayB, LunaAwayB, Screen1AwayMode, Screen2AwayMode},
+                                            {EmberSpriteB, EmberCamera, LunaSpriteB, LunaCamera},
+                                            {Screen1Setting, Screen2Setting, Cam1Setting, Cam2Setting},
+                                            Screen2Enabled, CurrentScene.Name)
+
+            NewScene.WriteSceneFile(SceneDirectory)
+            SceneCollection(SceneIndex) = NewScene
+            'RefreshSceneCollection()
+        End Sub
+
+        Public Sub RenameScene(SceneIndex As Integer, NewName As String)
+            If CheckName(NewName) = True Then
+                SceneCollection(SceneIndex).Fname = NewName
+                SceneCollection(SceneIndex).WriteSceneFile(SceneDirectory)
+                RefreshSceneCollection()
+            Else
+                SendMessage("Cannot create duplicate scene name", "NOPE")
+            End If
+        End Sub
+
+        Public Sub AddScene(SceneName As String)
+            If CheckName(SceneName) = True Then
+                Dim NewScene As New SceneFile(, SceneName,
+                                            {EmberAwayB, LunaAwayB, Screen1AwayMode, Screen2AwayMode},
+                                            {EmberSpriteB, EmberCamera, LunaSpriteB, LunaCamera},
+                                            {Screen1Setting, Screen2Setting, Cam1Setting, Cam2Setting},
+                                            Screen2Enabled, CurrentScene.Name)
+                NewScene.WriteSceneFile(SceneDirectory)
+                RefreshSceneCollection()
+            Else
+                SendMessage("Cannot create duplicate scene name", "NOPE")
+            End If
+        End Sub
+
+    End Class
+    Public Class SceneFile
+
+        Public Fname As String
+        Public Sname As String
+        Public FullName As String
+        Public Away() As Boolean
+        Public Features() As Boolean
+        Public Outputs() As Integer
+        Public Screen2en As Integer
+        Public Sub New(Optional SourceFile As String = "",
+                       Optional SceneName As String = "",
+                       Optional Aways() As Boolean = Nothing,
+                       Optional Feats() As Boolean = Nothing,
+                       Optional Settings() As Integer = Nothing,
+                       Optional Screen2 As Boolean = False,
+                       Optional ScName As String = "")
+            If SourceFile <> "" Then
+                ReadSceneFile(SourceFile)
+
+            Else
+                Fname = SceneName
+                If Aways IsNot Nothing Then
+                    Away = Aways
+                Else
+                    Away = {False, False, False, False}
+                End If
+                If Feats IsNot Nothing Then
+                    Features = Feats
+                Else
+                    Features = {True, True, True, True}
+                End If
+                If Settings IsNot Nothing Then
+                    Outputs = Settings
+                Else
+                    Outputs = {ScreenSetting.EmberPC, ScreenSetting.LunaPC, ScreenSetting.EmberCam, ScreenSetting.LunaCam}
+                End If
+                Screen2en = Screen2
+                Sname = ScName
+            End If
+
+        End Sub
+
+        Public Async Function ApplySceneSettings() As Task
+            EmberAwayB = Away(SceneEnums.E_cam_Away)
+            LunaAwayB = Away(SceneEnums.L_cam_Away)
+            Screen1AwayMode = Away(SceneEnums.E_scr_Away)
+            Screen2AwayMode = Away(SceneEnums.L_scr_Away)
+            EmberCamera = Features(SceneEnums.E_Camera)
+            LunaCamera = Features(SceneEnums.L_Camera)
+            EmberSpriteB = Features(SceneEnums.E_Sprite)
+            LunaSpriteB = Features(SceneEnums.L_Sprite)
+            Screen1Setting = Outputs(SceneEnums.Screen1)
+            Screen2Setting = Outputs(SceneEnums.Screen2)
+            Cam1Setting = Outputs(SceneEnums.Camera1)
+            Cam2Setting = Outputs(SceneEnums.Camera2)
+            Screen2Enabled = Screen2en
+            Await UpdateSceneDisplay()
+            If CurrentScene.Name <> Sname Then
+                Await Task.Delay(350)
+                Await UpdateSceneDisplay(Sname)
+                'Await Task.Delay(1000)
+            End If
+        End Function
+
+        Public Sub ReadSceneFile(Optional SceneFileName As String = "")
+            If SceneFileName = "" Then
+                If FullName <> "" Then
+                    SceneFileName = FullName
+                End If
+            End If
+            If SceneFileName <> "" Then
+                If File.Exists(SceneFileName) = True Then
+                    Fname = Replace(Split(SceneFileName, "\").Last, ".txt", "")
+                    Dim Reader As StreamReader = File.OpenText(SceneFileName)
+                    Do Until Reader.EndOfStream = True
+                        ReadSceneFileLine(Reader.ReadLine())
+                    Loop
+                    Reader.Close()
+                    Reader.Dispose()
+                End If
+            End If
+        End Sub
+
+        Public Sub ReadSceneFileLine(InputLine As String)
+            Dim SplitString As String() = Split(InputLine, "<>")
+            Select Case SplitString(0)
+                Case = "Away"
+                    Away = Array.ConvertAll(Split(SplitString(1), ","), AddressOf ConvertStringToBool)
+                Case = "Features"
+                    Features = Array.ConvertAll(Split(SplitString(1), ","), AddressOf ConvertStringToBool)
+                Case = "Outputs"
+                    Outputs = Array.ConvertAll(Split(SplitString(1), ","), AddressOf ConvertStringToInteger)
+                Case = "Screen2en"
+                    Screen2en = SplitString(1)
+                Case = "Sname"
+                    Sname = SplitString(1)
+            End Select
+        End Sub
+
+        Public Sub WriteSceneFile(SceneFileDirectory As String)
+            FullName = SceneFileDirectory & "\" & Fname & ".txt"
+            File.Create(FullName).Dispose()
+            If File.Exists(FullName) = True Then
+                Dim Writer As StreamWriter = File.AppendText(FullName)
+
+                Writer.WriteLine("Away<>" & String.Join(",", Away))
+                Writer.WriteLine("Features<>" & String.Join(",", Features))
+                Writer.WriteLine("Outputs<>" & String.Join(",", Outputs))
+                Writer.WriteLine("Screen2en<>" & Screen2en)
+                Writer.WriteLine("Sname<>" & Sname)
+
+                Writer.Close()
+                Writer.Dispose()
+                'SendMessage(Sname)
+            End If
+        End Sub
+
+        Public Sub DeleteSceneFile(SceneFileDirectory As String)
+            FullName = SceneFileDirectory & "\" & Fname & ".txt"
+            File.Delete(FullName)
+        End Sub
+    End Class
 
     Public Structure ScreenSetting
         Public Const EmberPC As Integer = 0
@@ -151,25 +400,27 @@ Public Module OBSfunctions
         Public DisplayName As String
     End Structure
 
-    Public Sub InitializeInputs()
-        If InputsInitialized = False Then
-            ReDim OBSinputs(0 To 7)
-            OBSinputs(ScreenSetting.EmberPC).ObjectName = "Ember's PC"
-            OBSinputs(ScreenSetting.EmberPC).DisplayName = "Ember's PC"
 
-        End If
-    End Sub
+    'Public Sub InitializeInputs()
+    '    If InputsInitialized = False Then
+    '        ReDim OBSinputs(0 To 7)
+    '        OBSinputs(ScreenSetting.EmberPC).ObjectName = "Ember's PC"
+    '        OBSinputs(ScreenSetting.EmberPC).DisplayName = "Ember's PC"
+
+    '    End If
+    'End Sub
 
 
     Public Sub SceneChangeDetected()
         If SceneChangeInProgress = True Then
             SceneChangeInProgress = False
-            'SceneAccess.ReleaseMutex()
+            If SceneChangeNeeded = True Then SceneHasChanged.SetResult(False)
             RaiseEvent SceneChangeCompleted()
         End If
     End Sub
 
-    Public Sub UpdateSceneDisplay(Optional ChangeSceneString As String = "")
+    Public SceneHasChanged As TaskCompletionSource(Of Boolean), SceneChangeNeeded As Boolean
+    Public Async Function UpdateSceneDisplay(Optional ChangeSceneString As String = "") As Task
 
         'If SceneAccess Is Nothing Then SceneAccess = New Mutex
         'SceneAccess.WaitOne()
@@ -870,14 +1121,18 @@ Public Module OBSfunctions
         Next
 
         If ChangeSceneString <> "" And CurrentScene.Name <> ChangeSceneString Then
+            SceneHasChanged = New TaskCompletionSource(Of Boolean)
+            SceneChangeNeeded = True
             OBS.SetCurrentScene(ChangeSceneString)
+            SceneChangeNeeded = Await SceneHasChanged.Task
+            CurrentScene = OBS.GetCurrentScene
         Else
             SceneChangeInProgress = False
         End If
 
         OBSmutex.ReleaseMutex()
 
-    End Sub
+    End Function
 
 
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -921,6 +1176,8 @@ Public Module OBSfunctions
         End If
     End Sub
 
+    'Ember animations should be *0.6 for timing purposes
+    'Luna anumations should be *0.95 for timing puroses
 
     Public Structure SpriteID
         Public Const Ember As Boolean = True
@@ -938,53 +1195,60 @@ Public Module OBSfunctions
         Public Sparkle As String
         Public WTF As String
         Public OMG As String
-        Public LeftH As String
-        Public RightH As String
-        Public Hands As String
+        Public Manic As String
+        Public RockandStone As String
+        Public Wibble As String
+        Public DeepBreath As String
 
         Public Sub InitializeMoods(CharacterSelect As Boolean)
             If CharacterSelect = SpriteID.Ember Then
-                Neutral = "\ember_blink.mp4"
-                Happy = "\ember_happy.mp4"
-                Sadge = "\ember_sad.mp4"
-                Angy = ""
-                Wumpy = "\ember_wumpy.mp4"
+                Neutral = "blink.avi"
+                Happy = "happy.avi"
+                Sadge = "sadge.avi"
+                Angy = "angery.avi"
+                Wumpy = "wumpy.avi"
                 Cringe = ""
                 Wow = ""
                 Sparkle = ""
-                WTF = "\ember_WTF.mp4"
+                WTF = "wtf.avi"
                 OMG = ""
-                LeftH = "\ember_l.mp4"
-                RightH = "\ember_r.mp4"
-                Hands = "\ember_both.mp4"
+                RockandStone = "rocknstone.avi"
+                Manic = ""
+                Wibble = ""
+                DeepBreath = ""
             Else
-                Neutral = "\luna_blink.mp4"
-                Happy = "\luna_smile.mp4"
-                Sadge = "\luna_sad.mp4"
-                Angy = "\luna_angery.mp4"
-                Wumpy = "\luna_pissed.mp4"
-                Cringe = "\luna_cringe.mp4"
-                Wow = "\luna_wow.mp4"
-                Sparkle = "\luna_sparkles.mp4"
+                Neutral = "blink.mp4"
+                Happy = "smile.mp4"
+                Sadge = "sad.mp4"
+                Angy = "angery.mp4"
+                Wumpy = "pissed.mp4"
+                Cringe = "cringe.mp4"
+                Wow = "wow.mp4"
+                Sparkle = "sparkles.mp4"
                 WTF = ""
-                OMG = "\luna_omg.mp4"
-                LeftH = ""
-                RightH = ""
-                Hands = ""
+                OMG = "omg.mp4"
+                RockandStone = ""
+                Manic = "manic.mp4"
+                Wibble = "wibble.mp4"
+                DeepBreath = "deepbreath.mp4"
             End If
         End Sub
+
     End Structure
 
     Public Class CharacterControls
         Private Name As String
         Public Directory As String
-        Public CurrentMood As String
+        Private CurrentMood As String
         Private SourceName As String
         Private Bubble As SpeechBubble
         Public Mood As CharacterMoods
         Private ResourceID As Integer
+        Private FileHeader As String
         Public Event Said(MessageData As String)
         Public Event MoodChange(MoodString As String)
+        Public LeftHand As Boolean
+        Public RightHand As Boolean
 
         Public Sub New()
             AddHandler Bubble.MessageSent, AddressOf MessageSent
@@ -992,21 +1256,27 @@ Public Module OBSfunctions
 
         Public Sub initLUNA()
             Name = "Luna"
+            FileHeader = "\luna_"
             Mood.InitializeMoods(SpriteID.Luna)
             Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name
-            CurrentMood = Directory & Mood.Neutral
+            CurrentMood = ""
             SourceName = Name & " Sprite"
             ResourceID = ResourceIDs.LunaSprite
+            LeftHand = False
+            RightHand = False
             Bubble.InitializeBubble(Name & "'s Speech Bubble", Name & " Messenger", Name & " Mtext")
         End Sub
 
         Public Sub initEMBER()
             Name = "Ember"
+            FileHeader = "\ember_"
             Mood.InitializeMoods(SpriteID.Ember)
             Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name
-            CurrentMood = Directory & Mood.Neutral
+            CurrentMood = ""
             SourceName = Name & " Sprite"
             ResourceID = ResourceIDs.EmberSprite
+            LeftHand = False
+            RightHand = False
             Bubble.InitializeBubble(Name & "'s Speech Bubble", Name & " Messenger", Name & " Mtext")
         End Sub
 
@@ -1021,6 +1291,22 @@ Public Module OBSfunctions
                                                                   Name & " Sprite Says: " & InputMessage)
         End Sub
 
+        Public Function MyMood() As String
+            Dim OutputString As String = Replace(CurrentMood, Directory & FileHeader, "")
+            Dim HandsInt As Integer = 0
+            If LeftHand = True Then HandsInt = HandsInt + 1
+            If RightHand = True Then HandsInt = HandsInt + 2
+            Select Case HandsInt
+                Case 0
+                    Return OutputString
+                Case = 1
+                    Return Replace(OutputString, "_left", "")
+                Case = 2
+                    Return Replace(OutputString, "_right", "")
+                Case = 3
+                    Return Replace(OutputString, "_both", "")
+            End Select
+        End Function
         Private Async Function MessageAsync(InputMessage As String,
                         Optional MessageMood As String = "",
                         Optional MessageSound As String = "",
@@ -1035,7 +1321,8 @@ Public Module OBSfunctions
                 TempMood = ""
             End If
             If MessageMood <> "" Then
-                CurrentMood = MediaSourceChange(SourceName, 1, Directory & MessageMood)
+                MessageMood = AppendMood(MessageMood)
+                CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MessageMood)
                 RaiseEvent MoodChange(CurrentMood)
             End If
             Await Bubble.SendMessage(InputMessage)
@@ -1044,6 +1331,24 @@ Public Module OBSfunctions
                 RaiseEvent MoodChange(CurrentMood)
             End If
         End Function
+
+        Private Function AppendMood(InputString As String) As String
+            Dim HandsInt As Integer = 0
+            If LeftHand = True Then HandsInt = HandsInt + 1
+            If RightHand = True Then HandsInt = HandsInt + 2
+            Select Case HandsInt
+                Case 0
+                    Return InputString
+                Case = 1
+                    Return Replace(InputString, ".", "_left.")
+                Case = 2
+                    Return Replace(InputString, ".", "_right.")
+                Case = 3
+                    Return Replace(InputString, ".", "_both.")
+            End Select
+        End Function
+
+
 
         Public Sub MessageSent(Messenger As String, Message As String)
             RaiseEvent Said(Messenger & " sent text: (" & Message & ")")
@@ -1060,16 +1365,17 @@ Public Module OBSfunctions
 
         Private Async Function ChangeMoodAsync(MoodFileName As String, Optional duration As Integer = 0) As Task
             If MoodFileName <> "" Then
+                MoodFileName = AppendMood(MoodFileName)
                 If duration > 0 Then
                     Dim TempMood As String = CurrentMood
-                    CurrentMood = MediaSourceChange(SourceName, 1, Directory & MoodFileName)
+                    CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MoodFileName)
                     RaiseEvent MoodChange(CurrentMood)
                     Await Task.Delay(duration)
                     CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
                     RaiseEvent MoodChange(CurrentMood)
                 Else
-                    If CurrentMood <> Directory & MoodFileName Then
-                        CurrentMood = MediaSourceChange(SourceName, 1, Directory & MoodFileName)
+                    If CurrentMood <> Directory & FileHeader & MoodFileName Then
+                        CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MoodFileName)
                         RaiseEvent MoodChange(CurrentMood)
                     End If
                 End If
@@ -1137,7 +1443,7 @@ Public Module OBSfunctions
         SetOBSsourceText(OBScounterObject(CounterSelection).ValueSource, OBScounterObject(CounterSelection).Value)
 
 
-        Call UpdateSceneDisplay()
+        Await UpdateSceneDisplay()
         RaiseEvent CountersUpdated()
         Dim SoundTask As Task
         If CounterSound <> "" Then SoundTask =
@@ -1155,7 +1461,7 @@ Public Module OBSfunctions
         Await Task.Delay(2200)
         OBScounterObject(CounterSelection).Title = ""
         OBScounterObject(CounterSelection).State = False
-        Call UpdateSceneDisplay()
+        Await UpdateSceneDisplay()
         RaiseEvent CountersUpdated()
         Await Task.Delay(500)
 
@@ -1503,7 +1809,7 @@ Public Module OBSfunctions
         Dim Increment As Integer = -1
         If StopTime >= TimeInSeconds Then Increment = 1
 
-        Call UpdateSceneDisplay()
+        Await UpdateSceneDisplay()
         RaiseEvent TimersUpdated(TimerSelection)
 
         Await Task.Delay(1000)
@@ -1554,7 +1860,7 @@ SoundPlayed2:
         OBStimerObject(TimerSelection).Title = ""
         OBStimerObject(TimerSelection).Sounds = Nothing
 
-        Call UpdateSceneDisplay()
+        Await UpdateSceneDisplay()
         OBStimerObject(TimerSelection).Pause = False
         RaiseEvent TimersUpdated(TimerSelection)
         Await Task.Delay(500)
@@ -1957,12 +2263,12 @@ FoundIt:
                 AlertActive = True
 PlayNextSound:
                 SoundAlertDisplay = True
-                Call UpdateSceneDisplay()
+                Await UpdateSceneDisplay()
                 AlertPlayer.Play(SoundFile)
                 Await Task.Delay(4000)
                 'Thread.Sleep(4000)
                 SoundAlertDisplay = False
-                Call UpdateSceneDisplay()
+                Await UpdateSceneDisplay()
                 Await Task.Delay(1000)
                 'Thread.Sleep(1000)
                 If AlertQueue.Count <> 0 Then

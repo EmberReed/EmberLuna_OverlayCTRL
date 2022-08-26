@@ -1,20 +1,20 @@
 ﻿Imports systen.threading
 Public Class OBScharacters
 
-    Public CharacterBool As Boolean
+    'Public CharacterBool As Boolean
 
-    Private Sub EmberAway_Click(sender As Object, e As EventArgs) Handles CharacterSwitch.Click
-        If CharacterBool = SpriteID.Ember Then
-            CharacterBool = SpriteID.Luna
-        Else
-            CharacterBool = SpriteID.Ember
-        End If
-        Call UpdateDisplay()
-    End Sub
+    'Private Sub EmberAway_Click(sender As Object, e As EventArgs) Handles CharacterSwitch.Click
+    '    If CharacterBool = SpriteID.Ember Then
+    '        CharacterBool = SpriteID.Luna
+    '    Else
+    '        CharacterBool = SpriteID.Ember
+    '    End If
+    '    Call UpdateDisplay()
+    'End Sub
 
     Private Sub OBScharacters_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         SourceWindow.CHARACTERS.BackColor = ActiveBUTT
-        CharacterBool = SpriteID.Ember
+        'CharacterBool = SpriteID.Ember
         AddHandler Ember.MoodChange, AddressOf MoodChangeDetected
         AddHandler Luna.MoodChange, AddressOf MoodChangeDetected
         Call UpdateDisplay()
@@ -30,604 +30,425 @@ TryAgain:
     End Sub
 
     Public Sub UpdateDisplay()
-        If CharacterBool = SpriteID.Ember Then
-            CharacterSwitch.Text = "EMBER"
-            CharacterSprite.BackgroundImage = My.Resources.ember
 
-            Select Case Ember.CurrentMood
-                Case = Ember.Directory & Ember.Mood.Neutral
-                    NeutralBUTT.BackColor = ActiveBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Happy
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = ActiveBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Sadge
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = ActiveBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Angy
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = ActiveBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Wumpy
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = ActiveBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Cringe
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = ActiveBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Wow
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = ActiveBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.WTF
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = ActiveBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.OMG
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = ActiveBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Sparkle
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = ActiveBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.Hands
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = ActiveBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.LeftH
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = ActiveBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Ember.Directory & Ember.Mood.RightH
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = ActiveBUTT
-            End Select
+        Select Case Ember.MyMood
+            Case = Ember.Mood.Neutral
+                E_NeutralBUTT.BackColor = ActiveBUTT
+                E_HappyBUTT.BackColor = StandardBUTT
+                E_SadgeBUTT.BackColor = StandardBUTT
+                E_AngyBUTT.BackColor = StandardBUTT
+                E_WumpyBUTT.BackColor = StandardBUTT
+                E_WtfBUTT.BackColor = StandardBUTT
+                E_RocKnStonE.BackColor = StandardBUTT
+            Case = Ember.Mood.Happy
+                E_NeutralBUTT.BackColor = StandardBUTT
+                E_HappyBUTT.BackColor = ActiveBUTT
+                E_SadgeBUTT.BackColor = StandardBUTT
+                E_AngyBUTT.BackColor = StandardBUTT
+                E_WumpyBUTT.BackColor = StandardBUTT
+                E_WtfBUTT.BackColor = StandardBUTT
+                E_RocKnStonE.BackColor = StandardBUTT
+            Case = Ember.Mood.Sadge
+                E_NeutralBUTT.BackColor = StandardBUTT
+                E_HappyBUTT.BackColor = StandardBUTT
+                E_SadgeBUTT.BackColor = ActiveBUTT
+                E_AngyBUTT.BackColor = StandardBUTT
+                E_WumpyBUTT.BackColor = StandardBUTT
+                E_WtfBUTT.BackColor = StandardBUTT
+                E_RocKnStonE.BackColor = StandardBUTT
+            Case = Ember.Mood.Angy
+                E_NeutralBUTT.BackColor = StandardBUTT
+                E_HappyBUTT.BackColor = StandardBUTT
+                E_SadgeBUTT.BackColor = StandardBUTT
+                E_AngyBUTT.BackColor = ActiveBUTT
+                E_WumpyBUTT.BackColor = StandardBUTT
+                E_WtfBUTT.BackColor = StandardBUTT
+                E_RocKnStonE.BackColor = StandardBUTT
+            Case = Ember.Mood.Wumpy
+                E_NeutralBUTT.BackColor = StandardBUTT
+                E_HappyBUTT.BackColor = StandardBUTT
+                E_SadgeBUTT.BackColor = StandardBUTT
+                E_AngyBUTT.BackColor = StandardBUTT
+                E_WumpyBUTT.BackColor = ActiveBUTT
+                E_WtfBUTT.BackColor = StandardBUTT
+                E_RocKnStonE.BackColor = StandardBUTT
+            Case = Ember.Mood.WTF
+                E_NeutralBUTT.BackColor = StandardBUTT
+                E_HappyBUTT.BackColor = StandardBUTT
+                E_SadgeBUTT.BackColor = StandardBUTT
+                E_AngyBUTT.BackColor = StandardBUTT
+                E_WumpyBUTT.BackColor = StandardBUTT
+                E_WtfBUTT.BackColor = ActiveBUTT
+                E_RocKnStonE.BackColor = StandardBUTT
+            Case = Ember.Mood.RockandStone
+                E_NeutralBUTT.BackColor = StandardBUTT
+                E_HappyBUTT.BackColor = StandardBUTT
+                E_SadgeBUTT.BackColor = StandardBUTT
+                E_AngyBUTT.BackColor = StandardBUTT
+                E_WumpyBUTT.BackColor = StandardBUTT
+                E_WtfBUTT.BackColor = StandardBUTT
+                E_RocKnStonE.BackColor = ActiveBUTT
+        End Select
+
+        If Ember.LeftHand Then
+            E_LefthBUTT.BackColor = ActiveBUTT
         Else
-            CharacterSwitch.Text = "LUNA"
-            CharacterSprite.BackgroundImage = My.Resources.luna1
-
-            Select Case Luna.CurrentMood
-                Case = Luna.Directory & Luna.Mood.Neutral
-                    NeutralBUTT.BackColor = ActiveBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Happy
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = ActiveBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Sadge
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = ActiveBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Angy
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = ActiveBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Wumpy
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = ActiveBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Cringe
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = ActiveBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Wow
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = ActiveBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.WTF
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = ActiveBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.OMG
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = ActiveBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Sparkle
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = ActiveBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.Hands
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = ActiveBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.LeftH
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = ActiveBUTT
-                    RighthBUTT.BackColor = StandardBUTT
-                Case = Luna.Directory & Luna.Mood.RightH
-                    NeutralBUTT.BackColor = StandardBUTT
-                    HappyBUTT.BackColor = StandardBUTT
-                    SadgeBUTT.BackColor = StandardBUTT
-                    AngyBUTT.BackColor = StandardBUTT
-                    WumpyBUTT.BackColor = StandardBUTT
-                    CringeBUTT.BackColor = StandardBUTT
-                    WowBUTT.BackColor = StandardBUTT
-                    WtfBUTT.BackColor = StandardBUTT
-                    OmgBUTT.BackColor = StandardBUTT
-                    SparkleBUTT.BackColor = StandardBUTT
-                    HandsBUTT.BackColor = StandardBUTT
-                    LefthBUTT.BackColor = StandardBUTT
-                    RighthBUTT.BackColor = ActiveBUTT
-            End Select
+            E_LefthBUTT.BackColor = StandardBUTT
         End If
+
+        If Ember.RightHand Then
+            E_RighthBUTT.BackColor = ActiveBUTT
+        Else
+            E_RighthBUTT.BackColor = StandardBUTT
+        End If
+
+
+
+        Select Case Luna.MyMood
+            Case = Luna.Mood.Neutral
+                L_NeutralBUTT.BackColor = ActiveBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Happy
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = ActiveBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Sadge
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = ActiveBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Angy
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = ActiveBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Wumpy
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = ActiveBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Cringe
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = ActiveBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Wow
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = ActiveBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.OMG
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = ActiveBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Sparkle
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = ActiveBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Manic
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = ActiveBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.Wibble
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = ActiveBUTT
+                L_DeepBreath.BackColor = StandardBUTT
+            Case = Luna.Mood.DeepBreath
+                L_NeutralBUTT.BackColor = StandardBUTT
+                L_HappyBUTT.BackColor = StandardBUTT
+                L_SadgeBUTT.BackColor = StandardBUTT
+                L_AngyBUTT.BackColor = StandardBUTT
+                L_WumpyBUTT.BackColor = StandardBUTT
+                L_CringeBUTT.BackColor = StandardBUTT
+                L_WowBUTT.BackColor = StandardBUTT
+                L_OmgBUTT.BackColor = StandardBUTT
+                L_SparkleBUTT.BackColor = StandardBUTT
+                L_ManicBUTT.BackColor = StandardBUTT
+                L_WibbleBUTT.BackColor = StandardBUTT
+                L_DeepBreath.BackColor = ActiveBUTT
+        End Select
+        'End If
     End Sub
 
     Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
         If e.KeyChar = Chr(13) Then
             If TextBox3.Text <> "" Then
-                If CharacterBool = SpriteID.Ember Then
-                    Ember.Says(TextBox3.Text)
-                Else
-                    Luna.Says(TextBox3.Text)
-                End If
+                Ember.Says(TextBox3.Text)
                 TextBox3.Text = ""
             End If
             e.Handled = True
         End If
     End Sub
 
-    Private Sub NeutralBUTT_Click(sender As Object, e As EventArgs) Handles NeutralBUTT.Click
-        If CharacterBool = SpriteID.Ember Then
+    Private Sub TextBox1_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox1.KeyPress
+        If e.KeyChar = Chr(13) Then
+            If TextBox3.Text <> "" Then
+                Luna.Says(TextBox3.Text)
+                TextBox3.Text = ""
+            End If
+            e.Handled = True
+        End If
+    End Sub
+
+    Private Sub ENeutralBUTT_Click(sender As Object, e As EventArgs) Handles E_NeutralBUTT.Click
+        Ember.ChangeMood(Ember.Mood.Neutral)
+    End Sub
+    Private Sub LNeutralBUTT_Click(sender As Object, e As EventArgs) Handles L_NeutralBUTT.Click
+        Luna.ChangeMood(Luna.Mood.Neutral)
+    End Sub
+
+    Private Sub EhappyBUTT_Click(sender As Object, e As EventArgs) Handles E_HappyBUTT.Click
+        If E_HappyBUTT.BackColor = ActiveBUTT Then
             Ember.ChangeMood(Ember.Mood.Neutral)
         Else
+            Ember.ChangeMood(Ember.Mood.Happy)
+        End If
+    End Sub
+    Private Sub LhappyBUTT_Click(sender As Object, e As EventArgs) Handles L_HappyBUTT.Click
+        If L_HappyBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Happy)
+        End If
+    End Sub
+
+    Private Sub EsadgeBUTT_Click(sender As Object, e As EventArgs) Handles E_SadgeBUTT.Click
+        If E_SadgeBUTT.BackColor = ActiveBUTT Then
+            Ember.ChangeMood(Ember.Mood.Neutral)
+        Else
+            Ember.ChangeMood(Ember.Mood.Sadge)
+        End If
+    End Sub
+    Private Sub LsadgeBUTT_Click(sender As Object, e As EventArgs) Handles L_SadgeBUTT.Click
+        If L_SadgeBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Sadge)
+        End If
+    End Sub
+
+    Private Sub EangyBUTT_Click(sender As Object, e As EventArgs) Handles E_AngyBUTT.Click
+        If E_AngyBUTT.BackColor = ActiveBUTT Then
+            Ember.ChangeMood(Ember.Mood.Neutral)
+        Else
+            Ember.ChangeMood(Ember.Mood.Angy)
+        End If
+    End Sub
+    Private Sub LangyBUTT_Click(sender As Object, e As EventArgs) Handles L_AngyBUTT.Click
+        If L_AngyBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Angy)
+        End If
+    End Sub
+
+    Private Sub EwumpyBUTT_Click(sender As Object, e As EventArgs) Handles E_WumpyBUTT.Click
+        If E_WumpyBUTT.BackColor = ActiveBUTT Then
+            Ember.ChangeMood(Ember.Mood.Neutral)
+        Else
+            Ember.ChangeMood(Ember.Mood.Wumpy)
+        End If
+    End Sub
+    Private Sub LwumpyBUTT_Click(sender As Object, e As EventArgs) Handles L_WumpyBUTT.Click
+        If L_WumpyBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Wumpy)
+        End If
+    End Sub
+
+    Private Sub cringeBUTT_Click(sender As Object, e As EventArgs) Handles L_CringeBUTT.Click
+        If L_CringeBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Cringe)
+        End If
+    End Sub
+
+    Private Sub L_wowBUTT_Click(sender As Object, e As EventArgs) Handles L_WowBUTT.Click
+        If L_WowBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Wow)
+        End If
+
+    End Sub
+
+    Private Sub wtfBUTT_Click(sender As Object, e As EventArgs) Handles E_WtfBUTT.Click
+        If E_WtfBUTT.BackColor = ActiveBUTT Then
+            Ember.ChangeMood(Ember.Mood.Neutral)
+        Else
+            Ember.ChangeMood(Ember.Mood.WTF)
+        End If
+    End Sub
+
+    Private Sub L_omgBUTT_Click(sender As Object, e As EventArgs) Handles L_OmgBUTT.Click
+        If L_OmgBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.OMG)
+        End If
+    End Sub
+
+    Private Sub L_sparkleBUTT_Click(sender As Object, e As EventArgs) Handles L_SparkleBUTT.Click
+        If L_SparkleBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Sparkle)
+        End If
+    End Sub
+
+    Private Sub L_MANICBUTT_Click(sender As Object, e As EventArgs) Handles L_ManicBUTT.Click
+        If L_ManicBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Manic)
+        End If
+    End Sub
+
+    Private Sub L_WIBBLEBUTT_Click(sender As Object, e As EventArgs) Handles L_WibbleBUTT.Click
+        If L_WibbleBUTT.BackColor = ActiveBUTT Then
+            Luna.ChangeMood(Luna.Mood.Neutral)
+        Else
+            Luna.ChangeMood(Luna.Mood.Wibble)
+        End If
+    End Sub
+
+    Private Sub E_lefthBUTT_Click(sender As Object, e As EventArgs) Handles E_LefthBUTT.Click
+        Dim MoodString As String = Ember.MyMood
+        If E_LefthBUTT.BackColor = ActiveBUTT Then
+            Ember.LeftHand = False
+            Ember.ChangeMood(MoodString)
+        Else
+            Ember.LeftHand = True
+            Ember.ChangeMood(MoodString)
+        End If
+    End Sub
+
+    Private Sub righthBUTT_Click(sender As Object, e As EventArgs) Handles E_RighthBUTT.Click
+        Dim MoodString As String = Ember.MyMood
+        If E_RighthBUTT.BackColor = ActiveBUTT Then
+            Ember.RightHand = False
+            Ember.ChangeMood(MoodString)
+        Else
+            Ember.RightHand = True
+            Ember.ChangeMood(MoodString)
+        End If
+    End Sub
+
+    Private Sub E_RocKnStonE_Click(sender As Object, e As EventArgs) Handles E_RocKnStonE.Click
+        Ember.ChangeMood(Ember.Mood.RockandStone, 2800)
+    End Sub
+
+    Private Sub OBScharacters_Shown(sender As Object, e As EventArgs) Handles MyBase.Shown
+        'SendMessage(Ember.MyMood)
+        If Ember.MyMood = "" Then
+            Ember.ChangeMood(Ember.Mood.Neutral)
+        End If
+        'SendMessage(Luna.MyMood)
+        If Luna.MyMood = "" Then
             Luna.ChangeMood(Luna.Mood.Neutral)
         End If
     End Sub
 
-    Private Sub happyBUTT_Click(sender As Object, e As EventArgs) Handles HappyBUTT.Click
-        If HappyBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Happy)
-            Else
-                Luna.ChangeMood(Luna.Mood.Happy)
-            End If
-        End If
+    Private Sub L_DeepBreath_Click(sender As Object, e As EventArgs) Handles L_DeepBreath.Click
+        Luna.ChangeMood(Luna.Mood.DeepBreath, 4200)
     End Sub
 
-    Private Sub sadgeBUTT_Click(sender As Object, e As EventArgs) Handles SadgeBUTT.Click
-        If SadgeBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Sadge)
-            Else
-                Luna.ChangeMood(Luna.Mood.Sadge)
-            End If
-        End If
 
-    End Sub
-
-    Private Sub angyBUTT_Click(sender As Object, e As EventArgs) Handles AngyBUTT.Click
-        If AngyBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Angy)
-            Else
-                Luna.ChangeMood(Luna.Mood.Angy)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub wumpyBUTT_Click(sender As Object, e As EventArgs) Handles WumpyBUTT.Click
-        If WumpyBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Wumpy)
-            Else
-                Luna.ChangeMood(Luna.Mood.Wumpy)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub cringeBUTT_Click(sender As Object, e As EventArgs) Handles CringeBUTT.Click
-        If CringeBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Cringe)
-            Else
-                Luna.ChangeMood(Luna.Mood.Cringe)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub wowBUTT_Click(sender As Object, e As EventArgs) Handles WowBUTT.Click
-        If WowBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Wow)
-            Else
-                Luna.ChangeMood(Luna.Mood.Wow)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub wtfBUTT_Click(sender As Object, e As EventArgs) Handles WtfBUTT.Click
-        If WtfBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.WTF)
-            Else
-                Luna.ChangeMood(Luna.Mood.WTF)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub omgBUTT_Click(sender As Object, e As EventArgs) Handles OmgBUTT.Click
-        If OmgBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.OMG)
-            Else
-                Luna.ChangeMood(Luna.Mood.OMG)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub sparkleBUTT_Click(sender As Object, e As EventArgs) Handles SparkleBUTT.Click
-        If SparkleBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Sparkle)
-            Else
-                Luna.ChangeMood(Luna.Mood.Sparkle)
-            End If
-        End If
-    End Sub
-
-    Private Sub handsBUTT_Click(sender As Object, e As EventArgs) Handles HandsBUTT.Click
-        If HandsBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Hands)
-            Else
-                Luna.ChangeMood(Luna.Mood.Hands)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub lefthBUTT_Click(sender As Object, e As EventArgs) Handles LefthBUTT.Click
-        If LefthBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.LeftH)
-            Else
-                Luna.ChangeMood(Luna.Mood.LeftH)
-            End If
-        End If
-    End Sub
-
-    Private Sub righthBUTT_Click(sender As Object, e As EventArgs) Handles RighthBUTT.Click
-        If RighthBUTT.BackColor = ActiveBUTT Then
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.Neutral)
-            Else
-                Luna.ChangeMood(Luna.Mood.Neutral)
-            End If
-        Else
-            If CharacterBool = SpriteID.Ember Then
-                Ember.ChangeMood(Ember.Mood.RightH)
-            Else
-                Luna.ChangeMood(Luna.Mood.RightH)
-            End If
-        End If
-    End Sub
 End Class

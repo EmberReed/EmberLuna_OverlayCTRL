@@ -45,6 +45,8 @@ Public Class MainWindow
         Counters = New OBScounters
         CounterData = New OBScounterData
         ChatUserInfo = New UserData
+        MySceneCollection = New SceneCollection
+
         IRC = New IrcClient("irc.twitch.tv", 6667, BotName, twitchOAuth, Broadcastername)
         Ember = New CharacterControls
         Ember.initEMBER()
@@ -183,11 +185,11 @@ Public Class MainWindow
         Dim StartupCounter As Integer = 0
         Do Until AmIconnected()
             Await Task.Delay(100)
-            StartupCounter = StartupCounter + 1
-            If StartupCounter > 100 Then
-                SendMessage("Failed to Start...", "UH OH")
-                Me.Close()
-            End If
+            'startupCounter = StartupCounter + 1
+            'If StartupCounter > 100 Then
+            '    SendMessage("Failed to Start...", "UH OH")
+            '    Me.Close()
+            'End If
         Loop
 
         Me.Enabled = True
