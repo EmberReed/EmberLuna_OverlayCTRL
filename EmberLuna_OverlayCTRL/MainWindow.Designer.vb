@@ -48,8 +48,6 @@ Partial Class MainWindow
         Me.Button11 = New System.Windows.Forms.Button()
         Me.Button12 = New System.Windows.Forms.Button()
         Me.Button13 = New System.Windows.Forms.Button()
-        Me.EventHighlighter = New System.Windows.Forms.PictureBox()
-        Me.ChatHighlighter = New System.Windows.Forms.PictureBox()
         Me.IRCdisplay = New System.Windows.Forms.Label()
         Me.OBSdisplay = New System.Windows.Forms.Label()
         Me.PUBSUBdisplay = New System.Windows.Forms.Label()
@@ -57,6 +55,8 @@ Partial Class MainWindow
         Me.CTRL2display = New System.Windows.Forms.Label()
         Me.CTRL1display = New System.Windows.Forms.Label()
         Me.AUTHdisplay = New System.Windows.Forms.Label()
+        Me.EventHighlighter = New System.Windows.Forms.PictureBox()
+        Me.ChatHighlighter = New System.Windows.Forms.PictureBox()
         CType(Me.EventHighlighter, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.ChatHighlighter, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
@@ -401,29 +401,6 @@ Partial Class MainWindow
         Me.Button13.Text = "START STREAM"
         Me.Button13.UseVisualStyleBackColor = False
         '
-        'EventHighlighter
-        '
-        Me.EventHighlighter.BackColor = System.Drawing.Color.Black
-        Me.EventHighlighter.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-        Me.EventHighlighter.Location = New System.Drawing.Point(4, 110)
-        Me.EventHighlighter.Name = "EventHighlighter"
-        Me.EventHighlighter.Size = New System.Drawing.Size(401, 101)
-        Me.EventHighlighter.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
-        Me.EventHighlighter.TabIndex = 24
-        Me.EventHighlighter.TabStop = False
-        '
-        'ChatHighlighter
-        '
-        Me.ChatHighlighter.BackColor = System.Drawing.Color.Black
-        Me.ChatHighlighter.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-        Me.ChatHighlighter.InitialImage = Nothing
-        Me.ChatHighlighter.Location = New System.Drawing.Point(4, 4)
-        Me.ChatHighlighter.Name = "ChatHighlighter"
-        Me.ChatHighlighter.Size = New System.Drawing.Size(401, 101)
-        Me.ChatHighlighter.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
-        Me.ChatHighlighter.TabIndex = 22
-        Me.ChatHighlighter.TabStop = False
-        '
         'IRCdisplay
         '
         Me.IRCdisplay.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
@@ -514,6 +491,29 @@ Partial Class MainWindow
         Me.AUTHdisplay.TabIndex = 42
         Me.AUTHdisplay.Text = "AUTH"
         Me.AUTHdisplay.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        '
+        'EventHighlighter
+        '
+        Me.EventHighlighter.BackColor = System.Drawing.Color.Black
+        Me.EventHighlighter.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.EventHighlighter.Location = New System.Drawing.Point(4, 110)
+        Me.EventHighlighter.Name = "EventHighlighter"
+        Me.EventHighlighter.Size = New System.Drawing.Size(401, 101)
+        Me.EventHighlighter.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
+        Me.EventHighlighter.TabIndex = 24
+        Me.EventHighlighter.TabStop = False
+        '
+        'ChatHighlighter
+        '
+        Me.ChatHighlighter.BackColor = System.Drawing.Color.Black
+        Me.ChatHighlighter.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.ChatHighlighter.InitialImage = Nothing
+        Me.ChatHighlighter.Location = New System.Drawing.Point(4, 4)
+        Me.ChatHighlighter.Name = "ChatHighlighter"
+        Me.ChatHighlighter.Size = New System.Drawing.Size(401, 101)
+        Me.ChatHighlighter.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage
+        Me.ChatHighlighter.TabIndex = 22
+        Me.ChatHighlighter.TabStop = False
         '
         'MainWindow
         '

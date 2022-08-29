@@ -11,6 +11,7 @@
 
     Private Sub ChannelPointsForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         RewardEditor = New ChannelPointsEditor
+
         DisplayTotal = ButtonsWide * ButtonsHigh
         SourceWindow.CHANNEL_POINTS.BackColor = ActiveBUTT
         DisplayRewards()
@@ -92,7 +93,7 @@
     End Sub
 
     Private Sub DecreaseRewardIndex()
-        If SourceIndex > 0 And AudioControl.SoundPlayer.Active = False Then
+        If SourceIndex > 0 Then
             SourceIndex = SourceIndex - 1
             DisplayRewards()
         End If

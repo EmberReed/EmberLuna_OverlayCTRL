@@ -18,6 +18,7 @@ Public Class MainWindow
     Private PubSubStarterState As Boolean = False
     Private ChannelPointStarterState As Boolean
 
+
     'Public Event OBSSceneChanged(SceneName As String)
 
     Private Sub MainWindow_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -38,6 +39,7 @@ Public Class MainWindow
         OBSTimers = New TimerControls
         TimerCollection = New OBSTimerData
         SpriteControls = New OBScharacters
+        MyVolumControls = New OBSvolumeControls
         'MessageBuffer = New ConcurrentQueue(Of String)
         AudioControl = New OBSaudioPlayer
         MusicPlayer = New OBSMusicPlayer
@@ -91,9 +93,9 @@ Public Class MainWindow
         AddHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
         AddHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
         AddHandler AudioControl.MusicPlayer.Stopped, AddressOf MediaEnded
-        AddHandler AudioControl.SoundPlayer.Started, AddressOf SoundStarted
-        AddHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
-        AddHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
+        AddHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf SoundStarted
+        'AddHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
+        'AddHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
 
         SetDrawing(Me.Handle, WM_SETREDRAW, True, 0)
         Me.Refresh()
@@ -160,9 +162,9 @@ Public Class MainWindow
         RemoveHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
         RemoveHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
         RemoveHandler AudioControl.MusicPlayer.Stopped, AddressOf MediaEnded
-        RemoveHandler AudioControl.SoundPlayer.Started, AddressOf SoundStarted
-        RemoveHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
-        RemoveHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
+        RemoveHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf SoundStarted
+        'RemoveHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
+        'RemoveHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
 
         'Call DisconnectOBS()
         Application.DoEvents()
@@ -371,16 +373,8 @@ Public Class MainWindow
         File.WriteAllText("\\StreamPC-V2\OBS Assets\Text\NowPlaying.txt", "")
     End Sub
 
-    Private Sub SoundStarted()
-        LogEventString("OBS Sound-Board Played: " & AudioControl.SoundPlayer.Current)
-    End Sub
-
-    Private Sub SoundPaused()
-        LogEventString("OBS Sound-Board paused")
-    End Sub
-
-    Private Sub SoundEnded()
-        LogEventString("OBS Sound-Board stopped")
+    Private Sub SoundStarted(SoundEvent As String)
+        LogEventString(SoundEvent)
     End Sub
 
     Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
@@ -787,6 +781,19 @@ Public Class MainWindow
 
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
         NewUserHandler("Itsame", True)
+    End Sub
+
+
+
+    Private Sub Button11_Click(sender As Object, e As EventArgs) Handles Button11.Click
+        If MyVolumControls.Visible = False Then
+            If CheckOBSconnect() = True Then
+                MyVolumControls = New OBSvolumeControls
+                MyVolumControls.Show()
+            End If
+        Else
+            MyVolumControls.Select()
+        End If
     End Sub
 End Class
 

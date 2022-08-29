@@ -16,7 +16,10 @@ Public Class OBSSoundBoard
     Private SourceButtonText As String = ""
     Private MouseIsDown As Boolean = False
 
+    Private WithEvents MySounds As SoundController
+
     Private Sub SoundBoard_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        MySounds = New SoundController(SoundSource.SFX, "Sound Board")
         SoundEditor = New AddSound
         DisplayTotal = ButtonsWide * ButtonsHigh
         ReDim ButtonHold(0 To DisplayTotal - 1)
@@ -41,6 +44,17 @@ Public Class OBSSoundBoard
         SourceWindow.SOUND_BOARD.BackColor = StandardBUTT
     End Sub
 
+    Private Sub SoundPlaying() Handles MySounds.SoundStopped
+        PictureBox3.BackgroundImage = My.Resources.play
+        PictureBox3.BackColor = StandardBUTT
+        STOPBUTT.BackColor = StandardBUTT
+    End Sub
+
+    Private Sub SoundStopped() Handles MySounds.SoundStarted
+        PictureBox3.BackgroundImage = My.Resources._STOP
+        PictureBox3.BackColor = ActiveBUTT
+        STOPBUTT.BackColor = ActiveBUTT
+    End Sub
 
 
     Private Sub IntializeCategorySelector()
@@ -96,15 +110,17 @@ Public Class OBSSoundBoard
     'End If
     'End Sub
     Private Sub PictureBox3_Click(sender As Object, e As EventArgs) Handles PictureBox3.Click
-        Dim SoundString As String = TextboxLineSelector(SoundListBox)
-        If SoundString <> "" Then
-            AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(SoundString))
-            'Dim SoundTask As Task = PlaySoundSyncTest(SoundString)
+        If MySounds.IsActive Then
+            Dim Stask As Task = MySounds.StopSound()
+        Else
+            Dim SoundString As String = TextboxLineSelector(SoundListBox)
+            If SoundString <> "" Then Dim Stask As Task = MySounds.PlaySound(AudioControl.GetSoundFileDataByName(SoundString))
         End If
+
     End Sub
 
     Private Async Function PlaySoundSyncTest(SoundString As String) As Task
-        Await AudioControl.SoundPlayer.PlayAsync(AudioControl.GetSoundFileDataByName(SoundString))
+        Await MySounds.PlaySound(AudioControl.GetSoundFileDataByName(SoundString))
         SendMessage("Success")
     End Function
 
@@ -290,9 +306,13 @@ Public Class OBSSoundBoard
     End Sub
 
     Private Sub STOPBUTT_Click(sender As Object, e As EventArgs) Handles STOPBUTT.Click
-        If AudioControl.SoundPlayer.Active = True Then
-            AudioControl.SoundPlayer.Stopp()
-        End If
+        'If MySound.Index > -1 Then
+        Dim STASK As Task = MySounds.StopSound
+        'End If
+
+        'If AudioControl.SoundPlayer.Active = True Then
+        '    AudioControl.SoundPlayer.Stopp()
+        'End If
     End Sub
 
 
@@ -441,8 +461,10 @@ Public Class OBSSoundBoard
 
     Private Sub SoundListBox_DClick(sender As TextBox, e As EventArgs) Handles SoundListBox.DoubleClick
         MouseIsDown = False
-        AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(TextboxLineSelector(sender)))
+        Dim SOUNDTASK As Task = MySounds.PlaySound(AudioControl.GetSoundFileDataByName(TextboxLineSelector(sender)))
     End Sub
+
+
 
     Private Sub SoundListBox_MouseDown(ByVal sender As TextBox, ByVal e As MouseEventArgs) Handles SoundListBox.MouseDown
         MouseIsDown = True
@@ -1019,7 +1041,7 @@ Public Class OBSSoundBoard
         If AudioControl.SoundBoards IsNot Nothing Then
             Dim SoundFile As String = AudioControl.GetSoundFileDataByName(AudioControl.SoundBoards(SourceIndex).Buttons(SoundIndex))
             If SoundFile <> "" Then
-                AudioControl.SoundPlayer.Play(SoundFile)
+                Dim SOUNDTASK As Task = MySounds.PlaySound(SoundFile)
             End If
         End If
         ButtonHold(SoundIndex) = False

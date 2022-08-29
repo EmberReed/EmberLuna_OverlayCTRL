@@ -116,7 +116,7 @@
     End Sub
 
     Private Sub ComboBox3_SelectedIndexChanged(sender As Object, e As EventArgs) Handles ComboBox3.SelectedIndexChanged
-        If ComboBox3.Text <> "" Then CounterTicker.Play(ComboBox3.Text)
+        If ComboBox3.Text <> "" Then AudioControl.SoundPlayer.PlaySound(ComboBox3.Text, SoundSource.BeepBoop)
         NewCounter.Tick = ComboBox3.Text
     End Sub
 End Class

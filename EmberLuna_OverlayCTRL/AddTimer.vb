@@ -1,6 +1,12 @@
-﻿Public Class AddTimer
+﻿Imports System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar
+
+Public Class AddTimer
     Public TimerIndex As Integer = -1, TimerData As TimerButton
+
+    Public WithEvents MySounds As SoundController
+
     Private Sub AddTimer_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        MySounds = New SoundController(SoundSource.SFX, "Timer Editor")
         If TimerIndex > -1 Then
             TimerData = TimerCollection.Timers(TimerIndex)
         Else
@@ -11,6 +17,15 @@
             SoundPicker.Items.Add(SoundList(i))
         Next
         UpdateDisplay()
+    End Sub
+    Private Sub SoundPlayerActive() Handles MySounds.SoundStarted
+        PlaySoundButt.BackgroundImage = My.Resources._STOP
+        PlaySoundButt.BackColor = ActiveBUTT
+    End Sub
+
+    Private Sub SoundPlayerInActive() Handles MySounds.SoundStopped
+        PlaySoundButt.BackgroundImage = My.Resources.play
+        PlaySoundButt.BackColor = StandardBUTT
     End Sub
 
     Private Sub UpdateDisplay()
@@ -118,10 +133,10 @@
     End Sub
 
     Private Sub PlaySoundButt_Click(sender As Object, e As EventArgs) Handles PlaySoundButt.Click
-        If AudioControl.SoundPlayer.Active = True Then
-            AudioControl.SoundPlayer.Stopp()
+        If MySounds.IsActive Then
+            Dim STASK As Task = MySounds.StopSound
         Else
-            If SoundPicker.Text <> "" Then AudioControl.SoundPlayer.Play(AudioControl.GetSoundFileDataByName(SoundPicker.Text))
+            If SoundPicker.Text <> "" Then Dim Stask As Task = MySounds.PlaySound(AudioControl.GetSoundFileDataByName(SoundPicker.Text))
         End If
     End Sub
 
