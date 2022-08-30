@@ -194,6 +194,9 @@ Public Class MainWindow
             'End If
         Loop
 
+        AudioControl.MyMixer.SyncAll()
+
+
         Me.Enabled = True
     End Function
 

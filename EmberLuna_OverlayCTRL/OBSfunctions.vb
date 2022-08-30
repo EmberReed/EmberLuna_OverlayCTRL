@@ -9,6 +9,8 @@ Imports System.Collections.Concurrent
 Imports EmberLuna_OverlayCTRL.OBSfunctions
 Imports System.Media
 Imports System.IO.Ports
+Imports System.Windows.Forms.AxHost
+Imports System.Reflection.Emit
 
 Public Module OBSfunctions
 
@@ -86,17 +88,7 @@ Public Module OBSfunctions
         ResetThread.Start()
     End Sub
 
-    Public Sub SetVolume(Sources() As String, Level As Single, Muted As Boolean)
-        OBSmutex.WaitOne()
-        Dim MyInfo As VolumeInfo
-        For I As Integer = 0 To Sources.Length - 1
-            MyInfo = OBS.GetVolume(Sources(I), True)
-            'SendMessage(Round(MyInfo.Volume, 1))
-            If MyInfo.Volume <> Level Then OBS.SetVolume(Sources(I), Level, True)
-            'If MyInfo.Muted <> Muted Then OBS.SetMute(Sources(I), Muted)
-        Next
-        OBSmutex.ReleaseMutex()
-    End Sub
+
 
     Public Function MediaSourceChange(SourceName As String, Optional ActionType As Integer = 0, Optional FileName As String = "") As String
         OBSmutex.WaitOne()
@@ -1863,6 +1855,206 @@ FoundIt:
         Return OutputList
     End Function
 
+    Public Sub SetVolume(Sources() As String, Level As Single, Muted As Boolean, Optional SyncChannel As AudioChannel = Nothing)
+        OBSmutex.WaitOne()
+        Dim MyInfo As VolumeInfo
+        For I As Integer = 0 To Sources.Length - 1
+            MyInfo = OBS.GetVolume(Sources(I), True)
+            'SendMessage(Sources(I))
+            If I = 0 And SyncChannel IsNot Nothing Then
+                SyncChannel.Level = MyInfo.Volume
+                Level = SyncChannel.Level
+                SyncChannel.Muted = MyInfo.Muted
+                Muted = SyncChannel.Muted
+            Else
+                If MyInfo.Volume <> Level Then OBS.SetVolume(Sources(I), Level, True)
+                If MyInfo.Muted <> Muted Then OBS.SetMute(Sources(I), Muted)
+            End If
+        Next
+        OBSmutex.ReleaseMutex()
+    End Sub
+
+    Public Class AudioChannels
+        Public Channels() As AudioChannel
+        Public Const AudioData As String = "\\StreamPC-V2\OBS Assets\Sounds\MixerSettings"
+        Public Event MixerChannelChanged(ChannelID As Integer)
+
+        Public Sub New()
+            ReDim Channels(0 To AudioChannelIDs.LastChanneL)
+            For I As Integer = 0 To AudioChannelIDs.LastChanneL
+                Channels(I) = New AudioChannel(I)
+            Next
+            'AddHandler OBS.SourceVolumeChanged, AddressOf VolumeChanged
+            'AddHandler OBS.SourceMuteStateChanged, AddressOf MuteChanged
+        End Sub
+
+        Public Sub SyncAll()
+            For I As Integer = 0 To AudioChannelIDs.LastChanneL
+                Channels(I).SyncSettings()
+            Next
+        End Sub
+
+        Public Sub ApplyAll()
+            For I As Integer = 0 To AudioChannelIDs.LastChanneL
+                Channels(I).ApplySettings()
+            Next
+        End Sub
+
+        Public Sub MuteChanged(sender As OBSWebsocketDotNet.OBSWebsocket, SourceName As String, Muted As Boolean)
+            For I As Integer = 0 To AudioChannelIDs.LastChanneL
+                If Channels(I).SourceCollection.Contains(SourceName) Then
+                    Channels(I).Muted = Muted
+                    Channels(I).ApplySettings()
+                    RaiseEvent MixerChannelChanged(I)
+                    Exit Sub
+                End If
+            Next
+        End Sub
+
+        Public Sub VolumeChanged(sender As OBSWebsocketDotNet.OBSWebsocket, SourceName As String, Volume As Single)
+            For I As Integer = 0 To AudioChannelIDs.LastChanneL
+                If Channels(I).SourceCollection.Contains(SourceName) Then
+                    Channels(I).ApplySettings(Volume)
+                    RaiseEvent MixerChannelChanged(I)
+                    Exit Sub
+                End If
+            Next
+        End Sub
+
+        Public Sub ToggleMute(ChannelIndex As Integer)
+            Channels(ChannelIndex).ApplySettings(, True)
+            RaiseEvent MixerChannelChanged(ChannelIndex)
+        End Sub
+
+        Public Sub ChangeVolume(ChannelIndex As Integer, Level As Single)
+            Channels(ChannelIndex).ApplySettings(Level)
+            RaiseEvent MixerChannelChanged(ChannelIndex)
+        End Sub
+
+        Public Sub ReadChannelSettings()
+            If File.Exists(AudioData) Then
+                Dim InputStream As StreamReader = File.OpenText(AudioData)
+                Dim Startindex As Integer = 0
+                Do Until InputStream.EndOfStream = True
+                    If Startindex > AudioChannelIDs.LastChanneL Then GoTo ExitLoop
+                    Channels(Startindex).ReadLine(InputStream.ReadLine())
+                    Startindex = Startindex + 1
+                Loop
+ExitLoop:
+                InputStream.Close()
+                InputStream.Dispose()
+            End If
+        End Sub
+
+        Public Sub WriteChannelSetting()
+            File.Create(AudioData).Dispose()
+            If File.Exists(AudioData) = True Then
+                Dim Writer As StreamWriter = File.AppendText(AudioData)
+                For i As Integer = 0 To AudioChannelIDs.LastChanneL
+                    Writer.WriteLine(Channels(i).WriteLine())
+                Next
+                Writer.Close()
+                Writer.Dispose()
+            End If
+        End Sub
+    End Class
+
+    Public Structure AudioChannelIDs
+        Public Const EmberMic As Integer = 0
+        Public Const EmberPC As Integer = 2
+        Public Const LunaMic As Integer = 1
+        Public Const LunaPC As Integer = 3
+        Public Const Discord As Integer = 4
+        Public Const MusicPlayer As Integer = 5
+        Public Const SoundsAndEvents As Integer = 6
+
+        Public Const LastChanneL As Integer = 6
+    End Structure
+
+    Public Class AudioChannel
+        Public Name As String
+        Public Muted As Boolean
+        Public Level As Single
+        Public SourceCollection() As String
+
+        Public Sub New(ChannelID As Integer)
+            Muted = False
+            Level = -10
+            Select Case ChannelID
+                Case AudioChannelIDs.EmberMic
+                    Name = "EMBER MIC"
+                    SourceCollection = {"MOTU Ember"}
+                Case AudioChannelIDs.EmberPC
+                    Name = "EMBER PC"
+                    SourceCollection = {"Ember's PC Audio"}
+                Case AudioChannelIDs.LunaMic
+                    Name = "LUNA MIC"
+                    SourceCollection = {"MOTU Luna"}
+                Case AudioChannelIDs.LunaPC
+                    Name = "LUNA PC"
+                    SourceCollection = {"Luna's PC Audio"}
+                Case AudioChannelIDs.Discord
+                    Name = "DISCORD"
+                    SourceCollection = {"Discord"}
+                Case AudioChannelIDs.MusicPlayer
+                    Name = "MUSIC PLAYER"
+                    SourceCollection = {"Music Player"}
+                Case AudioChannelIDs.SoundsAndEvents
+                    Name = "SOUNDS + EVENTS"
+                    Dim SourceList As New List(Of String)
+                    For I As Integer = 0 To 9
+                        SourceList.Add("Sounds" & I)
+                    Next
+                    SourceCollection = SourceList.ToArray
+            End Select
+        End Sub
+
+        Public Sub SyncSettings()
+            SetVolume(SourceCollection, Level, Muted, Me)
+        End Sub
+
+
+
+        Public Sub ApplySettings(Optional NewLevel As Single = -101, Optional ToggleMute As Boolean = False)
+            If NewLevel >= -100 Then Level = NewLevel
+            If ToggleMute = True Then
+                If Muted = False Then
+                    Muted = True
+                Else
+                    Muted = False
+                End If
+            End If
+            SetVolume(SourceCollection, Level, Muted)
+        End Sub
+
+        Public Sub ReadLine(LineData As String)
+            Dim Split1() As String = Split(LineData, "++")
+            Dim Split2() As String
+            For Each DataPoint As String In Split1
+                Split2 = Split(DataPoint, "<>")
+                Select Case Split2(0)
+                    Case = "Name"
+                        Name = Split2(1)
+                    Case = "Muted"
+                        Muted = Split2(1)
+                    Case = "Level"
+                        Level = Split2(1)
+                    Case = "SourceCollection"
+                        Array.ConstrainedCopy(Split2, 1, SourceCollection, 0, Split2.Length - 1)
+                End Select
+            Next
+        End Sub
+
+        Public Function WriteLine() As String
+            Dim LineData As String = "Name" & "<>" & Name & "++Muted" & "<>" & Muted & "++Level" & "<>" & Level & "++SourceCollection"
+            For i As Integer = 0 To SourceCollection.Length - 1
+                LineData = LineData & "<>" & SourceCollection(i)
+            Next
+            Return LineData
+        End Function
+
+    End Class
+
     Public Class OBSaudioPlayer
 
         Public WithEvents MusicPlayer As AudioPlayer
@@ -1879,6 +2071,8 @@ FoundIt:
         Public SoundBoards() As SoundButts
         Public SoundFiles() As SoundButt
 
+        Public MyMixer As AudioChannels
+
         Public Event SoundBoardsUpdated()
         Public Event SoundBoardUpdated(CatIndex As Integer)
         Public Event SoundBoardButtonUpdated(CatIndex As Integer, ButtNumb As Integer)
@@ -1894,6 +2088,9 @@ FoundIt:
             ReadSoundBoards()
             MusicPlayer = New AudioPlayer("Music Player", "\\StreamPC-V2\OBS Assets\Music\")
             SoundPlayer = New SoundBank
+
+            MyMixer = New AudioChannels
+            MyMixer.ReadChannelSettings()
 
             SongList = BuildMusicList()
             SoundList = BuildMusicList("\\StreamPC-V2\OBS Assets\Sounds\SFX", False, True)
