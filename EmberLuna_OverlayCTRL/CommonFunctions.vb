@@ -20,7 +20,6 @@ Public Module CommonFunctions
     Public SpriteControls As OBScharacters
     Public GamesList As TwitchGames
     Public ChannelPointsDisplay As ChannelPointsForm
-    Public WithEvents MyVolumControls As OBSvolumeControls
 
     Public WithEvents ChannelPoints As ChannelPointData
     Public WithEvents myAPI As APIfunctions

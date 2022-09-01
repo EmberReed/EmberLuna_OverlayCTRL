@@ -265,20 +265,20 @@ TryAgain:
         'End If
     End Sub
 
-    Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
+    Private Sub TextBox1_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox1.KeyPress
         If e.KeyChar = Chr(13) Then
-            If TextBox3.Text <> "" Then
-                Ember.Says(TextBox3.Text)
-                TextBox3.Text = ""
+            If TextBox1.Text <> "" Then
+                Luna.Says(TextBox1.Text)
+                TextBox1.Text = ""
             End If
             e.Handled = True
         End If
     End Sub
 
-    Private Sub TextBox1_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox1.KeyPress
+    Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
         If e.KeyChar = Chr(13) Then
             If TextBox3.Text <> "" Then
-                Luna.Says(TextBox3.Text)
+                Ember.Says(TextBox3.Text)
                 TextBox3.Text = ""
             End If
             e.Handled = True
@@ -450,5 +450,11 @@ TryAgain:
         Luna.ChangeMood(Luna.Mood.DeepBreath, 4200)
     End Sub
 
+    Private Sub TextBox1_TextChanged(sender As Object, e As EventArgs) Handles TextBox1.TextChanged
 
+    End Sub
+
+    Private Sub TextBox3_TextChanged(sender As Object, e As EventArgs) Handles TextBox3.TextChanged
+
+    End Sub
 End Class

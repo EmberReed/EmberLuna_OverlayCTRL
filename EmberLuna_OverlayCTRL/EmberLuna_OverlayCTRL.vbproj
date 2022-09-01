@@ -245,12 +245,6 @@
     <Compile Include="AddSound.vb">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OBSvolumeControls.Designer.vb">
-      <DependentUpon>OBSvolumeControls.vb</DependentUpon>
-    </Compile>
-    <Compile Include="OBSvolumeControls.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="SceneSelector.Designer.vb">
       <DependentUpon>SceneSelector.vb</DependentUpon>
     </Compile>
@@ -329,9 +323,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="AddSound.resx">
       <DependentUpon>AddSound.vb</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="OBSvolumeControls.resx">
-      <DependentUpon>OBSvolumeControls.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SceneSelector.resx">
       <DependentUpon>SceneSelector.vb</DependentUpon>

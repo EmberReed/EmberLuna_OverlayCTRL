@@ -39,7 +39,6 @@ Public Class MainWindow
         OBSTimers = New TimerControls
         TimerCollection = New OBSTimerData
         SpriteControls = New OBScharacters
-        MyVolumControls = New OBSvolumeControls
         'MessageBuffer = New ConcurrentQueue(Of String)
         AudioControl = New OBSaudioPlayer
         MusicPlayer = New OBSMusicPlayer
@@ -789,14 +788,14 @@ Public Class MainWindow
 
 
     Private Sub Button11_Click(sender As Object, e As EventArgs) Handles Button11.Click
-        If MyVolumControls.Visible = False Then
-            If CheckOBSconnect() = True Then
-                MyVolumControls = New OBSvolumeControls
-                MyVolumControls.Show()
-            End If
-        Else
-            MyVolumControls.Select()
-        End If
+        'If MyVolumControls.Visible = False Then
+        '    If CheckOBSconnect() = True Then
+        '        MyVolumControls = New OBSvolumeControls
+        '        MyVolumControls.Show()
+        '    End If
+        'Else
+        '    MyVolumControls.Select()
+        'End If
     End Sub
 End Class
 
