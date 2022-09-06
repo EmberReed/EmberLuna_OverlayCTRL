@@ -372,7 +372,6 @@ Partial Class MainWindow
         Me.Button11.Name = "Button11"
         Me.Button11.Size = New System.Drawing.Size(107, 71)
         Me.Button11.TabIndex = 32
-        Me.Button11.Text = "VOLUME CONTROL"
         Me.Button11.UseVisualStyleBackColor = False
         '
         'Button12

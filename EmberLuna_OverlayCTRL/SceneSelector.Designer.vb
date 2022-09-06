@@ -69,43 +69,58 @@ Partial Class SceneSelector
         Me.LUNAmute = New System.Windows.Forms.Button()
         Me.EMBERmute = New System.Windows.Forms.Button()
         Me.GroupBox7 = New System.Windows.Forms.GroupBox()
+        Me.Mon7 = New System.Windows.Forms.Button()
         Me.Button7 = New System.Windows.Forms.Button()
         Me.NumericUpDown7 = New System.Windows.Forms.NumericUpDown()
         Me.ProgressBar7 = New System.Windows.Forms.ProgressBar()
         Me.Label7 = New System.Windows.Forms.Label()
         Me.GroupBox6 = New System.Windows.Forms.GroupBox()
+        Me.Mon6 = New System.Windows.Forms.Button()
         Me.Button6 = New System.Windows.Forms.Button()
         Me.NumericUpDown6 = New System.Windows.Forms.NumericUpDown()
         Me.ProgressBar6 = New System.Windows.Forms.ProgressBar()
         Me.Label6 = New System.Windows.Forms.Label()
         Me.GroupBox5 = New System.Windows.Forms.GroupBox()
+        Me.Mon5 = New System.Windows.Forms.Button()
         Me.Button5 = New System.Windows.Forms.Button()
         Me.NumericUpDown5 = New System.Windows.Forms.NumericUpDown()
         Me.ProgressBar5 = New System.Windows.Forms.ProgressBar()
         Me.Label5 = New System.Windows.Forms.Label()
         Me.GroupBox4 = New System.Windows.Forms.GroupBox()
+        Me.Mon4 = New System.Windows.Forms.Button()
         Me.Button4 = New System.Windows.Forms.Button()
         Me.NumericUpDown4 = New System.Windows.Forms.NumericUpDown()
         Me.ProgressBar4 = New System.Windows.Forms.ProgressBar()
         Me.Label4 = New System.Windows.Forms.Label()
         Me.GroupBox3 = New System.Windows.Forms.GroupBox()
+        Me.Mon3 = New System.Windows.Forms.Button()
         Me.Button3 = New System.Windows.Forms.Button()
         Me.NumericUpDown3 = New System.Windows.Forms.NumericUpDown()
         Me.ProgressBar3 = New System.Windows.Forms.ProgressBar()
         Me.Label3 = New System.Windows.Forms.Label()
         Me.GroupBox2 = New System.Windows.Forms.GroupBox()
+        Me.Mon2 = New System.Windows.Forms.Button()
         Me.Button2 = New System.Windows.Forms.Button()
         Me.NumericUpDown2 = New System.Windows.Forms.NumericUpDown()
         Me.ProgressBar2 = New System.Windows.Forms.ProgressBar()
         Me.Label2 = New System.Windows.Forms.Label()
         Me.GroupBox1 = New System.Windows.Forms.GroupBox()
+        Me.Mon1 = New System.Windows.Forms.Button()
         Me.Button1 = New System.Windows.Forms.Button()
         Me.NumericUpDown1 = New System.Windows.Forms.NumericUpDown()
         Me.ProgressBar1 = New System.Windows.Forms.ProgressBar()
         Me.Label1 = New System.Windows.Forms.Label()
-        Me.Button11 = New System.Windows.Forms.Button()
-        Me.CurrentSceneLabal = New System.Windows.Forms.Label()
+        Me.ShowMixer = New System.Windows.Forms.Button()
+        Me.CurrentSceneLabel = New System.Windows.Forms.Label()
         Me.ToolTip1 = New System.Windows.Forms.ToolTip(Me.components)
+        Me.EmberPIP = New System.Windows.Forms.Button()
+        Me.LunaPIP = New System.Windows.Forms.Button()
+        Me.GroupBox8 = New System.Windows.Forms.GroupBox()
+        Me.Mon8 = New System.Windows.Forms.Button()
+        Me.Button8 = New System.Windows.Forms.Button()
+        Me.NumericUpDown8 = New System.Windows.Forms.NumericUpDown()
+        Me.ProgressBar8 = New System.Windows.Forms.ProgressBar()
+        Me.Label8 = New System.Windows.Forms.Label()
         Me.GroupBox7.SuspendLayout()
         CType(Me.NumericUpDown7, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.GroupBox6.SuspendLayout()
@@ -120,6 +135,8 @@ Partial Class SceneSelector
         CType(Me.NumericUpDown2, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.GroupBox1.SuspendLayout()
         CType(Me.NumericUpDown1, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.GroupBox8.SuspendLayout()
+        CType(Me.NumericUpDown8, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'DualScreenBUTT
@@ -311,7 +328,7 @@ Partial Class SceneSelector
         Me.Lscreen.Name = "Lscreen"
         Me.Lscreen.Size = New System.Drawing.Size(262, 62)
         Me.Lscreen.TabIndex = 44
-        Me.Lscreen.Text = "LUNA'S SCREEN"
+        Me.Lscreen.Text = "          LUNA'S SCREEN"
         Me.Lscreen.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'EmberAway
@@ -409,11 +426,11 @@ Partial Class SceneSelector
         '
         Me.LscreenAway.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
         Me.LscreenAway.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.LscreenAway.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.LscreenAway.Font = New System.Drawing.Font("Calibri", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.LscreenAway.ForeColor = System.Drawing.SystemColors.ControlLightLight
-        Me.LscreenAway.Location = New System.Drawing.Point(286, 212)
+        Me.LscreenAway.Location = New System.Drawing.Point(283, 224)
         Me.LscreenAway.Name = "LscreenAway"
-        Me.LscreenAway.Size = New System.Drawing.Size(74, 32)
+        Me.LscreenAway.Size = New System.Drawing.Size(74, 25)
         Me.LscreenAway.TabIndex = 54
         Me.LscreenAway.Text = "AWAY"
         Me.LscreenAway.UseVisualStyleBackColor = False
@@ -446,11 +463,11 @@ Partial Class SceneSelector
         '
         Me.EscreenAway.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
         Me.EscreenAway.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.EscreenAway.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.EscreenAway.Font = New System.Drawing.Font("Calibri", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.EscreenAway.ForeColor = System.Drawing.SystemColors.ControlLightLight
-        Me.EscreenAway.Location = New System.Drawing.Point(18, 212)
+        Me.EscreenAway.Location = New System.Drawing.Point(15, 224)
         Me.EscreenAway.Name = "EscreenAway"
-        Me.EscreenAway.Size = New System.Drawing.Size(74, 32)
+        Me.EscreenAway.Size = New System.Drawing.Size(74, 25)
         Me.EscreenAway.TabIndex = 57
         Me.EscreenAway.Text = "AWAY"
         Me.EscreenAway.UseVisualStyleBackColor = False
@@ -464,7 +481,7 @@ Partial Class SceneSelector
         Me.Escreen.Name = "Escreen"
         Me.Escreen.Size = New System.Drawing.Size(262, 62)
         Me.Escreen.TabIndex = 56
-        Me.Escreen.Text = "EMBER'S SCREEN"
+        Me.Escreen.Text = "          EMBER'S SCREEN"
         Me.Escreen.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'EcamSelect
@@ -485,7 +502,7 @@ Partial Class SceneSelector
         Me.EcamAway.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.EcamAway.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.EcamAway.ForeColor = System.Drawing.SystemColors.ControlLightLight
-        Me.EcamAway.Location = New System.Drawing.Point(18, 281)
+        Me.EcamAway.Location = New System.Drawing.Point(15, 279)
         Me.EcamAway.Name = "EcamAway"
         Me.EcamAway.Size = New System.Drawing.Size(74, 32)
         Me.EcamAway.TabIndex = 63
@@ -501,7 +518,7 @@ Partial Class SceneSelector
         Me.Ecam.Name = "Ecam"
         Me.Ecam.Size = New System.Drawing.Size(262, 62)
         Me.Ecam.TabIndex = 62
-        Me.Ecam.Text = "EMBER'S CAM"
+        Me.Ecam.Text = "     EMBER'S CAM"
         Me.Ecam.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'LcamSelect
@@ -522,7 +539,7 @@ Partial Class SceneSelector
         Me.LcamAway.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.LcamAway.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.LcamAway.ForeColor = System.Drawing.SystemColors.ControlLightLight
-        Me.LcamAway.Location = New System.Drawing.Point(286, 281)
+        Me.LcamAway.Location = New System.Drawing.Point(283, 279)
         Me.LcamAway.Name = "LcamAway"
         Me.LcamAway.Size = New System.Drawing.Size(74, 32)
         Me.LcamAway.TabIndex = 60
@@ -538,7 +555,7 @@ Partial Class SceneSelector
         Me.Lcam.Name = "Lcam"
         Me.Lcam.Size = New System.Drawing.Size(262, 62)
         Me.Lcam.TabIndex = 59
-        Me.Lcam.Text = "LUNA'S CAM"
+        Me.Lcam.Text = "    LUNA'S CAM"
         Me.Lcam.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'DeleteButt
@@ -647,7 +664,7 @@ Partial Class SceneSelector
         Me.SceneListBox.Name = "SceneListBox"
         Me.SceneListBox.ReadOnly = True
         Me.SceneListBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical
-        Me.SceneListBox.Size = New System.Drawing.Size(225, 401)
+        Me.SceneListBox.Size = New System.Drawing.Size(230, 401)
         Me.SceneListBox.TabIndex = 96
         '
         'MICmute
@@ -660,7 +677,7 @@ Partial Class SceneSelector
         Me.MICmute.Name = "MICmute"
         Me.MICmute.Size = New System.Drawing.Size(130, 22)
         Me.MICmute.TabIndex = 107
-        Me.MICmute.Text = "MICs"
+        Me.MICmute.Text = "MICS"
         Me.MICmute.UseVisualStyleBackColor = False
         '
         'PCmute
@@ -673,7 +690,7 @@ Partial Class SceneSelector
         Me.PCmute.Name = "PCmute"
         Me.PCmute.Size = New System.Drawing.Size(130, 22)
         Me.PCmute.TabIndex = 106
-        Me.PCmute.Text = "PCs"
+        Me.PCmute.Text = "SCREENS"
         Me.PCmute.UseVisualStyleBackColor = False
         '
         'LUNAmute
@@ -706,15 +723,30 @@ Partial Class SceneSelector
         '
         Me.GroupBox7.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox7.Controls.Add(Me.Mon7)
         Me.GroupBox7.Controls.Add(Me.Button7)
         Me.GroupBox7.Controls.Add(Me.NumericUpDown7)
         Me.GroupBox7.Controls.Add(Me.ProgressBar7)
         Me.GroupBox7.Controls.Add(Me.Label7)
         Me.GroupBox7.Location = New System.Drawing.Point(7, 753)
         Me.GroupBox7.Name = "GroupBox7"
-        Me.GroupBox7.Size = New System.Drawing.Size(760, 51)
+        Me.GroupBox7.Size = New System.Drawing.Size(765, 51)
         Me.GroupBox7.TabIndex = 103
         Me.GroupBox7.TabStop = False
+        '
+        'Mon7
+        '
+        Me.Mon7.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon7.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon7.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon7.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon7.ForeColor = System.Drawing.Color.White
+        Me.Mon7.Location = New System.Drawing.Point(716, 19)
+        Me.Mon7.Name = "Mon7"
+        Me.Mon7.Size = New System.Drawing.Size(41, 22)
+        Me.Mon7.TabIndex = 87
+        Me.Mon7.Text = "MON"
+        Me.Mon7.UseVisualStyleBackColor = False
         '
         'Button7
         '
@@ -723,9 +755,9 @@ Partial Class SceneSelector
         Me.Button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button7.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button7.ForeColor = System.Drawing.Color.White
-        Me.Button7.Location = New System.Drawing.Point(676, 21)
+        Me.Button7.Location = New System.Drawing.Point(668, 19)
         Me.Button7.Name = "Button7"
-        Me.Button7.Size = New System.Drawing.Size(77, 22)
+        Me.Button7.Size = New System.Drawing.Size(45, 22)
         Me.Button7.TabIndex = 85
         Me.Button7.Text = "MUTE"
         Me.Button7.UseVisualStyleBackColor = False
@@ -746,7 +778,7 @@ Partial Class SceneSelector
         Me.ProgressBar7.Location = New System.Drawing.Point(26, 25)
         Me.ProgressBar7.Name = "ProgressBar7"
         Me.ProgressBar7.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.ProgressBar7.Size = New System.Drawing.Size(643, 16)
+        Me.ProgressBar7.Size = New System.Drawing.Size(638, 16)
         Me.ProgressBar7.Step = 1
         Me.ProgressBar7.Style = System.Windows.Forms.ProgressBarStyle.Continuous
         Me.ProgressBar7.TabIndex = 0
@@ -761,7 +793,7 @@ Partial Class SceneSelector
         Me.Label7.ForeColor = System.Drawing.Color.White
         Me.Label7.Location = New System.Drawing.Point(2, 8)
         Me.Label7.Name = "Label7"
-        Me.Label7.Size = New System.Drawing.Size(757, 41)
+        Me.Label7.Size = New System.Drawing.Size(762, 41)
         Me.Label7.TabIndex = 0
         Me.Label7.Text = "SOUNDS + EVENTS"
         '
@@ -769,15 +801,30 @@ Partial Class SceneSelector
         '
         Me.GroupBox6.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox6.Controls.Add(Me.Mon6)
         Me.GroupBox6.Controls.Add(Me.Button6)
         Me.GroupBox6.Controls.Add(Me.NumericUpDown6)
         Me.GroupBox6.Controls.Add(Me.ProgressBar6)
         Me.GroupBox6.Controls.Add(Me.Label6)
         Me.GroupBox6.Location = New System.Drawing.Point(7, 703)
         Me.GroupBox6.Name = "GroupBox6"
-        Me.GroupBox6.Size = New System.Drawing.Size(760, 51)
+        Me.GroupBox6.Size = New System.Drawing.Size(765, 51)
         Me.GroupBox6.TabIndex = 102
         Me.GroupBox6.TabStop = False
+        '
+        'Mon6
+        '
+        Me.Mon6.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon6.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon6.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon6.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon6.ForeColor = System.Drawing.Color.White
+        Me.Mon6.Location = New System.Drawing.Point(716, 19)
+        Me.Mon6.Name = "Mon6"
+        Me.Mon6.Size = New System.Drawing.Size(41, 22)
+        Me.Mon6.TabIndex = 87
+        Me.Mon6.Text = "MON"
+        Me.Mon6.UseVisualStyleBackColor = False
         '
         'Button6
         '
@@ -786,9 +833,9 @@ Partial Class SceneSelector
         Me.Button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button6.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button6.ForeColor = System.Drawing.Color.White
-        Me.Button6.Location = New System.Drawing.Point(676, 21)
+        Me.Button6.Location = New System.Drawing.Point(668, 19)
         Me.Button6.Name = "Button6"
-        Me.Button6.Size = New System.Drawing.Size(77, 22)
+        Me.Button6.Size = New System.Drawing.Size(45, 22)
         Me.Button6.TabIndex = 85
         Me.Button6.Text = "MUTE"
         Me.Button6.UseVisualStyleBackColor = False
@@ -809,7 +856,7 @@ Partial Class SceneSelector
         Me.ProgressBar6.Location = New System.Drawing.Point(26, 25)
         Me.ProgressBar6.Name = "ProgressBar6"
         Me.ProgressBar6.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.ProgressBar6.Size = New System.Drawing.Size(643, 16)
+        Me.ProgressBar6.Size = New System.Drawing.Size(638, 16)
         Me.ProgressBar6.Step = 1
         Me.ProgressBar6.Style = System.Windows.Forms.ProgressBarStyle.Continuous
         Me.ProgressBar6.TabIndex = 0
@@ -824,7 +871,7 @@ Partial Class SceneSelector
         Me.Label6.ForeColor = System.Drawing.Color.White
         Me.Label6.Location = New System.Drawing.Point(2, 8)
         Me.Label6.Name = "Label6"
-        Me.Label6.Size = New System.Drawing.Size(757, 41)
+        Me.Label6.Size = New System.Drawing.Size(762, 41)
         Me.Label6.TabIndex = 0
         Me.Label6.Text = "MUSIC PLAYER"
         '
@@ -832,15 +879,30 @@ Partial Class SceneSelector
         '
         Me.GroupBox5.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox5.Controls.Add(Me.Mon5)
         Me.GroupBox5.Controls.Add(Me.Button5)
         Me.GroupBox5.Controls.Add(Me.NumericUpDown5)
         Me.GroupBox5.Controls.Add(Me.ProgressBar5)
         Me.GroupBox5.Controls.Add(Me.Label5)
         Me.GroupBox5.Location = New System.Drawing.Point(7, 653)
         Me.GroupBox5.Name = "GroupBox5"
-        Me.GroupBox5.Size = New System.Drawing.Size(760, 51)
+        Me.GroupBox5.Size = New System.Drawing.Size(765, 51)
         Me.GroupBox5.TabIndex = 101
         Me.GroupBox5.TabStop = False
+        '
+        'Mon5
+        '
+        Me.Mon5.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon5.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon5.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon5.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon5.ForeColor = System.Drawing.Color.White
+        Me.Mon5.Location = New System.Drawing.Point(716, 19)
+        Me.Mon5.Name = "Mon5"
+        Me.Mon5.Size = New System.Drawing.Size(41, 22)
+        Me.Mon5.TabIndex = 87
+        Me.Mon5.Text = "MON"
+        Me.Mon5.UseVisualStyleBackColor = False
         '
         'Button5
         '
@@ -849,9 +911,9 @@ Partial Class SceneSelector
         Me.Button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button5.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button5.ForeColor = System.Drawing.Color.White
-        Me.Button5.Location = New System.Drawing.Point(676, 21)
+        Me.Button5.Location = New System.Drawing.Point(668, 19)
         Me.Button5.Name = "Button5"
-        Me.Button5.Size = New System.Drawing.Size(77, 22)
+        Me.Button5.Size = New System.Drawing.Size(45, 22)
         Me.Button5.TabIndex = 85
         Me.Button5.Text = "MUTE"
         Me.Button5.UseVisualStyleBackColor = False
@@ -872,7 +934,7 @@ Partial Class SceneSelector
         Me.ProgressBar5.Location = New System.Drawing.Point(26, 25)
         Me.ProgressBar5.Name = "ProgressBar5"
         Me.ProgressBar5.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.ProgressBar5.Size = New System.Drawing.Size(643, 16)
+        Me.ProgressBar5.Size = New System.Drawing.Size(638, 16)
         Me.ProgressBar5.Step = 1
         Me.ProgressBar5.Style = System.Windows.Forms.ProgressBarStyle.Continuous
         Me.ProgressBar5.TabIndex = 0
@@ -887,7 +949,7 @@ Partial Class SceneSelector
         Me.Label5.ForeColor = System.Drawing.Color.White
         Me.Label5.Location = New System.Drawing.Point(2, 8)
         Me.Label5.Name = "Label5"
-        Me.Label5.Size = New System.Drawing.Size(757, 41)
+        Me.Label5.Size = New System.Drawing.Size(762, 41)
         Me.Label5.TabIndex = 0
         Me.Label5.Text = "DISCORD"
         '
@@ -895,15 +957,30 @@ Partial Class SceneSelector
         '
         Me.GroupBox4.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox4.Controls.Add(Me.Mon4)
         Me.GroupBox4.Controls.Add(Me.Button4)
         Me.GroupBox4.Controls.Add(Me.NumericUpDown4)
         Me.GroupBox4.Controls.Add(Me.ProgressBar4)
         Me.GroupBox4.Controls.Add(Me.Label4)
         Me.GroupBox4.Location = New System.Drawing.Point(7, 603)
         Me.GroupBox4.Name = "GroupBox4"
-        Me.GroupBox4.Size = New System.Drawing.Size(760, 51)
+        Me.GroupBox4.Size = New System.Drawing.Size(765, 51)
         Me.GroupBox4.TabIndex = 100
         Me.GroupBox4.TabStop = False
+        '
+        'Mon4
+        '
+        Me.Mon4.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon4.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon4.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon4.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon4.ForeColor = System.Drawing.Color.White
+        Me.Mon4.Location = New System.Drawing.Point(716, 19)
+        Me.Mon4.Name = "Mon4"
+        Me.Mon4.Size = New System.Drawing.Size(41, 22)
+        Me.Mon4.TabIndex = 87
+        Me.Mon4.Text = "MON"
+        Me.Mon4.UseVisualStyleBackColor = False
         '
         'Button4
         '
@@ -912,9 +989,9 @@ Partial Class SceneSelector
         Me.Button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button4.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button4.ForeColor = System.Drawing.Color.White
-        Me.Button4.Location = New System.Drawing.Point(676, 21)
+        Me.Button4.Location = New System.Drawing.Point(668, 19)
         Me.Button4.Name = "Button4"
-        Me.Button4.Size = New System.Drawing.Size(77, 22)
+        Me.Button4.Size = New System.Drawing.Size(45, 22)
         Me.Button4.TabIndex = 85
         Me.Button4.Text = "MUTE"
         Me.Button4.UseVisualStyleBackColor = False
@@ -935,7 +1012,7 @@ Partial Class SceneSelector
         Me.ProgressBar4.Location = New System.Drawing.Point(26, 25)
         Me.ProgressBar4.Name = "ProgressBar4"
         Me.ProgressBar4.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.ProgressBar4.Size = New System.Drawing.Size(643, 16)
+        Me.ProgressBar4.Size = New System.Drawing.Size(638, 16)
         Me.ProgressBar4.Step = 1
         Me.ProgressBar4.Style = System.Windows.Forms.ProgressBarStyle.Continuous
         Me.ProgressBar4.TabIndex = 0
@@ -950,7 +1027,7 @@ Partial Class SceneSelector
         Me.Label4.ForeColor = System.Drawing.Color.White
         Me.Label4.Location = New System.Drawing.Point(2, 8)
         Me.Label4.Name = "Label4"
-        Me.Label4.Size = New System.Drawing.Size(757, 41)
+        Me.Label4.Size = New System.Drawing.Size(762, 41)
         Me.Label4.TabIndex = 0
         Me.Label4.Text = "LUNA PC"
         '
@@ -958,15 +1035,30 @@ Partial Class SceneSelector
         '
         Me.GroupBox3.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox3.Controls.Add(Me.Mon3)
         Me.GroupBox3.Controls.Add(Me.Button3)
         Me.GroupBox3.Controls.Add(Me.NumericUpDown3)
         Me.GroupBox3.Controls.Add(Me.ProgressBar3)
         Me.GroupBox3.Controls.Add(Me.Label3)
         Me.GroupBox3.Location = New System.Drawing.Point(7, 553)
         Me.GroupBox3.Name = "GroupBox3"
-        Me.GroupBox3.Size = New System.Drawing.Size(760, 51)
+        Me.GroupBox3.Size = New System.Drawing.Size(765, 51)
         Me.GroupBox3.TabIndex = 99
         Me.GroupBox3.TabStop = False
+        '
+        'Mon3
+        '
+        Me.Mon3.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon3.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon3.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon3.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon3.ForeColor = System.Drawing.Color.White
+        Me.Mon3.Location = New System.Drawing.Point(716, 19)
+        Me.Mon3.Name = "Mon3"
+        Me.Mon3.Size = New System.Drawing.Size(41, 22)
+        Me.Mon3.TabIndex = 87
+        Me.Mon3.Text = "MON"
+        Me.Mon3.UseVisualStyleBackColor = False
         '
         'Button3
         '
@@ -975,9 +1067,9 @@ Partial Class SceneSelector
         Me.Button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button3.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button3.ForeColor = System.Drawing.Color.White
-        Me.Button3.Location = New System.Drawing.Point(676, 21)
+        Me.Button3.Location = New System.Drawing.Point(668, 19)
         Me.Button3.Name = "Button3"
-        Me.Button3.Size = New System.Drawing.Size(77, 22)
+        Me.Button3.Size = New System.Drawing.Size(45, 22)
         Me.Button3.TabIndex = 85
         Me.Button3.Text = "MUTE"
         Me.Button3.UseVisualStyleBackColor = False
@@ -998,7 +1090,7 @@ Partial Class SceneSelector
         Me.ProgressBar3.Location = New System.Drawing.Point(26, 25)
         Me.ProgressBar3.Name = "ProgressBar3"
         Me.ProgressBar3.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.ProgressBar3.Size = New System.Drawing.Size(643, 16)
+        Me.ProgressBar3.Size = New System.Drawing.Size(638, 16)
         Me.ProgressBar3.Step = 1
         Me.ProgressBar3.Style = System.Windows.Forms.ProgressBarStyle.Continuous
         Me.ProgressBar3.TabIndex = 0
@@ -1013,7 +1105,7 @@ Partial Class SceneSelector
         Me.Label3.ForeColor = System.Drawing.Color.White
         Me.Label3.Location = New System.Drawing.Point(2, 8)
         Me.Label3.Name = "Label3"
-        Me.Label3.Size = New System.Drawing.Size(757, 41)
+        Me.Label3.Size = New System.Drawing.Size(762, 41)
         Me.Label3.TabIndex = 0
         Me.Label3.Text = "LUNA MIC"
         '
@@ -1021,15 +1113,30 @@ Partial Class SceneSelector
         '
         Me.GroupBox2.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox2.Controls.Add(Me.Mon2)
         Me.GroupBox2.Controls.Add(Me.Button2)
         Me.GroupBox2.Controls.Add(Me.NumericUpDown2)
         Me.GroupBox2.Controls.Add(Me.ProgressBar2)
         Me.GroupBox2.Controls.Add(Me.Label2)
         Me.GroupBox2.Location = New System.Drawing.Point(7, 503)
         Me.GroupBox2.Name = "GroupBox2"
-        Me.GroupBox2.Size = New System.Drawing.Size(760, 51)
+        Me.GroupBox2.Size = New System.Drawing.Size(765, 51)
         Me.GroupBox2.TabIndex = 98
         Me.GroupBox2.TabStop = False
+        '
+        'Mon2
+        '
+        Me.Mon2.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon2.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon2.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon2.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon2.ForeColor = System.Drawing.Color.White
+        Me.Mon2.Location = New System.Drawing.Point(716, 19)
+        Me.Mon2.Name = "Mon2"
+        Me.Mon2.Size = New System.Drawing.Size(41, 22)
+        Me.Mon2.TabIndex = 87
+        Me.Mon2.Text = "MON"
+        Me.Mon2.UseVisualStyleBackColor = False
         '
         'Button2
         '
@@ -1038,9 +1145,9 @@ Partial Class SceneSelector
         Me.Button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button2.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button2.ForeColor = System.Drawing.Color.White
-        Me.Button2.Location = New System.Drawing.Point(676, 21)
+        Me.Button2.Location = New System.Drawing.Point(668, 19)
         Me.Button2.Name = "Button2"
-        Me.Button2.Size = New System.Drawing.Size(77, 22)
+        Me.Button2.Size = New System.Drawing.Size(45, 22)
         Me.Button2.TabIndex = 85
         Me.Button2.Text = "MUTE"
         Me.Button2.UseVisualStyleBackColor = False
@@ -1061,7 +1168,7 @@ Partial Class SceneSelector
         Me.ProgressBar2.Location = New System.Drawing.Point(26, 25)
         Me.ProgressBar2.Name = "ProgressBar2"
         Me.ProgressBar2.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.ProgressBar2.Size = New System.Drawing.Size(643, 16)
+        Me.ProgressBar2.Size = New System.Drawing.Size(638, 16)
         Me.ProgressBar2.Step = 1
         Me.ProgressBar2.Style = System.Windows.Forms.ProgressBarStyle.Continuous
         Me.ProgressBar2.TabIndex = 0
@@ -1076,7 +1183,7 @@ Partial Class SceneSelector
         Me.Label2.ForeColor = System.Drawing.Color.White
         Me.Label2.Location = New System.Drawing.Point(2, 8)
         Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(757, 41)
+        Me.Label2.Size = New System.Drawing.Size(762, 41)
         Me.Label2.TabIndex = 0
         Me.Label2.Text = "EMBER PC"
         '
@@ -1084,15 +1191,30 @@ Partial Class SceneSelector
         '
         Me.GroupBox1.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox1.Controls.Add(Me.Mon1)
         Me.GroupBox1.Controls.Add(Me.Button1)
         Me.GroupBox1.Controls.Add(Me.NumericUpDown1)
         Me.GroupBox1.Controls.Add(Me.ProgressBar1)
         Me.GroupBox1.Controls.Add(Me.Label1)
         Me.GroupBox1.Location = New System.Drawing.Point(7, 453)
         Me.GroupBox1.Name = "GroupBox1"
-        Me.GroupBox1.Size = New System.Drawing.Size(760, 51)
+        Me.GroupBox1.Size = New System.Drawing.Size(765, 51)
         Me.GroupBox1.TabIndex = 97
         Me.GroupBox1.TabStop = False
+        '
+        'Mon1
+        '
+        Me.Mon1.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon1.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon1.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon1.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon1.ForeColor = System.Drawing.Color.White
+        Me.Mon1.Location = New System.Drawing.Point(716, 19)
+        Me.Mon1.Name = "Mon1"
+        Me.Mon1.Size = New System.Drawing.Size(41, 22)
+        Me.Mon1.TabIndex = 86
+        Me.Mon1.Text = "MON"
+        Me.Mon1.UseVisualStyleBackColor = False
         '
         'Button1
         '
@@ -1101,9 +1223,9 @@ Partial Class SceneSelector
         Me.Button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.Button1.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.Button1.ForeColor = System.Drawing.Color.White
-        Me.Button1.Location = New System.Drawing.Point(676, 21)
+        Me.Button1.Location = New System.Drawing.Point(668, 19)
         Me.Button1.Name = "Button1"
-        Me.Button1.Size = New System.Drawing.Size(77, 22)
+        Me.Button1.Size = New System.Drawing.Size(45, 22)
         Me.Button1.TabIndex = 85
         Me.Button1.Text = "MUTE"
         Me.Button1.UseVisualStyleBackColor = False
@@ -1124,7 +1246,7 @@ Partial Class SceneSelector
         Me.ProgressBar1.Location = New System.Drawing.Point(26, 25)
         Me.ProgressBar1.Name = "ProgressBar1"
         Me.ProgressBar1.RightToLeft = System.Windows.Forms.RightToLeft.No
-        Me.ProgressBar1.Size = New System.Drawing.Size(643, 16)
+        Me.ProgressBar1.Size = New System.Drawing.Size(638, 16)
         Me.ProgressBar1.Step = 1
         Me.ProgressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous
         Me.ProgressBar1.TabIndex = 0
@@ -1139,47 +1261,153 @@ Partial Class SceneSelector
         Me.Label1.ForeColor = System.Drawing.Color.White
         Me.Label1.Location = New System.Drawing.Point(2, 8)
         Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(757, 41)
+        Me.Label1.Size = New System.Drawing.Size(762, 41)
         Me.Label1.TabIndex = 0
         Me.Label1.Text = "EMBER MIC"
         '
-        'Button11
+        'ShowMixer
         '
-        Me.Button11.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+        Me.ShowMixer.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.Button11.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.Button11.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button11.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button11.ForeColor = System.Drawing.Color.White
-        Me.Button11.Location = New System.Drawing.Point(542, 431)
-        Me.Button11.Name = "Button11"
-        Me.Button11.Size = New System.Drawing.Size(225, 22)
-        Me.Button11.TabIndex = 108
-        Me.Button11.Text = "MICs"
-        Me.Button11.UseVisualStyleBackColor = False
+        Me.ShowMixer.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.ShowMixer.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.ShowMixer.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.ShowMixer.ForeColor = System.Drawing.Color.White
+        Me.ShowMixer.Location = New System.Drawing.Point(542, 431)
+        Me.ShowMixer.Name = "ShowMixer"
+        Me.ShowMixer.Size = New System.Drawing.Size(230, 22)
+        Me.ShowMixer.TabIndex = 108
+        Me.ShowMixer.Text = "SHOW VOLUME CONTROLS"
+        Me.ShowMixer.UseVisualStyleBackColor = False
         '
-        'CurrentSceneLabal
+        'CurrentSceneLabel
         '
-        Me.CurrentSceneLabal.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+        Me.CurrentSceneLabel.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
             Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
-        Me.CurrentSceneLabal.BackColor = System.Drawing.Color.FromArgb(CType(CType(45, Byte), Integer), CType(CType(45, Byte), Integer), CType(CType(45, Byte), Integer))
-        Me.CurrentSceneLabal.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-        Me.CurrentSceneLabal.ForeColor = System.Drawing.Color.White
-        Me.CurrentSceneLabal.Location = New System.Drawing.Point(542, 5)
-        Me.CurrentSceneLabal.Name = "CurrentSceneLabal"
-        Me.CurrentSceneLabal.Size = New System.Drawing.Size(225, 18)
-        Me.CurrentSceneLabal.TabIndex = 109
-        Me.CurrentSceneLabal.Text = "EMBER CONTROLS"
-        Me.CurrentSceneLabal.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        Me.CurrentSceneLabel.BackColor = System.Drawing.Color.FromArgb(CType(CType(45, Byte), Integer), CType(CType(45, Byte), Integer), CType(CType(45, Byte), Integer))
+        Me.CurrentSceneLabel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.CurrentSceneLabel.ForeColor = System.Drawing.Color.White
+        Me.CurrentSceneLabel.Location = New System.Drawing.Point(542, 5)
+        Me.CurrentSceneLabel.Name = "CurrentSceneLabel"
+        Me.CurrentSceneLabel.Size = New System.Drawing.Size(230, 18)
+        Me.CurrentSceneLabel.TabIndex = 109
+        Me.CurrentSceneLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        '
+        'EmberPIP
+        '
+        Me.EmberPIP.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.EmberPIP.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.EmberPIP.Font = New System.Drawing.Font("Calibri", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.EmberPIP.ForeColor = System.Drawing.SystemColors.ControlLightLight
+        Me.EmberPIP.Location = New System.Drawing.Point(15, 197)
+        Me.EmberPIP.Name = "EmberPIP"
+        Me.EmberPIP.Size = New System.Drawing.Size(74, 25)
+        Me.EmberPIP.TabIndex = 111
+        Me.EmberPIP.Text = "PIP"
+        Me.EmberPIP.UseVisualStyleBackColor = False
+        '
+        'LunaPIP
+        '
+        Me.LunaPIP.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.LunaPIP.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.LunaPIP.Font = New System.Drawing.Font("Calibri", 9.75!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.LunaPIP.ForeColor = System.Drawing.SystemColors.ControlLightLight
+        Me.LunaPIP.Location = New System.Drawing.Point(283, 197)
+        Me.LunaPIP.Name = "LunaPIP"
+        Me.LunaPIP.Size = New System.Drawing.Size(74, 25)
+        Me.LunaPIP.TabIndex = 110
+        Me.LunaPIP.Text = "PIP"
+        Me.LunaPIP.UseVisualStyleBackColor = False
+        '
+        'GroupBox8
+        '
+        Me.GroupBox8.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.GroupBox8.Controls.Add(Me.Mon8)
+        Me.GroupBox8.Controls.Add(Me.Button8)
+        Me.GroupBox8.Controls.Add(Me.NumericUpDown8)
+        Me.GroupBox8.Controls.Add(Me.ProgressBar8)
+        Me.GroupBox8.Controls.Add(Me.Label8)
+        Me.GroupBox8.Location = New System.Drawing.Point(7, 803)
+        Me.GroupBox8.Name = "GroupBox8"
+        Me.GroupBox8.Size = New System.Drawing.Size(765, 51)
+        Me.GroupBox8.TabIndex = 112
+        Me.GroupBox8.TabStop = False
+        '
+        'Mon8
+        '
+        Me.Mon8.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Mon8.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Mon8.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Mon8.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Mon8.ForeColor = System.Drawing.Color.White
+        Me.Mon8.Location = New System.Drawing.Point(716, 19)
+        Me.Mon8.Name = "Mon8"
+        Me.Mon8.Size = New System.Drawing.Size(41, 22)
+        Me.Mon8.TabIndex = 87
+        Me.Mon8.Text = "MON"
+        Me.Mon8.UseVisualStyleBackColor = False
+        '
+        'Button8
+        '
+        Me.Button8.Anchor = CType((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Button8.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.Button8.Font = New System.Drawing.Font("Calibri", 8.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Button8.ForeColor = System.Drawing.Color.White
+        Me.Button8.Location = New System.Drawing.Point(668, 19)
+        Me.Button8.Name = "Button8"
+        Me.Button8.Size = New System.Drawing.Size(45, 22)
+        Me.Button8.TabIndex = 85
+        Me.Button8.Text = "MUTE"
+        Me.Button8.UseVisualStyleBackColor = False
+        '
+        'NumericUpDown8
+        '
+        Me.NumericUpDown8.DecimalPlaces = 2
+        Me.NumericUpDown8.Location = New System.Drawing.Point(6, 23)
+        Me.NumericUpDown8.Name = "NumericUpDown8"
+        Me.NumericUpDown8.Size = New System.Drawing.Size(17, 20)
+        Me.NumericUpDown8.TabIndex = 2
+        '
+        'ProgressBar8
+        '
+        Me.ProgressBar8.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.ProgressBar8.ForeColor = System.Drawing.Color.FromArgb(CType(CType(255, Byte), Integer), CType(CType(82, Byte), Integer), CType(CType(0, Byte), Integer))
+        Me.ProgressBar8.Location = New System.Drawing.Point(26, 25)
+        Me.ProgressBar8.Name = "ProgressBar8"
+        Me.ProgressBar8.RightToLeft = System.Windows.Forms.RightToLeft.No
+        Me.ProgressBar8.Size = New System.Drawing.Size(638, 16)
+        Me.ProgressBar8.Step = 1
+        Me.ProgressBar8.Style = System.Windows.Forms.ProgressBarStyle.Continuous
+        Me.ProgressBar8.TabIndex = 0
+        Me.ProgressBar8.Value = 10
+        '
+        'Label8
+        '
+        Me.Label8.Anchor = CType(((System.Windows.Forms.AnchorStyles.Top Or System.Windows.Forms.AnchorStyles.Left) _
+            Or System.Windows.Forms.AnchorStyles.Right), System.Windows.Forms.AnchorStyles)
+        Me.Label8.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Label8.Font = New System.Drawing.Font("Calibri", 9.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Label8.ForeColor = System.Drawing.Color.White
+        Me.Label8.Location = New System.Drawing.Point(2, 8)
+        Me.Label8.Name = "Label8"
+        Me.Label8.Size = New System.Drawing.Size(762, 41)
+        Me.Label8.TabIndex = 0
+        Me.Label8.Text = "LUNA MIC"
         '
         'SceneSelector
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(773, 810)
-        Me.Controls.Add(Me.CurrentSceneLabal)
-        Me.Controls.Add(Me.Button11)
+        Me.ClientSize = New System.Drawing.Size(778, 861)
+        Me.Controls.Add(Me.GroupBox8)
+        Me.Controls.Add(Me.EmberPIP)
+        Me.Controls.Add(Me.LunaPIP)
+        Me.Controls.Add(Me.CurrentSceneLabel)
+        Me.Controls.Add(Me.ShowMixer)
         Me.Controls.Add(Me.MICmute)
         Me.Controls.Add(Me.PCmute)
         Me.Controls.Add(Me.LUNAmute)
@@ -1234,6 +1462,8 @@ Partial Class SceneSelector
         Me.Controls.Add(Me.eCTRL)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle
         Me.MaximizeBox = False
+        Me.MaximumSize = New System.Drawing.Size(2000, 900)
+        Me.MinimumSize = New System.Drawing.Size(794, 498)
         Me.Name = "SceneSelector"
         Me.Text = "OBS SCENE CONTROL CENTER"
         Me.GroupBox7.ResumeLayout(False)
@@ -1250,6 +1480,8 @@ Partial Class SceneSelector
         CType(Me.NumericUpDown2, System.ComponentModel.ISupportInitialize).EndInit()
         Me.GroupBox1.ResumeLayout(False)
         CType(Me.NumericUpDown1, System.ComponentModel.ISupportInitialize).EndInit()
+        Me.GroupBox8.ResumeLayout(False)
+        CType(Me.NumericUpDown8, System.ComponentModel.ISupportInitialize).EndInit()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -1335,7 +1567,22 @@ Partial Class SceneSelector
     Friend WithEvents NumericUpDown1 As NumericUpDown
     Friend WithEvents ProgressBar1 As ProgressBar
     Friend WithEvents Label1 As Label
-    Friend WithEvents Button11 As Button
-    Friend WithEvents CurrentSceneLabal As Label
+    Friend WithEvents ShowMixer As Button
+    Friend WithEvents CurrentSceneLabel As Label
     Friend WithEvents ToolTip1 As ToolTip
+    Friend WithEvents EmberPIP As Button
+    Friend WithEvents LunaPIP As Button
+    Friend WithEvents GroupBox8 As GroupBox
+    Friend WithEvents Button8 As Button
+    Friend WithEvents NumericUpDown8 As NumericUpDown
+    Friend WithEvents ProgressBar8 As ProgressBar
+    Friend WithEvents Label8 As Label
+    Friend WithEvents Mon7 As Button
+    Friend WithEvents Mon6 As Button
+    Friend WithEvents Mon5 As Button
+    Friend WithEvents Mon4 As Button
+    Friend WithEvents Mon3 As Button
+    Friend WithEvents Mon2 As Button
+    Friend WithEvents Mon1 As Button
+    Friend WithEvents Mon8 As Button
 End Class

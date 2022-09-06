@@ -102,15 +102,6 @@
         'NewCounter.PublicCount = PublicPrivate.Checked
     End Sub
 
-    'Private Sub EventSound_CheckedChanged(sender As Object, e As EventArgs)
-    'If EventSound.Checked = True Then
-    '       EventSound.Text = "EVENT"
-    'Else
-    '       EventSound.Text = "SOUND"
-    'End If
-    '   NewCounter.NotificationType = EventSound.Checked
-    'End Sub
-
     Private Sub ComboBox1_SelectedIndexChanged_1(sender As Object, e As EventArgs) Handles ComboBox1.SelectedIndexChanged
 
     End Sub

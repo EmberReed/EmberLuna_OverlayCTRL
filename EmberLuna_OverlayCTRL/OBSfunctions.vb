@@ -128,6 +128,7 @@ Public Module OBSfunctions
 
     'SCREEN SETTINGS
     Public Screen2Enabled As Boolean = False
+    Public PIPenabled As Boolean = False
     Public Screen1Setting As Integer = ScreenSetting.EmberPC
     Public Screen2Setting As Integer = ScreenSetting.LunaPC
     Public Cam1Setting As Integer = ScreenSetting.EmberCam
@@ -138,6 +139,7 @@ Public Module OBSfunctions
     Public LunaCamera As Boolean = True
     Public EmberSpriteB As Boolean = True
     Public LunaSpriteB As Boolean = True
+
 
     'HANDLERS
     Public SceneChangeInProgress As Boolean = False
@@ -237,7 +239,7 @@ Public Module OBSfunctions
                                             {EmberAwayB, LunaAwayB, Screen1AwayMode, Screen2AwayMode},
                                             {EmberSpriteB, EmberCamera, LunaSpriteB, LunaCamera},
                                             {Screen1Setting, Screen2Setting, Cam1Setting, Cam2Setting},
-                                            Screen2Enabled, CurrentScene.Name)
+                                            Screen2Enabled, CurrentScene.Name, PIPenabled)
 
             NewScene.WriteSceneFile(SceneDirectory)
             SceneCollection(SceneIndex) = NewScene
@@ -260,7 +262,7 @@ Public Module OBSfunctions
                                             {EmberAwayB, LunaAwayB, Screen1AwayMode, Screen2AwayMode},
                                             {EmberSpriteB, EmberCamera, LunaSpriteB, LunaCamera},
                                             {Screen1Setting, Screen2Setting, Cam1Setting, Cam2Setting},
-                                            Screen2Enabled, CurrentScene.Name)
+                                            Screen2Enabled, CurrentScene.Name, PIPenabled)
                 NewScene.WriteSceneFile(SceneDirectory)
                 RefreshSceneCollection()
             Else
@@ -277,17 +279,18 @@ Public Module OBSfunctions
         Public Away() As Boolean
         Public Features() As Boolean
         Public Outputs() As Integer
-        Public Screen2en As Integer
+        Public Screen2en As Boolean
+        Public PIPen As Boolean
         Public Sub New(Optional SourceFile As String = "",
                        Optional SceneName As String = "",
                        Optional Aways() As Boolean = Nothing,
                        Optional Feats() As Boolean = Nothing,
                        Optional Settings() As Integer = Nothing,
                        Optional Screen2 As Boolean = False,
-                       Optional ScName As String = "")
+                       Optional ScName As String = "",
+                       Optional PIP As Boolean = False)
             If SourceFile <> "" Then
                 ReadSceneFile(SourceFile)
-
             Else
                 Fname = SceneName
                 If Aways IsNot Nothing Then
@@ -306,6 +309,7 @@ Public Module OBSfunctions
                     Outputs = {ScreenSetting.EmberPC, ScreenSetting.LunaPC, ScreenSetting.EmberCam, ScreenSetting.LunaCam}
                 End If
                 Screen2en = Screen2
+                PIPen = PIP
                 Sname = ScName
             End If
 
@@ -325,6 +329,7 @@ Public Module OBSfunctions
             Cam1Setting = Outputs(SceneEnums.Camera1)
             Cam2Setting = Outputs(SceneEnums.Camera2)
             Screen2Enabled = Screen2en
+            PIPenabled = PIPen
             Await UpdateSceneDisplay()
             If CurrentScene.Name <> Sname Then
                 Await Task.Delay(350)
@@ -363,6 +368,8 @@ Public Module OBSfunctions
                     Outputs = Array.ConvertAll(Split(SplitString(1), ","), AddressOf ConvertStringToInteger)
                 Case = "Screen2en"
                     Screen2en = SplitString(1)
+                Case = "PIPen"
+                    PIPen = SplitString(1)
                 Case = "Sname"
                     Sname = SplitString(1)
             End Select
@@ -378,6 +385,7 @@ Public Module OBSfunctions
                 Writer.WriteLine("Features<>" & String.Join(",", Features))
                 Writer.WriteLine("Outputs<>" & String.Join(",", Outputs))
                 Writer.WriteLine("Screen2en<>" & Screen2en)
+                Writer.WriteLine("PIPen<>" & PIPen)
                 Writer.WriteLine("Sname<>" & Sname)
 
                 Writer.Close()
@@ -414,13 +422,124 @@ Public Module OBSfunctions
         End If
     End Sub
 
+    Public Sub SetSourceVisibility(SourceName As String, SceneName As String, Visibool As Boolean, Optional UseMutex As Boolean = False)
+        If UseMutex = True Then OBSmutex.WaitOne()
+        Dim Container As SceneItemProperties = OBS.GetSceneItemProperties(SourceName, SceneName)
+        If Visibool <> Container.Visible Then
+            If Visibool = True Then
+                Container.Visible = True
+                OBS.SetSceneItemProperties(Container, SceneName)
+            Else
+                Container.Visible = False
+                OBS.SetSceneItemProperties(Container, SceneName)
+            End If
+        End If
+        If UseMutex = True Then OBSmutex.ReleaseMutex()
+    End Sub
+
+    Public Function SyncScreenSettings(ActiveScene As OBSScene, AwayName As String, Optional Screen2 As Boolean = False) As Integer
+        Dim Output As Integer = 0
+        For Each SceneItem In ActiveScene.Items
+            Select Case SceneItem.SourceName
+                Case = "Ember's PC"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.EmberPC
+                Case = "Luna's PC"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.LunaPC
+                Case = "J-Cam 1"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.EmberCam
+                Case = "E-Cam 1"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.LunaCam
+                Case = "Aux In 1"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.Aux1
+                Case = "Aux In 2"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.Aux2
+                Case = "Aux-Cam 1"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.Aux3
+                Case = "Aux-Cam 2"
+                    If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then Output = ScreenSetting.Aux4
+                Case = AwayName
+                    Select Case AwayName
+                        Case "Ember Is Away"
+                            EmberAwayB = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                        Case "Luna Is Away"
+                            LunaAwayB = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                        Case "Jerin Montage"
+                            If Screen2 Then
+                                Screen2AwayMode = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                            Else
+                                Screen2AwayMode = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                            End If
+                    End Select
+            End Select
+        Next
+        Return Output
+    End Function
+    Public Sub SyncSceneDisplay()
+
+        SceneChangeInProgress = True
+
+        Dim ItemsList As List(Of SceneItem)
+        Dim CurrentSceneList As GetSceneListInfo
+
+        OBSmutex.WaitOne()
+        CurrentScene = OBS.GetCurrentScene
+        Dim SceneName As String = CurrentScene.Name
+
+        PIPenabled = False
+
+        CurrentSceneList = OBS.GetSceneList()
+        For Each ActiveScene In CurrentSceneList.Scenes
+            Select Case ActiveScene.Name
+                Case "Cam 1"
+                    Cam1Setting = SyncScreenSettings(ActiveScene, "Ember Is Away")
+                Case "Screen 1"
+                    Screen1Setting = SyncScreenSettings(ActiveScene, "Jerin Montage")
+                Case "Cam 2"
+                    Cam2Setting = SyncScreenSettings(ActiveScene, "Luna Is Away")
+                Case "Screen 2"
+                    Screen2Setting = SyncScreenSettings(ActiveScene, "Jerin Montage", True)
+                Case "EmberPIP"
+
+                    ItemsList = ActiveScene.Items
+                    For Each SceneItem In ItemsList
+                        If SceneItem.SourceName = "Ember" Then
+                            EmberSpriteB = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                        End If
+                    Next
+                Case "LunaPIP"
+                    ItemsList = ActiveScene.Items
+                    For Each SceneItem In ItemsList
+                        If SceneItem.SourceName = "Luna" Then
+                            LunaSpriteB = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                        End If
+                    Next
+                Case "Single Screen Mode"
+                    ItemsList = ActiveScene.Items
+                    For Each SceneItem In ItemsList
+                        Select Case SceneItem.SourceName
+                            Case = "Screen 2"
+                                Screen2Enabled = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                            Case = "Ember Cam"
+                                EmberCamera = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                            Case = "Luna Cam"
+                                LunaCamera = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible
+                            Case "EmberPIP"
+                                If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then PIPenabled = True
+                            Case "LunaPIP"
+                                If OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name).Visible = True Then PIPenabled = True
+                        End Select
+                    Next
+            End Select
+        Next
+        OBSmutex.ReleaseMutex()
+
+    End Sub
 
     Public Async Function UpdateSceneDisplay(Optional ChangeSceneString As String = "") As Task
 
         SceneChangeInProgress = True
 
         Dim ItemsList As List(Of OBSWebsocketDotNet.Types.SceneItem)
-        Dim Container As OBSWebsocketDotNet.Types.SceneItemProperties
         Dim CurrentSceneList As OBSWebsocketDotNet.Types.GetSceneListInfo
 
         OBSmutex.WaitOne()
@@ -443,199 +562,92 @@ Public Module OBSfunctions
                     For Each SceneItem In ItemsList
                         Select Case SceneItem.SourceName
                             Case = "SoundAlert"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If SoundAlertDisplay <> Container.Visible Then
-                                    If SoundAlertDisplay = True Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    Else
-                                        Container.Visible = False
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, SoundAlertDisplay)
                         End Select
+                    Next
+                Case "EmberPIP"
+                    ItemsList = ActiveScene.Items
+                    For Each SceneItem In ItemsList
+                        If SceneItem.SourceName = "Ember" Then
+                            SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, EmberSpriteB)
+                        End If
+                    Next
+                Case "LunaPIP"
+                    ItemsList = ActiveScene.Items
+                    For Each SceneItem In ItemsList
+                        If SceneItem.SourceName = "Luna" Then
+                            SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, LunaSpriteB)
+                        End If
                     Next
                 Case "Dual Screen Mode", "Center Screen Mode", "Single Screen Mode", "Split Screen Mode"
                     ItemsList = ActiveScene.Items
                     For Each SceneItem In ItemsList
                         Select Case SceneItem.SourceName
                             Case = "EmberTimer"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If OBStimerObject(TimerIDs.Ember).State <> Container.Visible Then
-                                    If OBStimerObject(TimerIDs.Ember).State = True Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    Else
-                                        Container.Visible = False
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    OBStimerObject(TimerIDs.Ember).State)
                             Case = "EmberCounter"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If OBScounterObject(CounterIDs.Ember).State <> Container.Visible Then
-                                    If OBScounterObject(CounterIDs.Ember).State = True Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    Else
-                                        Container.Visible = False
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    OBScounterObject(CounterIDs.Ember).State)
                             Case = "LunaTimer"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If OBStimerObject(TimerIDs.Luna).State <> Container.Visible Then
-                                    If OBStimerObject(TimerIDs.Luna).State = True Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    Else
-                                        Container.Visible = False
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    OBStimerObject(TimerIDs.Luna).State)
                             Case = "LunaCounter"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If OBScounterObject(CounterIDs.Luna).State <> Container.Visible Then
-                                    If OBScounterObject(CounterIDs.Luna).State = True Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    Else
-                                        Container.Visible = False
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    OBScounterObject(CounterIDs.Luna).State)
                             Case = "GlobalTimer"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If OBStimerObject(TimerIDs.GlobalCC).State <> Container.Visible Then
-                                    If OBStimerObject(TimerIDs.GlobalCC).State = True Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    Else
-                                        Container.Visible = False
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    OBStimerObject(TimerIDs.GlobalCC).State)
                             Case = "GlobalCounter"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If OBScounterObject(CounterIDs.Glob).State <> Container.Visible Then
-                                    If OBScounterObject(CounterIDs.Glob).State = True Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    Else
-                                        Container.Visible = False
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
-
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    OBScounterObject(CounterIDs.Glob).State)
                             Case = "Screen 1"
                                 If ActiveScene.Name = "Center Screen Mode" Or ActiveScene.Name = "Single Screen Mode" Then
-                                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                    If Screen2Enabled = True Then
-                                        If Container.Visible = True Then
-                                            Container.Visible = False
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    Else
-                                        If Container.Visible = False Then
-                                            Container.Visible = True
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    End If
+                                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Screen2Enabled = False)
                                 End If
                             Case = "Screen 2"
                                 If ActiveScene.Name = "Center Screen Mode" Or ActiveScene.Name = "Single Screen Mode" Then
-                                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                    If Screen2Enabled = False Then
-                                        If Container.Visible = True Then
-                                            Container.Visible = False
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    Else
-                                        If Container.Visible = False Then
-                                            Container.Visible = True
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    End If
+                                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    Screen2Enabled)
                                 End If
                             Case = "Ember Cam"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
                                 If ActiveScene.Name = "Split Screen Mode" Or ActiveScene.Name = "Single Screen Mode" Then
-                                    If EmberCamera = False Then
-                                        If Container.Visible = True Then
-                                            Container.Visible = False
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    Else
-                                        If Container.Visible = False Then
-                                            Container.Visible = True
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    End If
+                                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, EmberCamera)
                                 Else
-                                    If Container.Visible = False Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
+                                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, True)
                                 End If
                             Case = "Luna Cam"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
                                 If ActiveScene.Name = "Split Screen Mode" Or ActiveScene.Name = "Single Screen Mode" Then
-                                    If LunaCamera = False Then
-                                        If Container.Visible = True Then
-                                            Container.Visible = False
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    Else
-                                        If Container.Visible = False Then
-                                            Container.Visible = True
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    End If
+                                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, LunaCamera)
                                 Else
-                                    If Container.Visible = False Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
+                                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, True)
                                 End If
                             Case = "Ember"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If ActiveScene.Name = "Split Screen Mode" Or ActiveScene.Name = "Single Screen Mode" Then
-                                    If EmberSpriteB = False Then
-                                        If Container.Visible = True Then
-                                            Container.Visible = False
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    Else
-                                        If Container.Visible = False Then
-                                            Container.Visible = True
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    End If
-                                Else
-                                    If Container.Visible = False Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                Select Case ActiveScene.Name
+                                    Case "Single Screen Mode"
+                                        SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                            (EmberSpriteB = False Or (PIPenabled And Screen2Enabled)) = False)
+                                    Case "Split Screen Mode"
+                                        SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, EmberSpriteB)
+                                    Case Else
+                                        SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, True)
+                                End Select
                             Case = "Luna"
-                                Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                                If ActiveScene.Name = "Split Screen Mode" Or ActiveScene.Name = "Single Screen Mode" Then
-                                    If LunaSpriteB = False Then
-                                        If Container.Visible = True Then
-                                            Container.Visible = False
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    Else
-                                        If Container.Visible = False Then
-                                            Container.Visible = True
-                                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                        End If
-                                    End If
-                                Else
-                                    If Container.Visible = False Then
-                                        Container.Visible = True
-                                        OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                                    End If
-                                End If
+                                Select Case ActiveScene.Name
+                                    Case "Single Screen Mode"
+                                        SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                            (LunaSpriteB = False Or (PIPenabled And Screen2Enabled = False)) = False)
+                                    Case "Split Screen Mode"
+                                        SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, LunaSpriteB)
+                                    Case Else
+                                        SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, True)
+                                End Select
+                            Case "EmberPIP"
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    PIPenabled And Screen2Enabled)
+                            Case "LunaPIP"
+                                SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name,
+                                                    PIPenabled And Screen2Enabled = False)
                         End Select
                     Next
             End Select
@@ -657,126 +669,26 @@ Public Module OBSfunctions
 
     End Function
     Public Sub SetScreenSettings(ActiveScene As OBSScene, Setting As Integer, Awaymode As Boolean, AwayName As String)
-        Dim Container As OBSWebsocketDotNet.Types.SceneItemProperties
         For Each SceneItem In ActiveScene.Items
             Select Case SceneItem.SourceName
                 Case = "Ember's PC"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.EmberPC Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.EmberPC)
                 Case = "Luna's PC"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.LunaPC Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.LunaPC)
                 Case = "J-Cam 1"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.EmberCam Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.EmberCam)
                 Case = "E-Cam 1"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.LunaCam Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.LunaCam)
                 Case = "Aux In 1"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.Aux1 Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.Aux1)
                 Case = "Aux In 2"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.Aux2 Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.Aux2)
                 Case = "Aux-Cam 1"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.Aux3 Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.Aux3)
                 Case = "Aux-Cam 2"
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Setting = ScreenSetting.Aux4 Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Setting = ScreenSetting.Aux4)
                 Case = AwayName
-                    Container = OBS.GetSceneItemProperties(SceneItem.SourceName, ActiveScene.Name)
-                    If Awaymode = True Then
-                        If Container.Visible = False Then
-                            Container.Visible = True
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    Else
-                        If Container.Visible = True Then
-                            Container.Visible = False
-                            OBS.SetSceneItemProperties(Container, ActiveScene.Name)
-                        End If
-                    End If
+                    SetSourceVisibility(SceneItem.SourceName, ActiveScene.Name, Awaymode)
             End Select
         Next
     End Sub
@@ -888,16 +800,22 @@ Public Module OBSfunctions
         Private CurrentMood As String
         Private SourceName As String
         Private Bubble As SpeechBubble
+        Private SoundPlayer As SoundController
         Public Mood As CharacterMoods
         Private ResourceID As Integer
         Private FileHeader As String
-        Public Event Said(MessageData As String)
+        'Public Event Said(MessageData As String)
         Public Event MoodChange(MoodString As String)
         Public LeftHand As Boolean
         Public RightHand As Boolean
 
-        Public Sub New()
-            AddHandler Bubble.MessageSent, AddressOf MessageSent
+        Public Sub New(CharName As String)
+            Select Case CharName
+                Case "Ember"
+                    initEMBER()
+                Case "Luna"
+                    initLUNA()
+            End Select
         End Sub
 
         Public Sub initLUNA()
@@ -905,12 +823,13 @@ Public Module OBSfunctions
             FileHeader = "\luna_"
             Mood.InitializeMoods(SpriteID.Luna)
             Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name
-            CurrentMood = ""
+            CurrentMood = Directory & FileHeader & Mood.Neutral
             SourceName = Name & " Sprite"
             ResourceID = ResourceIDs.LunaSprite
             LeftHand = False
             RightHand = False
-            Bubble.InitializeBubble(Name & "'s Speech Bubble", Name & " Messenger", Name & " Mtext")
+            Bubble = New SpeechBubble(Name)
+            SoundPlayer = New SoundController(SoundSource.SFX, Name)
         End Sub
 
         Public Sub initEMBER()
@@ -918,24 +837,64 @@ Public Module OBSfunctions
             FileHeader = "\ember_"
             Mood.InitializeMoods(SpriteID.Ember)
             Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name
-            CurrentMood = ""
+            CurrentMood = Directory & FileHeader & Mood.Neutral
             SourceName = Name & " Sprite"
             ResourceID = ResourceIDs.EmberSprite
             LeftHand = False
             RightHand = False
-            Bubble.InitializeBubble(Name & "'s Speech Bubble", Name & " Messenger", Name & " Mtext")
+            Bubble = New SpeechBubble(Name)
+            SoundPlayer = New SoundController(SoundSource.SFX, Name)
         End Sub
 
         Public Sub Says(InputMessage As String,
                         Optional MessageMood As String = "",
-                        Optional MessageSound As String = "")
+                        Optional MessageSound As String = "",
+                        Optional StaticMoodChange As Boolean = False,
+                        Optional MoodTimer As Integer = 0)
             Dim SpeechTask As Task(Of Task) = New Task(Of Task) _
             (Async Function() As Task
-                 Await MessageAsync(InputMessage, MessageMood, MessageSound)
+                 Dim TempMood As String
+                 'SendMessage(CurrentMood)
+                 If StaticMoodChange = False And MessageMood <> "" Then
+                     TempMood = CurrentMood
+                     MessageMood = AppendMood(MessageMood)
+                     CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MessageMood)
+                     RaiseEvent MoodChange(CurrentMood)
+                 Else
+                     TempMood = ""
+                 End If
+                 Dim MoodTask As Task = Nothing
+                 If MoodTimer > 0 And TempMood <> "" Then
+                     MoodTask = DelayedSetMood(TempMood, MoodTimer)
+                 End If
+                 Dim BubbleTask As Task = Bubble.SendMessage(InputMessage)
+                 Dim SoundTask As Task = Nothing
+                 If MessageSound <> "" Then
+                     Await Task.Delay(250)
+                     SoundTask = SoundPlayer.PlaySound(AudioControl.GetSoundFileDataByName(MessageSound))
+                 End If
+                 Await BubbleTask
+                 If SoundTask IsNot Nothing Then Await SoundTask
+                 If MoodTask IsNot Nothing Then
+                     Await MoodTask
+                 Else
+                     If MessageMood <> "" And TempMood <> "" Then
+                         CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+                         RaiseEvent MoodChange(CurrentMood)
+                     End If
+                 End If
+                 Await Task.Delay(250)
              End Function)
+
             Dim Speak As Task = MyResourceManager.RequestResource({ResourceID}, SpeechTask,
                                                                   Name & " Sprite Says: " & InputMessage)
         End Sub
+
+        Private Async Function DelayedSetMood(MoodString As String, Delay As Integer) As Task
+            Await Task.Delay(Delay)
+            CurrentMood = MediaSourceChange(SourceName, 1, MoodString)
+            RaiseEvent MoodChange(CurrentMood)
+        End Function
 
         Public Function MyMood() As String
             Dim OutputString As String = Replace(CurrentMood, Directory & FileHeader, "")
@@ -953,30 +912,37 @@ Public Module OBSfunctions
                     Return Replace(OutputString, "_both", "")
             End Select
         End Function
-        Private Async Function MessageAsync(InputMessage As String,
-                        Optional MessageMood As String = "",
-                        Optional MessageSound As String = "",
-                        Optional StaticMoodChange As Boolean = False) As Task
-            If MessageSound <> "" Then
-                AudioControl.SoundPlayer.PlaySound(AudioControl.GetSoundFileDataByName(MessageSound), SoundSource.SFX)
-            End If
-            Dim TempMood As String
-            If StaticMoodChange = False Then
-                TempMood = CurrentMood
-            Else
-                TempMood = ""
-            End If
-            If MessageMood <> "" Then
-                MessageMood = AppendMood(MessageMood)
-                CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MessageMood)
-                RaiseEvent MoodChange(CurrentMood)
-            End If
-            Await Bubble.SendMessage(InputMessage)
-            If MessageMood <> "" And TempMood <> "" Then
-                CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
-                RaiseEvent MoodChange(CurrentMood)
-            End If
-        End Function
+
+        'Private Async Function MessageAsync(InputMessage As String,
+        '                Optional MessageMood As String = "",
+        '                Optional MessageSound As String = "",
+        '                Optional StaticMoodChange As Boolean = False) As Task
+        '    Dim TempMood As String
+        '    'SendMessage(CurrentMood)
+        '    If StaticMoodChange = False Then
+        '        TempMood = CurrentMood
+        '    Else
+        '        TempMood = ""
+        '    End If
+        '    If MessageMood <> "" Then
+        '        MessageMood = AppendMood(MessageMood)
+        '        CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MessageMood)
+        '        RaiseEvent MoodChange(CurrentMood)
+        '    End If
+        '    Dim BubbleTask As Task = Bubble.SendMessage(InputMessage)
+        '    Dim SoundTask As Task = Nothing
+        '    If MessageSound <> "" Then
+        '        Await Task.Delay(250)
+        '        SoundTask = SoundPlayer.PlaySound(AudioControl.GetSoundFileDataByName(MessageSound))
+        '    End If
+        '    Await BubbleTask
+        '    If SoundTask IsNot Nothing Then Await SoundTask
+        '    If MessageMood <> "" And TempMood <> "" Then
+        '        CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+        '        RaiseEvent MoodChange(CurrentMood)
+        '    End If
+        '    Await Task.Delay(250)
+        'End Function
 
         Private Function AppendMood(InputString As String) As String
             Dim HandsInt As Integer = 0
@@ -993,12 +959,6 @@ Public Module OBSfunctions
                     Return Replace(InputString, ".", "_both.")
             End Select
         End Function
-
-
-
-        Public Sub MessageSent(Messenger As String, Message As String)
-            RaiseEvent Said(Messenger & " sent text: (" & Message & ")")
-        End Sub
 
         Public Sub ChangeMood(MoodFileName As String, Optional duration As Integer = 0)
             Dim MoodTask As Task(Of Task) = New Task(Of Task) _
@@ -1029,32 +989,28 @@ Public Module OBSfunctions
         End Function
     End Class
 
-    Public Structure SpeechBubble
+    Public Class SpeechBubble
         Public Name As String
-        Public Bubble As String
+        Public Bubble As VideoPlayer
         Public Msource As String
-        Public Mtext As String
         Public Event MessageSent(Messenger As String, Message As String)
 
-        Public Sub InitializeBubble(InputName As String, InputBubble As String, InputSource As String)
-            Name = InputName
-            Bubble = InputBubble
-            Msource = InputSource
-            Mtext = ""
+        Public Sub New(CharName As String)
+            Name = CharName & "'s Speech Bubble"
+            Bubble = New VideoPlayer(CharName & " Messenger", CharName, "sfx_drip.wav",,,,,, SoundSource.BeepBoop)
+            Msource = CharName & " Mtext"
         End Sub
 
         Public Async Function SendMessage(MessageText As String) As Task
-            Mtext = MessageText
-            RaiseEvent MessageSent(Name, Mtext)
-            Call MediaSourceChange(Bubble, 4)
+            RaiseEvent MessageSent(Name, MessageText)
+            Dim BubbleTask As Task = Bubble.Show
             Await Task.Delay(220)
-            Call SetOBSsourceText(Msource, Mtext)
-            Mtext = ""
+            Call SetOBSsourceText(Msource, MessageText)
             Await Task.Delay(3900)
-            Call SetOBSsourceText(Msource, Mtext)
-            Await Task.Delay(100)
+            Call SetOBSsourceText(Msource, "")
+            Await BubbleTask
         End Function
-    End Structure
+    End Class
 
 
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1640,7 +1596,6 @@ SoundPlayed2:
     Public Class OBSTimerData
 
         Public TimerDirectory As String
-        'Public Event TimerUpdated(TimerIndex As Integer)
         Public Event TimerDataUpdated()
         Public Timers() As TimerButton
 
@@ -1855,20 +1810,29 @@ FoundIt:
         Return OutputList
     End Function
 
-    Public Sub SetVolume(Sources() As String, Level As Single, Muted As Boolean, Optional SyncChannel As AudioChannel = Nothing)
+    Public Sub SetVolume(Sources() As String, Level As Single, Muted As Boolean, Monitor As Boolean, Optional SyncChannel As AudioChannel = Nothing)
         OBSmutex.WaitOne()
-        Dim MyInfo As VolumeInfo
+        Dim MyInfo As VolumeInfo, MonBool As Boolean
         For I As Integer = 0 To Sources.Length - 1
             MyInfo = OBS.GetVolume(Sources(I), True)
-            'SendMessage(Sources(I))
+            MonBool = (OBS.GetAudioMonitorType(Sources(I)) = "none") = False
             If I = 0 And SyncChannel IsNot Nothing Then
                 SyncChannel.Level = MyInfo.Volume
                 Level = SyncChannel.Level
                 SyncChannel.Muted = MyInfo.Muted
                 Muted = SyncChannel.Muted
+                SyncChannel.Monitored = MonBool
+                Monitor = MonBool
             Else
                 If MyInfo.Volume <> Level Then OBS.SetVolume(Sources(I), Level, True)
                 If MyInfo.Muted <> Muted Then OBS.SetMute(Sources(I), Muted)
+                If Monitor <> MonBool Then
+                    If Monitor Then
+                        OBS.SetAudioMonitorType(Sources(I), "monitorAndOutput")
+                    Else
+                        OBS.SetAudioMonitorType(Sources(I), "none")
+                    End If
+                End If
             End If
         Next
         OBSmutex.ReleaseMutex()
@@ -1926,6 +1890,12 @@ FoundIt:
             RaiseEvent MixerChannelChanged(ChannelIndex)
         End Sub
 
+
+        Public Sub ToggleMon(ChannelIndex As Integer)
+            Channels(ChannelIndex).ApplySettings(, , True)
+            RaiseEvent MixerChannelChanged(ChannelIndex)
+        End Sub
+
         Public Sub ChangeVolume(ChannelIndex As Integer, Level As Single)
             Channels(ChannelIndex).ApplySettings(Level)
             RaiseEvent MixerChannelChanged(ChannelIndex)
@@ -1964,22 +1934,25 @@ ExitLoop:
         Public Const EmberPC As Integer = 2
         Public Const LunaMic As Integer = 1
         Public Const LunaPC As Integer = 3
-        Public Const Discord As Integer = 4
-        Public Const MusicPlayer As Integer = 5
-        Public Const SoundsAndEvents As Integer = 6
+        Public Const Console As Integer = 4
+        Public Const Discord As Integer = 5
+        Public Const MusicPlayer As Integer = 6
+        Public Const SoundsAndEvents As Integer = 7
 
-        Public Const LastChanneL As Integer = 6
+        Public Const LastChanneL As Integer = 7
     End Structure
 
     Public Class AudioChannel
         Public Name As String
         Public Muted As Boolean
+        Public Monitored As Boolean
         Public Level As Single
         Public SourceCollection() As String
 
         Public Sub New(ChannelID As Integer)
             Muted = False
             Level = -10
+            Monitored = False
             Select Case ChannelID
                 Case AudioChannelIDs.EmberMic
                     Name = "EMBER MIC"
@@ -1993,6 +1966,9 @@ ExitLoop:
                 Case AudioChannelIDs.LunaPC
                     Name = "LUNA PC"
                     SourceCollection = {"Luna's PC Audio"}
+                Case AudioChannelIDs.Console
+                    Name = "CONSOLE"
+                    SourceCollection = {"Console Audio"}
                 Case AudioChannelIDs.Discord
                     Name = "DISCORD"
                     SourceCollection = {"Discord"}
@@ -2002,7 +1978,7 @@ ExitLoop:
                 Case AudioChannelIDs.SoundsAndEvents
                     Name = "SOUNDS + EVENTS"
                     Dim SourceList As New List(Of String)
-                    For I As Integer = 0 To 9
+                    For I As Integer = 0 To 5
                         SourceList.Add("Sounds" & I)
                     Next
                     SourceCollection = SourceList.ToArray
@@ -2010,12 +1986,12 @@ ExitLoop:
         End Sub
 
         Public Sub SyncSettings()
-            SetVolume(SourceCollection, Level, Muted, Me)
+            SetVolume(SourceCollection, Level, Muted, Monitored, Me)
         End Sub
 
 
 
-        Public Sub ApplySettings(Optional NewLevel As Single = -101, Optional ToggleMute As Boolean = False)
+        Public Sub ApplySettings(Optional NewLevel As Single = -101, Optional ToggleMute As Boolean = False, Optional ToggleMon As Boolean = False)
             If NewLevel >= -100 Then Level = NewLevel
             If ToggleMute = True Then
                 If Muted = False Then
@@ -2024,7 +2000,14 @@ ExitLoop:
                     Muted = False
                 End If
             End If
-            SetVolume(SourceCollection, Level, Muted)
+            If ToggleMon = True Then
+                If Monitored = False Then
+                    Monitored = True
+                Else
+                    Monitored = False
+                End If
+            End If
+            SetVolume(SourceCollection, Level, Muted, Monitored)
         End Sub
 
         Public Sub ReadLine(LineData As String)
@@ -2037,6 +2020,8 @@ ExitLoop:
                         Name = Split2(1)
                     Case = "Muted"
                         Muted = Split2(1)
+                    Case = "Monitored"
+                        Monitored = Split2(1)
                     Case = "Level"
                         Level = Split2(1)
                     Case = "SourceCollection"
@@ -2046,7 +2031,7 @@ ExitLoop:
         End Sub
 
         Public Function WriteLine() As String
-            Dim LineData As String = "Name" & "<>" & Name & "++Muted" & "<>" & Muted & "++Level" & "<>" & Level & "++SourceCollection"
+            Dim LineData As String = "Name" & "<>" & Name & "++Muted" & "<>" & Muted & "++Monitored" & "<>" & Monitored & "++Level" & "<>" & Level & "++SourceCollection"
             For i As Integer = 0 To SourceCollection.Length - 1
                 LineData = LineData & "<>" & SourceCollection(i)
             Next
@@ -2059,6 +2044,7 @@ ExitLoop:
 
         Public WithEvents MusicPlayer As AudioPlayer
         Public WithEvents SoundPlayer As SoundBank
+
 
         Public SongList As List(Of String)
         Public SoundList As List(Of String)
@@ -2101,26 +2087,26 @@ ExitLoop:
             AddHandler MusicPlayer.Stopped, AddressOf ContinueMusic
         End Sub
 
-        Public Async Function PlaySoundAlert(SoundFile As String) As Task
+        'Public Async Function PlaySoundAlert(SoundFile As String) As Task
 
-            Dim AlertPlayer As New Task(Of Task) _
-           (Async Function() As Task
-                Await PlaySoundAlertTask(SoundFile)
-            End Function)
-            Await MyResourceManager.RequestResource({ResourceIDs.AlertPlayer, ResourceIDs.CenterScreen}, AlertPlayer, "Sound Alert")
+        '    Dim AlertPlayer As New Task(Of Task) _
+        '   (Async Function() As Task
+        '        Await PlaySoundAlertTask(SoundFile)
+        '    End Function)
+        '    Await MyResourceManager.RequestResource({ResourceIDs.AlertPlayer, ResourceIDs.CenterScreen}, AlertPlayer, "Sound Alert")
 
-        End Function
+        'End Function
 
-        Private Async Function PlaySoundAlertTask(SoundFile As String) As Task
-            SoundAlertDisplay = True
-            Await UpdateSceneDisplay()
-            Dim MySound As SoundTask = SoundPlayer.PlaySound(SoundFile, SoundSource.SFX)
-            Await Task.Delay(3000)
-            Await MySound.Player
-            SoundAlertDisplay = False
-            Await UpdateSceneDisplay()
-            Await Task.Delay(1000)
-        End Function
+        'Private Async Function PlaySoundAlertTask(SoundFile As String) As Task
+        '    SoundAlertDisplay = True
+        '    Await UpdateSceneDisplay()
+        '    Dim MySound As Integer = SoundPlayer.PlaySound(SoundFile, SoundSource.SFX)
+        '    Await Task.Delay(3000)
+        '    'Await 
+        '    SoundAlertDisplay = False
+        '    Await UpdateSceneDisplay()
+        '    Await Task.Delay(1000)
+        'End Function
 
 
         '#############################SOUND BOARD CONTROLS#############################
@@ -2557,40 +2543,38 @@ FoundIt:
         Public Const BeepBoop As String = "\\StreamPC-V2\OBS Assets\Sounds\beepboop\"
     End Structure
 
-    Public Structure SoundTask
-        Public Index As Integer
-        Public Player As Task
-    End Structure
 
     Public Class SoundBank
         Private SoundPlayers() As AudioPlayer
         Private Access As Mutex
         Public Event SoundPlayed(EventString As String)
+        Public SoundTasks() As Task
+        Private SoundBools() As Boolean
         Public Sub New()
             Access = New Mutex
             Access.WaitOne()
-            ReDim SoundPlayers(0 To 9)
-            For I As Integer = 0 To 9
+            ReDim SoundPlayers(0 To 5)
+            ReDim SoundTasks(0 To 5)
+            ReDim SoundBools(0 To 5)
+            For I As Integer = 0 To 5
                 SoundPlayers(I) = New AudioPlayer("Sounds" & I, SoundSource.SFX)
             Next
             Access.ReleaseMutex()
         End Sub
 
-        Public Function PlaySound(SoundFile As String, Path As String, Optional Source As String = "") As SoundTask
+        Public Function PlaySound(SoundFile As String, Path As String, Optional Source As String = "") As Integer
             Access.WaitOne()
             Dim SoundIndex As Integer = -1
-            For I As Integer = 0 To 9
-                If SoundPlayers(I).Active = False Then
+            For I As Integer = 0 To 5
+                If SoundBools(I) = False Then
                     SoundIndex = I
                     GoTo FoundPlayer
                 End If
             Next
 FoundPlayer:
-            Dim Output As New SoundTask
-            Output.Index = SoundIndex
             If SoundIndex > -1 Then
                 SoundPlayers(SoundIndex).Path = Path
-                Output.Player = SoundPlayers(SoundIndex).PlayAsync(SoundFile)
+                SoundTasks(SoundIndex) = Play(SoundIndex, SoundFile)
                 If Source <> "" Then
                     RaiseEvent SoundPlayed(Source & " Played " & SoundFile & " (SB_INDEX# " & SoundIndex & ")")
                 Else
@@ -2604,19 +2588,26 @@ FoundPlayer:
                 End If
             End If
             Access.ReleaseMutex()
-            Return Output
+            Return SoundIndex
+        End Function
+
+        Private Async Function Play(SoundIndex As Integer, SoundFile As String) As Task
+            SoundBools(SoundIndex) = True
+            Await SoundPlayers(SoundIndex).PlayAsync(SoundFile)
+            'SendMessage(SoundFile & " " & SoundIndex)
+            SoundBools(SoundIndex) = False
         End Function
 
         Public Sub StopSounds(Optional SoundIndex() As Integer = Nothing)
             If SoundIndex Is Nothing Then
-                For I As Integer = 0 To SoundIndex.Length - 1
-                    If SoundPlayers(SoundIndex(I)).Active = True Then
+                For I As Integer = 0 To SoundBools.Length - 1
+                    If SoundBools(I) Then
                         SoundPlayers(SoundIndex(I)).Stopp()
                     End If
                 Next
             Else
                 For I As Integer = 0 To SoundIndex.Length - 1
-                    If SoundPlayers(SoundIndex(I)).Active = True Then
+                    If SoundBools(SoundIndex(I)) Then
                         SoundPlayers(SoundIndex(I)).Stopp()
                     End If
                 Next
@@ -2627,8 +2618,7 @@ FoundPlayer:
 
     Public Class SoundController
 
-        Private MySound As SoundTask
-        Private Stask As Task
+        Private MySound As Integer
         Private Path As String
         Private Controller As String
         Public Event SoundStarted()
@@ -2637,15 +2627,15 @@ FoundPlayer:
         'Private SoundStopped As TaskCompletionSource(Of Boolean)
 
         Public Sub New(Source As String, Optional FormName As String = "")
-            MySound.Index = -1
+            MySound = -1
             Path = Source
             Controller = FormName
         End Sub
 
         Public Async Function StopSound() As Task
             If IsActive() Then
-                AudioControl.SoundPlayer.StopSounds({MySound.Index})
-                Await Stask
+                AudioControl.SoundPlayer.StopSounds({MySound})
+                Await AudioControl.SoundPlayer.SoundTasks(MySound)
             End If
         End Function
 
@@ -2654,24 +2644,21 @@ FoundPlayer:
                 Await StopSound()
                 Await Task.Delay(10)
             End If
-            Stask = PlaySoundFile(SoundFile)
-            Await Stask
+            Await PlaySoundFile(SoundFile)
         End Function
 
         Public Function IsActive() As Boolean
-            If MySound.Index > -1 Then
-                Return True
-            Else
-                Return False
-            End If
+            Return MySound > -1
         End Function
 
         Private Async Function PlaySoundFile(SoundFile As String) As Task
             MySound = AudioControl.SoundPlayer.PlaySound(SoundFile, Path, Controller)
-            RaiseEvent SoundStarted()
-            Await MySound.Player
-            MySound.Index = -1
-            RaiseEvent SoundStopped()
+            If MySound > -1 Then
+                RaiseEvent SoundStarted()
+                Await AudioControl.SoundPlayer.SoundTasks(MySound)
+                RaiseEvent SoundStopped()
+                MySound = -1
+            End If
         End Function
 
     End Class
@@ -2923,14 +2910,13 @@ FoundPlayer:
         Public Access As Mutex
         Public Current As String
         Private AsyncTrigg As Boolean
+        Private KeepFile As Boolean = False
         Private AsyncSigg As TaskCompletionSource(Of Boolean)
         Public Event Started()
         Public Event Stopped()
         Public Event Paused()
 
-
-
-        Public Sub New(SourceName As String, SourcePath As String)
+        Public Sub New(SourceName As String, Optional SourcePath As String = "", Optional IKeepFile As Boolean = False)
             Access = New Mutex
             Access.WaitOne()
             Name = SourceName
@@ -2939,19 +2925,26 @@ FoundPlayer:
             Pause = False
             Access.ReleaseMutex()
             AsyncTrigg = False
+            KeepFile = IKeepFile
             AddHandler OBS.MediaEnded, AddressOf mediastopped
             AddHandler OBS.MediaStarted, AddressOf mediastarted
             AddHandler OBS.MediaPaused, AddressOf mediapaused
-
         End Sub
 
         Private Sub mediastopped(sender As OBSWebsocket, medianame As String, mediatype As String)
             If medianame = Name Then
-                Active = False
-                Pause = False
-                ResetMediaSource(Name)
-                RaiseEvent Stopped()
-                If AsyncTrigg = True Then AsyncSigg.SetResult(False)
+                'Access.WaitOne()
+                If AsyncTrigg = True Then
+                    AsyncSigg.SetResult(False)
+                Else
+                    'Access.WaitOne()
+                    If KeepFile = False Then ResetMediaSource(Name)
+                    Active = False
+                    Pause = False
+                    RaiseEvent Stopped()
+                    'Access.ReleaseMutex()
+                End If
+                'Access.ReleaseMutex()
             End If
         End Sub
 
@@ -2974,10 +2967,10 @@ FoundPlayer:
             Access.WaitOne()
             If Active = True Then
                 Current = Replace(MediaSourceChange(Name, 3), Path, "")
-                If InStr(Current, "(RND) ") Then
-                    Dim SplitString() As String = Current.Split("\")
-                    Current = SplitString(0)
-                End If
+                'If InStr(Current, "(RND) ") Then
+                '    Dim SplitString() As String = Current.Split("\")
+                '    Current = SplitString(0)
+                'End If
             End If
             Access.ReleaseMutex()
         End Sub
@@ -2985,57 +2978,243 @@ FoundPlayer:
         Public Sub Pausing()
             Access.WaitOne()
             If Pause = True Then
-                Current = Replace(MediaSourceChange(Name, 1), Path, "")
-                If InStr(Current, "(RND) ") Then
-                    Dim SplitString() As String = Current.Split("\")
-                    Current = SplitString(0)
-                End If
+                If Path <> "" Then Current = Replace(MediaSourceChange(Name, 1), Path, "")
+                'If InStr(Current, "(RND) ") Then
+                '    Dim SplitString() As String = Current.Split("\")
+                '    Current = SplitString(0)
+                'End If
             Else
-                Current = Replace(MediaSourceChange(Name, 2), Path, "")
-                If InStr(Current, "(RND) ") Then
-                    Dim SplitString() As String = Current.Split("\")
-                    Current = SplitString(0)
-                End If
+                If Path <> "" Then Current = Replace(MediaSourceChange(Name, 2), Path, "")
+                'If InStr(Current, "(RND) ") Then
+                '    Dim SplitString() As String = Current.Split("\")
+                '    Current = SplitString(0)
+                'End If
             End If
             Access.ReleaseMutex()
         End Sub
 
         Public Async Function PlayAsync(FileName As String) As Task
             Access.WaitOne()
+            Active = True
             AsyncTrigg = True
             AsyncSigg = New TaskCompletionSource(Of Boolean)
-            Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
+            If Path <> "" Then
+                Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
+            Else
+                Current = MediaSourceChange(Name, , FileName)
+            End If
             If InStr(Current, "(RND) ") Then
                 Dim SplitString() As String = Current.Split("\")
                 Current = SplitString(0)
             End If
             Access.ReleaseMutex()
             AsyncTrigg = Await AsyncSigg.Task
+            'Access.WaitOne()
+            'Await Task.Delay(10)
+            If KeepFile = False Then ResetMediaSource(Name)
+            Await Task.Delay(10)
+            Pause = False
+            Active = False
+            RaiseEvent Stopped()
+            'Access.ReleaseMutex()
         End Function
 
 
         Public Sub Play(FileName As String)
             If AsyncTrigg = True Then AsyncSigg.SetResult(False)
             Access.WaitOne()
-            Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
-            If InStr(Current, "(RND) ") Then
-                Dim SplitString() As String = Current.Split("\")
-                Current = SplitString(0)
+            If Path <> "" Then
+                Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
+            Else
+                Current = MediaSourceChange(Name, , FileName)
             End If
+            'If InStr(Current, "(RND) ") Then
+            '    Dim SplitString() As String = Current.Split("\")
+            '    Current = SplitString(0)
+            'End If
             Access.ReleaseMutex()
         End Sub
 
     End Class
 
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    '/////////////////////////////////////////////////////MEDIA PLAYERS///////////////////////////////////////////////////////
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    Public Class VideoPlayer
+        Private Player As AudioPlayer
+        Private Audio As SoundController
+        Private SceneName As String
+        Private FileList() As String
+        Private LoopDuration As Integer
+        Private HoldDuration As Integer
+        Private EndMedia As TaskCompletionSource(Of Boolean)
+        Private MediaActive As Boolean = False
+        Private SoundFile As String
+        Private GroupName As String
+        Private StayVisible As Boolean
+
+        Public Sub New(SourceName As String, Scene As String,
+                       Optional Sound As String = "",
+                       Optional InputFileList() As String = Nothing,
+                       Optional LoopTime As Integer = 0,
+                       Optional HoldTime As Integer = False,
+                       Optional InfiniteLoop As Boolean = False,
+                       Optional Group As String = "",
+                       Optional SFXsource As String = "")
+
+            Player = New AudioPlayer(SourceName, , True)
+            GroupName = Group
+
+            If SFXsource = "" Then
+                Audio = New SoundController(SoundSource.SFX, SourceName)
+            Else
+                Audio = New SoundController(SFXsource, SourceName)
+            End If
+
+            AddHandler Player.Stopped, AddressOf Hide
+            If InputFileList IsNot Nothing Then
+                FileList = InputFileList
+            Else
+                FileList = {}
+            End If
+            SceneName = Scene
+            SoundFile = Sound
+            If InfiniteLoop Then
+                StayVisible = True
+            Else
+                LoopDuration = LoopTime
+                HoldDuration = HoldTime
+            End If
+
+            MediaActive = False
+            'SetSourceVisibility(Player.Name, SceneName, False, True)
+        End Sub
+
+        Public Sub Hide()
+            Dim StopThread As New Thread(
+                Sub()
+                    If GroupName = "" Then
+                        SetSourceVisibility(Player.Name, SceneName, False, True)
+                    Else
+                        SetSourceVisibility(GroupName, SceneName, False, True)
+                    End If
+                    If Audio.IsActive Then Dim StopTask As Task = Audio.StopSound()
+                    If MediaActive = True Then EndMedia.SetResult(False)
+                End Sub)
+            StopThread.Start()
+        End Sub
+
+        Public Function IsActive() As Boolean
+            Return MediaActive
+        End Function
+        Public Async Function Show(Optional FileIndex As Integer = -1,
+                                   Optional CustomSound As String = "",
+                                   Optional WaitForSound As Boolean = False,
+                                   Optional CustomLoop As Integer = -1,
+                                   Optional CustomHold As Integer = -1) As Task
+
+            If MediaActive = False Then
+                Dim EndMe As Boolean = False
+                MediaActive = True
+                EndMedia = New TaskCompletionSource(Of Boolean)
+                Dim SoundTask As Task
+                If FileIndex > -1 And FileIndex < FileList.Length Then
+                    MediaSourceChange(Player.Name, , FileList(FileIndex))
+                End If
+                If GroupName = "" Then
+                    SetSourceVisibility(Player.Name, SceneName, True, True)
+                Else
+                    SetSourceVisibility(GroupName, SceneName, True, True)
+                End If
+                If CustomSound <> "" Or SoundFile <> "" Then
+                    If CustomSound = "" Then
+                        SoundTask = Audio.PlaySound(SoundFile)
+                    Else
+                        SoundTask = Audio.PlaySound(CustomSound)
+                    End If
+                End If
+                If StayVisible = False Then
+                    If LoopDuration > 0 Or CustomLoop > -1 Then
+                        EndMe = True
+                        If CustomLoop > -1 Then
+                            Await Task.Delay(CustomLoop)
+                        Else
+                            Await Task.Delay(LoopDuration)
+                        End If
+                    End If
+                    If HoldDuration > 0 Or CustomHold > -1 Then
+                        EndMe = True
+                        Player.Pausing()
+                        If CustomHold > -1 Then
+                            Await Task.Delay(CustomHold)
+                        Else
+                            Await Task.Delay(HoldDuration)
+                        End If
+                    End If
+                    If WaitForSound = True Then EndMe = True
+                End If
+                If EndMe Then
+                    If WaitForSound = True And SoundTask IsNot Nothing Then
+                        'If SoundTask.Status = TaskStatus.Running Then
+                        Await SoundTask
+                        'End If
+                    End If
+                    MediaActive = False
+                    If GroupName = "" Then
+                        SetSourceVisibility(Player.Name, SceneName, False, True)
+                    Else
+                        SetSourceVisibility(GroupName, SceneName, False, True)
+                    End If
+                Else
+                    If StayVisible = False Then
+                        MediaActive = Await EndMedia.Task
+                    End If
+                End If
+            End If
+        End Function
+    End Class
+
+    Public Class OBSevents
+        Public Hats As VideoPlayer
+        Public SoundAlert As VideoPlayer
+
+        Public Sub New()
+            Hats = New VideoPlayer("EmbersHats", "Events and Alerts", "Hats.wav")
+            SoundAlert = New VideoPlayer("Sound Alert Diplay", "Events and Alerts",,, 4000,,, "SoundAlert")
+        End Sub
+
+        Public Sub PlayHats()
+            Dim HatsTask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Await Hats.Show()
+                Await Task.Delay(500)
+            End Function)
+            Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, HatsTask, "Hats Hats Hats")
+        End Sub
+
+        Public Sub PlaySoundAlert(Username As String, Optional SoundFile As String = "")
+            Dim AlertTask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                If SoundFile = "" Then
+                    SoundFile = AudioControl.GetRandomPublicSoundFile
+                Else
+                    SoundFile = AudioControl.GetSoundFileDataByName(SoundFile)
+                End If
+                SetOBSsourceText("Sound Alert Text", Username & " PLAYED:" & vbCrLf & Replace(SoundFile, ".wav", ""))
+                Await SoundAlert.Show(, SoundFile, True)
+                Await Task.Delay(500)
+            End Function)
+            Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, AlertTask, "Sound Alert")
+        End Sub
 
 
+    End Class
 
 
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     '/////////////////////////////////////////////////////RESOURCE MANAGER////////////////////////////////////////////////////
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    'Public MyReourceManager As ResourceManager
 
     Public Structure ResourceIDs
         Public Const SoundPlayer As Integer = 0

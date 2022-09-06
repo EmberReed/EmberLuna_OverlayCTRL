@@ -5,13 +5,16 @@ Public Class SceneSelector
     Private SceneFile As String = ""
     Private Loaded As Boolean = False
     Private Sub SceneSelector_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ToggleVolumeControls(0)
         SourceWindow.SCENE_SELECTOR.BackColor = ActiveBUTT
         AddHandler OBS.SceneChanged, AddressOf RemoteDisplayChange
         AddHandler MySceneCollection.ScenesUpdated, AddressOf UpdateSceneListBox
+        AddHandler AudioControl.MyMixer.MixerChannelChanged, AddressOf ImportSingleR
         UpdateSceneListBox(MySceneCollection.GetSceneList)
         BuildOutputSelection()
         DisplayChange(CurrentScene.Name)
         UpdateScene()
+        ImportAll()
         Loaded = True
     End Sub
 
@@ -34,8 +37,8 @@ Public Class SceneSelector
         OutputSelection.Add("Luna's PC")
         OutputSelection.Add("Ember's Cam")
         OutputSelection.Add("Luna's Cam")
-        OutputSelection.Add("Aux In 1")
-        OutputSelection.Add("Aux In 2")
+        OutputSelection.Add("Aux In")
+        OutputSelection.Add("Gaming Console")
         OutputSelection.Add("Aux Cam 1")
         OutputSelection.Add("Aux Cam 2")
         EscreenSelect.Items.AddRange(OutputSelection.ToArray)
@@ -45,6 +48,7 @@ Public Class SceneSelector
     End Sub
 
     Private Sub SceneSelector_Closing(sender As Object, e As EventArgs) Handles MyBase.Closing
+        RemoveHandler AudioControl.MyMixer.MixerChannelChanged, AddressOf ImportSingleR
         RemoveHandler OBS.SceneChanged, AddressOf RemoteDisplayChange
         SourceWindow.SCENE_SELECTOR.BackColor = StandardBUTT
     End Sub
@@ -132,10 +136,22 @@ TryAgain:
             'SendMessage("SCREEN2")
             Lscreen.BackColor = ActiveBUTT
             Escreen.BackColor = StandardBUTT
+            LunaPIP.BackColor = StandardBUTT
+            If PIPenabled Then
+                EmberPIP.BackColor = ActiveBUTT
+            Else
+                EmberPIP.BackColor = StandardBUTT
+            End If
         Else
             'SendMessage("SCREEN1")
             Lscreen.BackColor = StandardBUTT
             Escreen.BackColor = ActiveBUTT
+            EmberPIP.BackColor = StandardBUTT
+            If PIPenabled Then
+                LunaPIP.BackColor = ActiveBUTT
+            Else
+                LunaPIP.BackColor = StandardBUTT
+            End If
         End If
 
         If LunaAwayB = True And Screen2AwayMode = True Then
@@ -475,7 +491,28 @@ TryAgain:
             UpdateScene()
         End If
     End Sub
-
+    Private Sub EmberPIP_Click(sender As Object, e As EventArgs) Handles EmberPIP.Click
+        If SceneChangeInProgress = False And Loaded = True Then
+            If PIPenabled = True Then
+                PIPenabled = False
+            Else
+                PIPenabled = True
+            End If
+            Call DisplayChange(CurrentSceneName)
+            UpdateScene()
+        End If
+    End Sub
+    Private Sub LunaPIP_Click(sender As Object, e As EventArgs) Handles LunaPIP.Click
+        If SceneChangeInProgress = False And Loaded = True Then
+            If PIPenabled = True Then
+                PIPenabled = False
+            Else
+                PIPenabled = True
+            End If
+            Call DisplayChange(CurrentSceneName)
+            UpdateScene()
+        End If
+    End Sub
     Private Sub Screen1Away_Click(sender As Object, e As EventArgs) Handles EscreenAway.Click
         If SceneChangeInProgress = False And Loaded = True Then
             If Screen1AwayMode = True Then
@@ -624,6 +661,7 @@ TryAgain:
 
     Private Async Function ApplySceneFile() As Task
         'Enabled = False
+        CurrentSceneLabel.Text = SceneFile
         Await MySceneCollection.SceneCollection(MySceneCollection.IndexByName(SceneFile)).ApplySceneSettings()
         DisplayChange(CurrentScene.Name)
         'Enabled = True
@@ -808,14 +846,21 @@ TryAgain:
         Dim MyChannel As GroupBox = Controls("GroupBox" & ChannelIndex + 1)
         Dim MydB As NumericUpDown = MyChannel.Controls("NumericUpDown" & ChannelIndex + 1)
         Dim MyMute As Windows.Forms.Button = MyChannel.Controls("Button" & ChannelIndex + 1)
+        Dim MyMon As Windows.Forms.Button = MyChannel.Controls("Mon" & ChannelIndex + 1)
         MydB.Value = Round(100 + AudioControl.MyMixer.Channels(ChannelIndex).Level, 1)
         If AudioControl.MyMixer.Channels(ChannelIndex).Muted Then
-            MyMute.Text = "UNMUTE"
+            'MyMute.Text = "UNMUTE"
             MyMute.BackColor = ActiveBUTT
         Else
-            MyMute.Text = "MUTE"
+            'MyMute.Text = "MUTE"
             MyMute.BackColor = StandardBUTT
         End If
+        If AudioControl.MyMixer.Channels(ChannelIndex).Monitored Then
+            MyMon.BackColor = ActiveBUTT
+        Else
+            MyMon.BackColor = StandardBUTT
+        End If
+
         If UpdateMatrix Then UpdateMuteMatrix()
     End Sub
 
@@ -840,35 +885,23 @@ TryAgain:
             LUNAmute.BackColor = StandardBUTT
         End If
         If AudioControl.MyMixer.Channels(AudioChannelIDs.EmberPC).Muted = True And
-            AudioControl.MyMixer.Channels(AudioChannelIDs.LunaPC).Muted = True Then
+            AudioControl.MyMixer.Channels(AudioChannelIDs.LunaPC).Muted = True And
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Console).Muted = True Then
             PCmute.BackColor = ActiveBUTT
         Else
             PCmute.BackColor = StandardBUTT
         End If
         If AudioControl.MyMixer.Channels(AudioChannelIDs.LunaMic).Muted = True And
-            AudioControl.MyMixer.Channels(AudioChannelIDs.EmberMic).Muted = True Then
+            AudioControl.MyMixer.Channels(AudioChannelIDs.EmberMic).Muted = True And
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Discord).Muted = True Then
             MICmute.BackColor = ActiveBUTT
         Else
             MICmute.BackColor = StandardBUTT
         End If
     End Sub
 
-    Private Sub OBSvolumeControls_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ImportAll()
-        AddHandler AudioControl.MyMixer.MixerChannelChanged, AddressOf ImportSingleR
-    End Sub
 
-    Private Sub OBSvolumeControls_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
-        RemoveHandler AudioControl.MyMixer.MixerChannelChanged, AddressOf ImportSingleR
-    End Sub
 
-    Private Sub OBSvolumeControls_Shown(sender As Object, e As EventArgs) Handles MyBase.Shown
-        SourceWindow.Button11.BackColor = ActiveBUTT
-    End Sub
-
-    Private Sub OBSvolumeControls_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
-        SourceWindow.Button11.BackColor = StandardBUTT
-    End Sub
 
     Private Sub NumericUpDown1_ValueChanged(sender As Object, e As EventArgs) Handles NumericUpDown1.ValueChanged
         Number_Output_toSlider(sender)
@@ -940,6 +973,16 @@ TryAgain:
         ToolTip1.SetToolTip(sender, Control_dB(e, sender, True) & "dB")
     End Sub
 
+    Private Sub NumericUpDown8_ValueChanged(sender As Object, e As EventArgs) Handles NumericUpDown8.ValueChanged
+        Number_Output_toSlider(sender)
+    End Sub
+    Private Sub ProgressBar8_Click(sender As Object, e As MouseEventArgs) Handles ProgressBar8.MouseClick
+        Control_Click_todB(e, sender)
+    End Sub
+    Private Sub ProgressBar8_MouseHover(sender As Object, e As MouseEventArgs) Handles ProgressBar8.MouseMove
+        ToolTip1.SetToolTip(sender, Control_dB(e, sender, True) & "dB")
+    End Sub
+
     Private Function Control_dB(MousePOS As MouseEventArgs, Control As Windows.Forms.ProgressBar, Optional dBout As Boolean = False)
         Dim Xpercent As Double = MousePOS.X / Control.Size.Width
         Xpercent = 100 + (50 * Log10(Xpercent))
@@ -958,7 +1001,7 @@ TryAgain:
         Dim ValueOut As Label = MyChannel.Controls("Label" & ControlInt)
         ValueOut.Text = AudioControl.MyMixer.Channels(ControlInt - 1).Name & " (" & Control.Value - 100 & "dB)"
         NumOut.Value = 100 * (10 ^ ((Control.Value - 100) / 50))
-        If SourceWindow.Button11.BackColor = ActiveBUTT Then
+        If Loaded Then
             AudioControl.MyMixer.Channels(ControlInt - 1).ApplySettings(Control.Value - 100)
         End If
     End Sub
@@ -975,27 +1018,59 @@ TryAgain:
         Dim ControlInt As Integer = Replace(Muter.Name, "Button", "")
         AudioControl.MyMixer.ToggleMute(ControlInt - 1)
     End Sub
+    Private Sub MonClick(Muter As Windows.Forms.Button)
+        Dim ControlInt As Integer = Replace(Muter.Name, "Mon", "")
+        AudioControl.MyMixer.ToggleMon(ControlInt - 1)
+    End Sub
 
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click, DeleteButt.Click
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         MuteClick(sender)
     End Sub
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button5.Click
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
         MuteClick(sender)
     End Sub
-    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button4.Click
+    Private Sub Button3_Click(sender As Object, e As EventArgs) Handles Button3.Click
         MuteClick(sender)
     End Sub
-    Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click, NewButt.Click
+    Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
         MuteClick(sender)
     End Sub
-    Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click, ResetButt.Click
+    Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click
         MuteClick(sender)
     End Sub
     Private Sub Button6_Click(sender As Object, e As EventArgs) Handles Button6.Click
         MuteClick(sender)
     End Sub
-    Private Sub Button7_Click(sender As Object, e As EventArgs) Handles Button7.Click, CamsBUTT.Click
+    Private Sub Button7_Click(sender As Object, e As EventArgs) Handles Button7.Click
         MuteClick(sender)
+    End Sub
+    Private Sub Button8_Click(sender As Object, e As EventArgs) Handles Button8.Click
+        MuteClick(sender)
+    End Sub
+
+    Private Sub Mon1_Click(sender As Object, e As EventArgs) Handles Mon1.Click
+        MonClick(sender)
+    End Sub
+    Private Sub Mon2_Click(sender As Object, e As EventArgs) Handles Mon2.Click
+        MonClick(sender)
+    End Sub
+    Private Sub Mon3_Click(sender As Object, e As EventArgs) Handles Mon3.Click
+        MonClick(sender)
+    End Sub
+    Private Sub Mon4_Click(sender As Object, e As EventArgs) Handles Mon4.Click
+        MonClick(sender)
+    End Sub
+    Private Sub Mon5_Click(sender As Object, e As EventArgs) Handles Mon5.Click
+        MonClick(sender)
+    End Sub
+    Private Sub Mon6_Click(sender As Object, e As EventArgs) Handles Mon6.Click
+        MonClick(sender)
+    End Sub
+    Private Sub Mon7_Click(sender As Object, e As EventArgs) Handles Mon7.Click
+        MonClick(sender)
+    End Sub
+    Private Sub Mon8_Click(sender As Object, e As EventArgs) Handles Mon8.Click
+        MonClick(sender)
     End Sub
 
     Private Sub EMBERmute_Click(sender As Object, e As EventArgs) Handles EMBERmute.Click
@@ -1034,36 +1109,76 @@ TryAgain:
         If PCmute.BackColor = ActiveBUTT Then
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaPC).Muted = False
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberPC).Muted = False
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Console).Muted = False
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaPC).ApplySettings()
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberPC).ApplySettings()
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Console).ApplySettings()
         Else
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaPC).Muted = True
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberPC).Muted = True
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Console).Muted = True
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaPC).ApplySettings()
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberPC).ApplySettings()
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Console).ApplySettings()
         End If
         ImportSingle(AudioChannelIDs.LunaPC)
-        ImportSingle(AudioChannelIDs.EmberPC, True)
+        ImportSingle(AudioChannelIDs.EmberPC)
+        ImportSingle(AudioChannelIDs.Console, True)
     End Sub
 
     Private Sub MICmute_Click(sender As Object, e As EventArgs) Handles MICmute.Click
         If MICmute.BackColor = ActiveBUTT Then
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberMic).Muted = False
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaMic).Muted = False
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Discord).Muted = False
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberMic).ApplySettings()
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaMic).ApplySettings()
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Discord).ApplySettings()
         Else
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberMic).Muted = True
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaMic).Muted = True
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Discord).Muted = True
             AudioControl.MyMixer.Channels(AudioChannelIDs.EmberMic).ApplySettings()
             AudioControl.MyMixer.Channels(AudioChannelIDs.LunaMic).ApplySettings()
+            AudioControl.MyMixer.Channels(AudioChannelIDs.Discord).ApplySettings()
         End If
         ImportSingle(AudioChannelIDs.EmberMic)
-        ImportSingle(AudioChannelIDs.LunaMic, True)
+        ImportSingle(AudioChannelIDs.LunaMic)
+        ImportSingle(AudioChannelIDs.Discord, True)
+    End Sub
+
+    Private MixerBool As Boolean = False
+    Private Sub ToggleVolumeControls(Optional EnforceValue As Integer = -1)
+        If EnforceValue > -1 Then
+            If EnforceValue = 0 Then
+                MixerBool = False
+            Else
+                MixerBool = True
+            End If
+        Else
+            If MixerBool Then
+                MixerBool = False
+            Else
+                MixerBool = True
+            End If
+        End If
+
+        If MixerBool = True Then
+            MaximumSize = New Size(2000, 900)
+            MinimumSize = New Size(794, 900)
+            ShowMixer.Text = "HIDE VOLUME CONTROLS"
+            ShowMixer.BackColor = ActiveBUTT
+        Else
+            MaximumSize = New Size(2000, 498)
+            MinimumSize = New Size(794, 498)
+            ShowMixer.Text = "SHOW VOLUME CONTROLS"
+            ShowMixer.BackColor = StandardBUTT
+        End If
     End Sub
 
 
 
-
-
+    Private Sub ShowMixer_Click(sender As Object, e As EventArgs) Handles ShowMixer.Click
+        ToggleVolumeControls()
+    End Sub
 End Class

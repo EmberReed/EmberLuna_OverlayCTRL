@@ -432,7 +432,9 @@ TryAgain:
     End Sub
 
     Private Sub E_RocKnStonE_Click(sender As Object, e As EventArgs) Handles E_RocKnStonE.Click
-        Ember.ChangeMood(Ember.Mood.RockandStone, 2800)
+        'Ember.ChangeMood(Ember.Mood.RockandStone, 2800)
+        'SendMessage(AudioControl.GetSoundFileDataByName("Rock And Stone"))
+        Ember.Says("ROCK AND STONE", Ember.Mood.RockandStone, "Rock And Stone",, 2800)
     End Sub
 
     Private Sub OBScharacters_Shown(sender As Object, e As EventArgs) Handles MyBase.Shown

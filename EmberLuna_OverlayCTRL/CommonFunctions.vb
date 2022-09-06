@@ -31,6 +31,7 @@ Public Module CommonFunctions
     Public WithEvents IRC As IrcClient
     Public WithEvents MyResourceManager As ResourceManager
     Public WithEvents MySceneCollection As SceneCollection
+    Public WithEvents MyOBSevents As OBSevents
 
     'COLORS
     Public ActiveBUTT As Color = Color.FromArgb(255, 255, 82, 0)

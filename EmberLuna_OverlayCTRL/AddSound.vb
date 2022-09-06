@@ -5,35 +5,13 @@ Public Class AddSound
 
     Public SoundIndex As Integer = -1, CatIndex As Integer = -1, ButtonIndex As Integer = -1, ButtData As SoundButt
     Private WithEvents MySound As SoundController
-    'Private Async Function PlaySoundFile(SoundFile As String) As Task
-    '    'If MySound.Index > -1 Then
-    '    ' AudioControl.SoundPlayer.StopSounds({MySound.Index})
-    '    'End If
-    '    'STOPBUTT.BackColor = ActiveBUTT
-    '    Button4.BackgroundImage = My.Resources._STOP
-    '    Button4.BackColor = ActiveBUTT
-
-    '    Await MySound.PlaySound(SoundFile)
-    '    'MySound = AudioControl.SoundPlayer.PlaySound(SoundFile, SoundSource.SFX)
-    '    'Await MySound.Player
-    '    'MySound.Index = -1
-
-    '    Button4.BackgroundImage = My.Resources.play
-    '    Button4.BackColor = StandardBUTT
-    '    'STOPBUTT.BackColor = StandardBUTT
-    'End Function
 
     Private Sub OBSSoundEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        'If CatIndex = -1 Or SoundIndex = -1 Then
-        'Close()
-        'Else
         MySound = New SoundController(SoundSource.SFX, "Sound Editor")
         SetDrawing(Me.Handle, WM_SETREDRAW, False, 0)
         For i As Integer = 0 To AudioControl.SoundList.Count - 1
             SoundPicker.Items.Add(AudioControl.SoundList(i))
         Next
-        'AddHandler AudioControl.SoundPlayer.Started, AddressOf SoundPlayerActive
-        'AddHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundPlayerInActive
         If SoundIndex = -1 Then
             ButtData.InitializeSoundFile()
         Else
@@ -46,24 +24,15 @@ Public Class AddSound
     End Sub
 
     Private Sub OBSSoundEditor_Closing(sender As Object, e As FormClosingEventArgs) Handles MyBase.Closing
-        'RemoveHandler AudioControl.SoundPlayer.Started, AddressOf SoundPlayerActive
-        'RemoveHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundPlayerInActive
     End Sub
 
     Private Sub SoundPlayerActive() Handles MySound.SoundStarted
-        'BeginInvoke(
-        '    Sub()
         Button4.BackgroundImage = My.Resources._STOP
         Button4.BackColor = ActiveBUTT
-        'End Sub)
     End Sub
     Private Sub SoundPlayerInActive() Handles MySound.SoundStopped
-        'tryagain:
-        '        BeginInvoke(
-        '            Sub()
         Button4.BackgroundImage = My.Resources.play
         Button4.BackColor = StandardBUTT
-        'End Sub)
     End Sub
 
     Private Sub ReadButtData()
@@ -113,15 +82,6 @@ Public Class AddSound
 
     Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click
         TextBoxLineRemover(SoundListBox)
-        'If SoundListBox.Text <> "" Then
-        '    If InStr(SoundListBox.Text, vbCrLf) <> 0 Then
-        '        Dim InputSTring() As String = Split(SoundListBox.Text, vbCrLf)
-        '        Array.Resize(InputSTring, InputSTring.Length - 1)
-        '        SoundListBox.Text = String.Join(vbCrLf, InputSTring)
-        '    Else
-        '        SoundListBox.Text = ""
-        '    End If
-        'End If
     End Sub
 
     Private Sub SoundName_TextChanged(sender As Object, e As EventArgs) Handles SoundName.TextChanged
