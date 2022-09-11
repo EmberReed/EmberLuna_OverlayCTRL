@@ -147,12 +147,17 @@ Public Module CommonFunctions
         Return InputList(RandomInt(0, InputList.Count - 1))
     End Function
 
-    Public Function RandomMessage(UserName As String, MessageType As String) As String
+    Public Function RandomMessage(UserName As String, MessageType As String, Optional Amount As String = "") As String
         Dim OutputString As String = RandomString(MessageType)
+
         OutputString = Replace(OutputString, "[user]", UserName)
+
+        If Amount <> "" Then OutputString = Replace(OutputString, "[amount]", Amount)
+
         If InStr(OutputString, "[food]") <> 0 Then
             OutputString = Replace(OutputString, "[food]", RandomString("Food"))
         End If
+
         Return OutputString
     End Function
 

@@ -19,23 +19,26 @@ Public Module OBSfunctions
 
     Public Function OBSstreamState() As Boolean
         OBSmutex.WaitOne()
-        Dim MyStatus As OutputStatus = OBS.GetStreamingStatus
+        Dim MyStatus As OutputStatus = OBS.GetStreamStatus
         OBSmutex.ReleaseMutex()
-        Return MyStatus.IsStreaming
+        Return MyStatus.IsActive
     End Function
 
     Public Sub SetOBSsourceText(SourceName As String, TextData As String, Optional BypassMutex As Boolean = False)
         If BypassMutex = False Then OBSmutex.WaitOne()
-        Dim SourceSettings As Newtonsoft.Json.Linq.JObject = OBS.GetSourceSettings(SourceName).Settings
-        SourceSettings.Property("text").Value = TextData
-        OBS.SetSourceSettings(SourceName, SourceSettings)
+        Dim InputSettings As InputSettings = OBS.GetInputSettings(SourceName)
+        'SourceSettings.
+        'Dim SourceSettings As Newtonsoft.Json.Linq.JObject = InputSettings.Settings
+        InputSettings.Settings.Property("text").Value = TextData
+        'InputSettings.Settings = SourceSettings
+        OBS.SetInputSettings(InputSettings)
         If BypassMutex = False Then OBSmutex.ReleaseMutex()
     End Sub
 
     Public Sub SetOBSscene(SceneString As String)
         OBSmutex.WaitOne()
         If OBS.IsConnected = True Then
-            OBS.SetCurrentScene(SceneString)
+            OBS.SetCurrentProgramScene(SceneString)
         End If
         OBSmutex.ReleaseMutex()
     End Sub
@@ -56,7 +59,7 @@ Public Module OBSfunctions
             Try
                 'SendMessage(OBSsocketString & " " & OBSsocketPassword)
                 OBS.Connect(OBSsocketString, OBSsocketPassword)
-                CurrentScene = OBS.GetCurrentScene
+                CurrentScene = OBS.GetCurrentProgramScene
                 OBSmutex.ReleaseMutex()
                 Return True
             Catch ex As Exception
@@ -80,9 +83,12 @@ Public Module OBSfunctions
         Dim ResetThread As Thread = New Thread(
             Sub()
                 OBSmutex.WaitOne()
-                Dim Settings As MediaSourceSettings = OBS.GetMediaSourceSettings(SourceName)
-                Settings.Media.LocalFile = ""
-                OBS.SetMediaSourceSettings(Settings)
+                Dim MySettings As InputSettings = OBS.GetInputSettings(SourceName)
+                MySettings.Settings.Property("local file").Value = ""
+                OBS.SetInputSettings(MySettings)
+                'Dim Settings As MediaSourceSettings = OBS.GetMediaSourceSettings(SourceName)
+                'Settings.Media.LocalFile = ""
+                'OBS.SetMediaSourceSettings(Settings)
                 OBSmutex.ReleaseMutex()
             End Sub)
         ResetThread.Start()
@@ -92,6 +98,26 @@ Public Module OBSfunctions
 
     Public Function MediaSourceChange(SourceName As String, Optional ActionType As Integer = 0, Optional FileName As String = "") As String
         OBSmutex.WaitOne()
+        Dim MySettings As InputSettings = OBS.GetInputSettings(SourceName)
+        Dim OutputFile As String = MySettings.Settings.Property("local file").Value
+
+        If FileName <> "" Then
+            MySettings.Settings.Property("local file").Value = FileName
+            OBS.SetInputSettings(MySettings)
+            OutputFile = FileName
+        Else
+            Select Case ActionType
+                Case = MediaFcode.Play
+                    OBS.TriggerMediaInputAction(SourceName, )
+                Case = MediaFcode.Pause
+                    OBS.PlayPauseMedia(SourceName, True)
+                Case = MediaFcode.Stopp
+                    OBS.StopMedia(SourceName)
+                Case = MediaFcode.Restart
+                    OBS.RestartMedia(SourceName)
+            End Select
+        End If
+
         Dim Settings As MediaSourceSettings = OBS.GetMediaSourceSettings(SourceName)
         Dim OutputFile As String = Settings.Media.LocalFile
         If FileName <> "" Then
@@ -706,33 +732,47 @@ Public Module OBSfunctions
             Else
                 MessageType = "Returns"
             End If
-            If CurrentScene.Name = "Center Screen Mode" Or CurrentScene.Name = "Dual Screen Mode" Then
-                Dim CoinFlip As Integer = RandomInt(0, 1)
-                If CoinFlip = 0 Then
-                    Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
-                Else
-                    Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
-                End If
-            Else
-                If EmberSpriteB = True And LunaSpriteB = True Then
-                    Dim CoinFlip As Integer = RandomInt(0, 1)
-                    If CoinFlip = 0 Then
-                        Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
-                    Else
-                        Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
-                    End If
-                Else
-                    If EmberSpriteB = True And LunaSpriteB = False Then Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
-                    If EmberSpriteB = False And LunaSpriteB = True Then Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
-                    If EmberSpriteB = False And LunaSpriteB = False Then
-                        IRC.SendChat(RandomMessage(UserName, MessageType))
-                        AudioControl.SoundPlayer.PlaySound(AudioControl.GetSoundFileDataByName("Hello"), SoundSource.SFX)
-                    End If
-                End If
-            End If
-            'End If
+
+            Select Case EmberOrLuna()
+                Case WhichSprite.Ember
+                    Dim Speak As Task = Ember.Says(RandomMessage(UserName, MessageType), Ember.Mood.Happy, "Hello")
+                Case WhichSprite.Luna
+                    Dim Speak As Task = Luna.Says(RandomMessage(UserName, MessageType), Luna.Mood.Cringe, "Hello")
+                Case WhichSprite.Neither
+                    IRC.SendChat(RandomMessage(UserName, MessageType))
+                    AudioControl.SoundPlayer.PlaySound(AudioControl.GetSoundFileDataByName("Hello"), SoundSource.SFX)
+            End Select
         End If
     End Sub
+
+    Public Structure WhichSprite
+        Public Const Neither = 0
+        Public Const Ember = 1
+        Public Const Luna = 2
+    End Structure
+
+    Public Function EmberOrLuna(Optional PreferAvailable As Boolean = True) As Integer
+        Dim EmberAvailable As Boolean = MyResourceManager.OKtoGO({ResourceIDs.EmberSprite})
+        Dim LunaAvailable As Boolean = MyResourceManager.OKtoGO({ResourceIDs.EmberSprite})
+
+        If CurrentScene.Name = "Center Screen Mode" Or
+            CurrentScene.Name = "Dual Screen Mode" Or
+            (EmberSpriteB = True And LunaSpriteB = True) Then
+            If PreferAvailable = False Or
+                (EmberAvailable And LunaAvailable) Or
+                (EmberAvailable = False And LunaAvailable = False) Then
+                Return RandomInt(WhichSprite.Ember, WhichSprite.Luna)
+            Else
+                If EmberAvailable Then Return WhichSprite.Ember
+                If LunaAvailable Then Return WhichSprite.Luna
+            End If
+        Else
+            If EmberSpriteB = True Then Return WhichSprite.Ember
+            If LunaSpriteB = True Then Return WhichSprite.Luna
+        End If
+        Return WhichSprite.Neither
+    End Function
+
 
     'Ember animations should be *0.6 for timing purposes
     'Luna anumations should be *0.95 for timing puroses
@@ -753,10 +793,11 @@ Public Module OBSfunctions
         Public Sparkle As String
         Public WTF As String
         Public OMG As String
-        Public Manic As String
         Public RockandStone As String
         Public Wibble As String
         Public DeepBreath As String
+        Public WooHoo As String
+        Public PooBrain As String
 
         Public Sub InitializeMoods(CharacterSelect As Boolean)
             If CharacterSelect = SpriteID.Ember Then
@@ -771,24 +812,26 @@ Public Module OBSfunctions
                 WTF = "wtf.avi"
                 OMG = ""
                 RockandStone = "rocknstone.avi"
-                Manic = ""
                 Wibble = ""
                 DeepBreath = ""
+                WooHoo = "woo2.avi"
+                PooBrain = ""
             Else
-                Neutral = "blink.mp4"
-                Happy = "smile.mp4"
+                Neutral = "blink.avi"
+                Happy = "manic.avi"
                 Sadge = "sad.mp4"
                 Angy = "angery.mp4"
                 Wumpy = "pissed.mp4"
-                Cringe = "cringe.mp4"
-                Wow = "wow.mp4"
+                Cringe = "cringe.avi"
+                Wow = "nowai.avi"
                 Sparkle = "sparkles.mp4"
                 WTF = ""
-                OMG = "omg.mp4"
+                OMG = "omg.avi"
                 RockandStone = ""
-                Manic = "manic.mp4"
-                Wibble = "wibble.mp4"
-                DeepBreath = "deepbreath.mp4"
+                Wibble = "wibble.avi"
+                DeepBreath = "deepbreath.avi"
+                WooHoo = "woo.avi"
+                PooBrain = "poobrain.avi"
             End If
         End Sub
 
@@ -846,61 +889,99 @@ Public Module OBSfunctions
             SoundPlayer = New SoundController(SoundSource.SFX, Name)
         End Sub
 
-        Public Sub Says(InputMessage As String,
+        Public Async Function Says(InputMessage As String,
                         Optional MessageMood As String = "",
                         Optional MessageSound As String = "",
                         Optional StaticMoodChange As Boolean = False,
-                        Optional MoodTimer As Integer = 0)
+                        Optional MoodTimer As Integer = 0,
+                        Optional BypassManager As Boolean = False,
+                        Optional Lefth As Integer = -1,
+                        Optional Righth As Integer = -1,
+                        Optional InterimMood As String = "") As Task
+
             Dim SpeechTask As Task(Of Task) = New Task(Of Task) _
             (Async Function() As Task
                  Dim TempMood As String
                  'SendMessage(CurrentMood)
                  If StaticMoodChange = False And MessageMood <> "" Then
                      TempMood = CurrentMood
-                     MessageMood = AppendMood(MessageMood)
+                     MessageMood = AppendMood(MessageMood, Lefth, Righth)
                      CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MessageMood)
                      RaiseEvent MoodChange(CurrentMood)
                  Else
                      TempMood = ""
                  End If
+
                  Dim MoodTask As Task = Nothing
+
                  If MoodTimer > 0 And TempMood <> "" Then
-                     MoodTask = DelayedSetMood(TempMood, MoodTimer)
+                     MoodTask = DelayedSetMood(TempMood, MoodTimer, InterimMood)
                  End If
+
                  Dim BubbleTask As Task = Bubble.SendMessage(InputMessage)
                  Dim SoundTask As Task = Nothing
+
                  If MessageSound <> "" Then
                      Await Task.Delay(250)
                      SoundTask = SoundPlayer.PlaySound(AudioControl.GetSoundFileDataByName(MessageSound))
                  End If
+
                  Await BubbleTask
+
                  If SoundTask IsNot Nothing Then Await SoundTask
+
                  If MoodTask IsNot Nothing Then
                      Await MoodTask
+                     If InterimMood <> "" And TempMood <> "" Then
+                         CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+                         RaiseEvent MoodChange(CurrentMood)
+                     End If
                  Else
                      If MessageMood <> "" And TempMood <> "" Then
                          CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
                          RaiseEvent MoodChange(CurrentMood)
                      End If
                  End If
+
                  Await Task.Delay(250)
+
              End Function)
 
-            Dim Speak As Task = MyResourceManager.RequestResource({ResourceID}, SpeechTask,
+            If BypassManager = False Then
+                Dim Speak As Task = MyResourceManager.RequestResource({ResourceID}, SpeechTask,
                                                                   Name & " Sprite Says: " & InputMessage)
-        End Sub
+            Else
+                SpeechTask.Start()
+                Await SpeechTask.Result
+            End If
 
-        Private Async Function DelayedSetMood(MoodString As String, Delay As Integer) As Task
-            Await Task.Delay(Delay)
-            CurrentMood = MediaSourceChange(SourceName, 1, MoodString)
-            RaiseEvent MoodChange(CurrentMood)
         End Function
 
-        Public Function MyMood() As String
+        Private Async Function DelayedSetMood(MoodString As String, Delay As Integer, InterimMood As String) As Task
+            Await Task.Delay(Delay)
+            If InterimMood = "" Then
+                CurrentMood = MediaSourceChange(SourceName, 1, MoodString)
+            Else
+                CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & InterimMood)
+            End If
+            RaiseEvent MoodChange(CurrentMood)
+
+        End Function
+
+        Public Function MyMood(Optional Input As String = "", Optional LeftH As Integer = -1, Optional RightH As Integer = -1) As String
             Dim OutputString As String = Replace(CurrentMood, Directory & FileHeader, "")
             Dim HandsInt As Integer = 0
-            If LeftHand = True Then HandsInt = HandsInt + 1
-            If RightHand = True Then HandsInt = HandsInt + 2
+            If LeftH > -1 Then
+                HandsInt = HandsInt + (LeftH * 1)
+            Else
+                If LeftHand = True Then HandsInt = HandsInt + 1
+            End If
+            If RightH > -1 Then
+                HandsInt = HandsInt + (RightH * 2)
+            Else
+                If RightHand = True Then HandsInt = HandsInt + 2
+            End If
+
             Select Case HandsInt
                 Case 0
                     Return OutputString
@@ -944,10 +1025,19 @@ Public Module OBSfunctions
         '    Await Task.Delay(250)
         'End Function
 
-        Private Function AppendMood(InputString As String) As String
+        Private Function AppendMood(InputString As String, Optional LeftH As Integer = -1, Optional RightH As Integer = -1) As String
             Dim HandsInt As Integer = 0
-            If LeftHand = True Then HandsInt = HandsInt + 1
-            If RightHand = True Then HandsInt = HandsInt + 2
+            If LeftH > -1 Then
+                HandsInt = HandsInt + (LeftH * 1)
+            Else
+                If LeftHand = True Then HandsInt = HandsInt + 1
+            End If
+            If RightH > -1 Then
+                HandsInt = HandsInt + (RightH * 2)
+            Else
+                If RightHand = True Then HandsInt = HandsInt + 2
+            End If
+
             Select Case HandsInt
                 Case 0
                     Return InputString
@@ -960,13 +1050,17 @@ Public Module OBSfunctions
             End Select
         End Function
 
-        Public Sub ChangeMood(MoodFileName As String, Optional duration As Integer = 0)
+        Public Sub ChangeMood(MoodFileName As String, Optional duration As Integer = 0, Optional BypassManager As Boolean = False)
             Dim MoodTask As Task(Of Task) = New Task(Of Task) _
             (Async Function() As Task
                  Await ChangeMoodAsync(MoodFileName, duration)
              End Function)
-            Dim RunMood As Task = MyResourceManager.RequestResource({ResourceID}, MoodTask,
+            If BypassManager Then
+                MoodTask.Start()
+            Else
+                Dim RunMood As Task = MyResourceManager.RequestResource({ResourceID}, MoodTask,
                                                                     Name & " Sprite Mood Change")
+            End If
         End Sub
 
         Private Async Function ChangeMoodAsync(MoodFileName As String, Optional duration As Integer = 0) As Task
@@ -3175,13 +3269,34 @@ FoundPlayer:
         End Function
     End Class
 
+    Public Structure UserEvents
+        Public Const NewFollower As Integer = 0
+        Public Const NewSubscriber As Integer = 1
+        Public Const NewDonation As Integer = 2
+        Public Const BitsDetected As Integer = 3
+        Public Const RaidDetected As Integer = 4
+        Public Const MaxEvents As Integer = 4
+    End Structure
+
     Public Class OBSevents
         Public Hats As VideoPlayer
         Public SoundAlert As VideoPlayer
+        Public UserAlert As VideoPlayer
+        Public Confetti As VideoPlayer
 
         Public Sub New()
+
+            Dim UserEventVidSources(0 To UserEvents.MaxEvents) As String
+            UserEventVidSources(UserEvents.NewFollower) = "\\StreamPC-V2\OBS Assets\Video\New Follower.mp4"
+            UserEventVidSources(UserEvents.NewSubscriber) = "\\StreamPC-V2\OBS Assets\Video\New Subscriber.mp4"
+            UserEventVidSources(UserEvents.NewDonation) = "\\StreamPC-V2\OBS Assets\Video\New Follower.mp4"
+            UserEventVidSources(UserEvents.BitsDetected) = "\\StreamPC-V2\OBS Assets\Video\New Follower.mp4"
+            UserEventVidSources(UserEvents.RaidDetected) = "\\StreamPC-V2\OBS Assets\Video\New Follower.mp4"
+
             Hats = New VideoPlayer("EmbersHats", "Events and Alerts", "Hats.wav")
             SoundAlert = New VideoPlayer("Sound Alert Diplay", "Events and Alerts",,, 4000,,, "SoundAlert")
+            UserAlert = New VideoPlayer("Viewer Generated Event", "Events and Alerts",, UserEventVidSources)
+            Confetti = New VideoPlayer("ConfettiBlast", "Events and Alerts", "Yay.wav")
         End Sub
 
         Public Sub PlayHats()
@@ -3208,7 +3323,84 @@ FoundPlayer:
             Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, AlertTask, "Sound Alert")
         End Sub
 
+        Public Sub ViewerEvent(EventType As Integer, Optional Username As String = "", Optional Amount As Double = 0)
+            Dim AlertTask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Dim Speaker1 As Task, Speaker2 As Task, Show As Task
+                Select Case EventType
+                    Case UserEvents.NewFollower
+                        Show = UserAlert.Show(EventType, "PKM Achievement.wav")
+                        Await Task.Delay(250)
+                        Dim Messenger1 As Integer = EmberOrLuna()
+                        Select Case Messenger1
+                            Case WhichSprite.Ember
+                                Speaker1 = Ember.Says("THANK YOU " & Username & "!!!", Ember.Mood.Happy,,,, True, 1, 0)
+                            Case WhichSprite.Luna
+                                Speaker1 = Luna.Says("THANK YOU " & Username & "!!!", Luna.Mood.Happy,,,, True)
+                        End Select
+                        Await Task.Delay(250)
+                        Select Case Messenger1
+                            Case WhichSprite.Ember
+                                If LunaSpriteB Then
+                                    Speaker2 = Luna.Says(RandomMessage(Username, "NewFollower"), Luna.Mood.Happy,,,, True)
+                                Else
+                                    Await Speaker1
+                                    Speaker1 = Nothing
+                                    Speaker2 = Ember.Says(RandomMessage(Username, "NewFollower"), Ember.Mood.Happy,,,, True, 1, 0)
+                                End If
+                            Case WhichSprite.Luna
+                                If EmberSpriteB Then
+                                    Speaker2 = Ember.Says(RandomMessage(Username, "NewFollower"), Ember.Mood.Happy,,,, True, 1, 0)
+                                Else
+                                    Await Speaker1
+                                    Speaker1 = Nothing
+                                    Speaker2 = Luna.Says(RandomMessage(Username, "NewFollower"), Luna.Mood.Happy,,,, True)
+                                End If
+                        End Select
+                        Await Show
+                        If Speaker1 IsNot Nothing Then Await Speaker1
+                        If Speaker2 IsNot Nothing Then Await Speaker2
+                    Case UserEvents.NewSubscriber
+                        Show = UserAlert.Show(EventType, "PKM Achievement 3.wav")
+                        Dim Celebrate As Task = Confetti.Show
+                        Await Task.Delay(250)
+                        Dim Messenger1 As Integer = EmberOrLuna()
+                        Select Case Messenger1
+                            Case WhichSprite.Ember
+                                Speaker1 = Ember.Says("THANK YOU SO MUCH " & Username & "!!!", Ember.Mood.Happy,,,, True, 1, 0)
+                            Case WhichSprite.Luna
+                                Speaker1 = Luna.Says("THANK YOU SO MUCH " & Username & "!!!", Luna.Mood.WooHoo,,, 2100, True,,, Luna.Mood.Happy)
+                        End Select
+                        Await Task.Delay(250)
+                        Select Case Messenger1
+                            Case WhichSprite.Ember
+                                If LunaSpriteB Then
+                                    Speaker2 = Luna.Says(RandomMessage(Username, "NewSubscriber"), Luna.Mood.WooHoo,,, 2100, True,,, Luna.Mood.Happy)
+                                Else
+                                    Await Speaker1
+                                    Speaker1 = Nothing
+                                    Speaker2 = Ember.Says(RandomMessage(Username, "NewSubscriber"), Ember.Mood.Happy,,,, True, 1, 0)
+                                End If
+                            Case WhichSprite.Luna
+                                If EmberSpriteB Then
+                                    Speaker2 = Ember.Says(RandomMessage(Username, "NewSubscriber"), Ember.Mood.Happy,,,, True, 1, 0)
+                                Else
+                                    Await Speaker1
+                                    Speaker1 = Nothing
+                                    Speaker2 = Luna.Says(RandomMessage(Username, "NewSubscriber"), Luna.Mood.WooHoo,,, 2100, True,,, Luna.Mood.Happy)
+                                End If
+                        End Select
+                        Await Show
+                        If Speaker1 IsNot Nothing Then Await Speaker1
+                        If Speaker2 IsNot Nothing Then Await Speaker2
+                        Confetti.Hide()
+                        Await Task.Delay(1000)
+                End Select
 
+            End Function)
+            Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen, ResourceIDs.EmberSprite, ResourceIDs.LunaSprite},
+                                                                  AlertTask, "Viewer Event")
+        End Sub
     End Class
 
 
@@ -3255,7 +3447,7 @@ FoundPlayer:
             Next
         End Sub
 
-        Private Function OKtoGO(RIDs() As Integer) As Boolean
+        Public Function OKtoGO(RIDs() As Integer) As Boolean
             For i As Integer = 0 To RIDs.Length - 1
                 If Reservations(RIDs(i)) = True Then
                     Return False

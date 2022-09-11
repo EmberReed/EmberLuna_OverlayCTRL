@@ -33,8 +33,8 @@ Partial Class OBScharacters
         Me.E_RighthBUTT = New System.Windows.Forms.Button()
         Me.E_LefthBUTT = New System.Windows.Forms.Button()
         Me.CharacterSprite = New System.Windows.Forms.PictureBox()
+        Me.L_PooBrain = New System.Windows.Forms.Button()
         Me.L_DeepBreath = New System.Windows.Forms.Button()
-        Me.L_ManicBUTT = New System.Windows.Forms.Button()
         Me.L_WibbleBUTT = New System.Windows.Forms.Button()
         Me.L_SparkleBUTT = New System.Windows.Forms.Button()
         Me.L_OmgBUTT = New System.Windows.Forms.Button()
@@ -56,6 +56,8 @@ Partial Class OBScharacters
         Me.Button3 = New System.Windows.Forms.Button()
         Me.TextBox4 = New System.Windows.Forms.TextBox()
         Me.E_RocKnStonE = New System.Windows.Forms.Button()
+        Me.E_Woohoo = New System.Windows.Forms.Button()
+        Me.L_Woohoo = New System.Windows.Forms.Button()
         CType(Me.CharacterSprite, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.PictureBox1, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
@@ -203,31 +205,31 @@ Partial Class OBScharacters
         Me.CharacterSprite.TabIndex = 26
         Me.CharacterSprite.TabStop = False
         '
+        'L_PooBrain
+        '
+        Me.L_PooBrain.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.L_PooBrain.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.L_PooBrain.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.L_PooBrain.ForeColor = System.Drawing.SystemColors.ControlLightLight
+        Me.L_PooBrain.Location = New System.Drawing.Point(434, 282)
+        Me.L_PooBrain.Name = "L_PooBrain"
+        Me.L_PooBrain.Size = New System.Drawing.Size(92, 31)
+        Me.L_PooBrain.TabIndex = 58
+        Me.L_PooBrain.Text = "POOBRN"
+        Me.L_PooBrain.UseVisualStyleBackColor = False
+        '
         'L_DeepBreath
         '
         Me.L_DeepBreath.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
         Me.L_DeepBreath.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.L_DeepBreath.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.L_DeepBreath.ForeColor = System.Drawing.SystemColors.ControlLightLight
-        Me.L_DeepBreath.Location = New System.Drawing.Point(434, 282)
+        Me.L_DeepBreath.Location = New System.Drawing.Point(434, 245)
         Me.L_DeepBreath.Name = "L_DeepBreath"
-        Me.L_DeepBreath.Size = New System.Drawing.Size(189, 31)
-        Me.L_DeepBreath.TabIndex = 58
-        Me.L_DeepBreath.Text = "DEEP BREATH"
+        Me.L_DeepBreath.Size = New System.Drawing.Size(92, 31)
+        Me.L_DeepBreath.TabIndex = 57
+        Me.L_DeepBreath.Text = "D-BREATH"
         Me.L_DeepBreath.UseVisualStyleBackColor = False
-        '
-        'L_ManicBUTT
-        '
-        Me.L_ManicBUTT.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.L_ManicBUTT.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.L_ManicBUTT.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.L_ManicBUTT.ForeColor = System.Drawing.SystemColors.ControlLightLight
-        Me.L_ManicBUTT.Location = New System.Drawing.Point(434, 245)
-        Me.L_ManicBUTT.Name = "L_ManicBUTT"
-        Me.L_ManicBUTT.Size = New System.Drawing.Size(92, 31)
-        Me.L_ManicBUTT.TabIndex = 57
-        Me.L_ManicBUTT.Text = "MANIC"
-        Me.L_ManicBUTT.UseVisualStyleBackColor = False
         '
         'L_WibbleBUTT
         '
@@ -496,10 +498,36 @@ Partial Class OBScharacters
         Me.E_RocKnStonE.ForeColor = System.Drawing.SystemColors.ControlLightLight
         Me.E_RocKnStonE.Location = New System.Drawing.Point(5, 282)
         Me.E_RocKnStonE.Name = "E_RocKnStonE"
-        Me.E_RocKnStonE.Size = New System.Drawing.Size(189, 31)
+        Me.E_RocKnStonE.Size = New System.Drawing.Size(92, 31)
         Me.E_RocKnStonE.TabIndex = 104
-        Me.E_RocKnStonE.Text = "ROCK AND STONE"
+        Me.E_RocKnStonE.Text = "RCKnSTNE"
         Me.E_RocKnStonE.UseVisualStyleBackColor = False
+        '
+        'E_Woohoo
+        '
+        Me.E_Woohoo.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.E_Woohoo.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.E_Woohoo.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.E_Woohoo.ForeColor = System.Drawing.SystemColors.ControlLightLight
+        Me.E_Woohoo.Location = New System.Drawing.Point(103, 282)
+        Me.E_Woohoo.Name = "E_Woohoo"
+        Me.E_Woohoo.Size = New System.Drawing.Size(92, 31)
+        Me.E_Woohoo.TabIndex = 105
+        Me.E_Woohoo.Text = "WOHOO"
+        Me.E_Woohoo.UseVisualStyleBackColor = False
+        '
+        'L_Woohoo
+        '
+        Me.L_Woohoo.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.L_Woohoo.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+        Me.L_Woohoo.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.L_Woohoo.ForeColor = System.Drawing.SystemColors.ControlLightLight
+        Me.L_Woohoo.Location = New System.Drawing.Point(531, 282)
+        Me.L_Woohoo.Name = "L_Woohoo"
+        Me.L_Woohoo.Size = New System.Drawing.Size(92, 31)
+        Me.L_Woohoo.TabIndex = 106
+        Me.L_Woohoo.Text = "WOHOO"
+        Me.L_Woohoo.UseVisualStyleBackColor = False
         '
         'OBScharacters
         '
@@ -507,6 +535,8 @@ Partial Class OBScharacters
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(629, 403)
+        Me.Controls.Add(Me.L_Woohoo)
+        Me.Controls.Add(Me.E_Woohoo)
         Me.Controls.Add(Me.E_RocKnStonE)
         Me.Controls.Add(Me.TextBox4)
         Me.Controls.Add(Me.Button3)
@@ -515,8 +545,8 @@ Partial Class OBScharacters
         Me.Controls.Add(Me.ComboBox1)
         Me.Controls.Add(Me.SoundPicker)
         Me.Controls.Add(Me.TextBox2)
+        Me.Controls.Add(Me.L_PooBrain)
         Me.Controls.Add(Me.L_DeepBreath)
-        Me.Controls.Add(Me.L_ManicBUTT)
         Me.Controls.Add(Me.L_WibbleBUTT)
         Me.Controls.Add(Me.L_SparkleBUTT)
         Me.Controls.Add(Me.L_OmgBUTT)
@@ -564,8 +594,8 @@ Partial Class OBScharacters
     Friend WithEvents E_WtfBUTT As Button
     Friend WithEvents E_RighthBUTT As Button
     Friend WithEvents E_LefthBUTT As Button
+    Friend WithEvents L_PooBrain As Button
     Friend WithEvents L_DeepBreath As Button
-    Friend WithEvents L_ManicBUTT As Button
     Friend WithEvents L_WibbleBUTT As Button
     Friend WithEvents L_SparkleBUTT As Button
     Friend WithEvents L_OmgBUTT As Button
@@ -587,4 +617,6 @@ Partial Class OBScharacters
     Friend WithEvents Button3 As Button
     Friend WithEvents TextBox4 As TextBox
     Friend WithEvents E_RocKnStonE As Button
+    Friend WithEvents E_Woohoo As Button
+    Friend WithEvents L_Woohoo As Button
 End Class

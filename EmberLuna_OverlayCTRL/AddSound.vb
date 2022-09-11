@@ -6,6 +6,7 @@ Public Class AddSound
     Public SoundIndex As Integer = -1, CatIndex As Integer = -1, ButtonIndex As Integer = -1, ButtData As SoundButt
     Private WithEvents MySound As SoundController
 
+
     Private Sub OBSSoundEditor_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         MySound = New SoundController(SoundSource.SFX, "Sound Editor")
         SetDrawing(Me.Handle, WM_SETREDRAW, False, 0)

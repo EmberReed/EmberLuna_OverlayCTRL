@@ -60,21 +60,21 @@ Public Class MainWindow
         PubSub = New TwitchPubSub
 
         AddHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
-        AddHandler OBS.SceneChanged, AddressOf SceneChangeDetected
-        AddHandler OBS.StreamingStateChanged, AddressOf StreamStartHandler
+        AddHandler OBS.SceneTransitionStarted, AddressOf SceneChangeDetected
+        AddHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
         AddHandler OBS.Connected, AddressOf OBSisConnected
         AddHandler OBS.Disconnected, AddressOf OBSdisConnected
 
         AddHandler IRC.IRCconnected, AddressOf IRCisConnected
         AddHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
         AddHandler IRC.IRCeventRecieved, AddressOf IRCevent
-        AddHandler IRC.IRCmessageRecieved, AddressOf IRCmessage
+        AddHandler IRC.IRCmessageRecieved, AddressOf GenericNotification
 
         AddHandler MyResourceManager.TaskEvent, AddressOf RMeventHandler
 
         AddHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
         AddHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
-        AddHandler myAPI.TokenAcquired, AddressOf Authorized
+        AddHandler myAPI.TokenAcquired, AddressOf GenericNotification
 
         'AddHandler Ember.Said, AddressOf GenericNotification
         'AddHandler Luna.Said, AddressOf GenericNotification
@@ -94,7 +94,7 @@ Public Class MainWindow
         AddHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
         AddHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
         AddHandler AudioControl.MusicPlayer.Stopped, AddressOf MediaEnded
-        AddHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf SoundStarted
+        AddHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf GenericNotification
         'AddHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
         'AddHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
 
@@ -132,13 +132,13 @@ Public Class MainWindow
         Loop
 
         RemoveHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
-        RemoveHandler OBS.SceneChanged, AddressOf SceneChangeDetected
-        RemoveHandler OBS.StreamingStateChanged, AddressOf StreamStartHandler
+        RemoveHandler OBS.SceneTransitionStarted, AddressOf SceneChangeDetected
+        RemoveHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
         RemoveHandler OBS.Connected, AddressOf OBSisConnected
 
         RemoveHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
         RemoveHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
-        RemoveHandler myAPI.TokenAcquired, AddressOf Authorized
+        RemoveHandler myAPI.TokenAcquired, AddressOf GenericNotification
 
         RemoveHandler IRC.IRCconnected, AddressOf IRCisConnected
         RemoveHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
@@ -163,7 +163,7 @@ Public Class MainWindow
         RemoveHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
         RemoveHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
         RemoveHandler AudioControl.MusicPlayer.Stopped, AddressOf MediaEnded
-        RemoveHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf SoundStarted
+        RemoveHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf GenericNotification
         'RemoveHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
         'RemoveHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
 
@@ -290,19 +290,11 @@ Public Class MainWindow
         PubSubStateChanged(False)
     End Sub
 
-    Private Sub Authorized(TokenMessage As String)
 
-        LogEventString(TokenMessage)
-
-    End Sub
     Public Sub LaunchStreamStarter(CurrentStreamInfo As String)
-
-
         APIconnected = True
-                        APIdisplay.BackColor = ActiveBUTT
-                        LogEventString(CurrentStreamInfo)
-
-
+        APIdisplay.BackColor = ActiveBUTT
+        LogEventString(CurrentStreamInfo)
     End Sub
 
     Private Sub SceneChanged(SceneName As String)
@@ -347,9 +339,6 @@ Public Class MainWindow
         BeginInvoke(Sub() DatastreamBox.Text = "- " & Message & vbCrLf & vbCrLf & DatastreamBox.Text)
     End Sub
 
-    Private Sub IRCmessage(IRCstring As String)
-        LogEventString(IRCstring)
-    End Sub
 
     Private Sub IRCevent(IRCstring As String)
         UpdateEventBox(IRCstring)
@@ -378,9 +367,6 @@ Public Class MainWindow
         File.WriteAllText("\\StreamPC-V2\OBS Assets\Text\NowPlaying.txt", "")
     End Sub
 
-    Private Sub SoundStarted(SoundEvent As String)
-        LogEventString(SoundEvent)
-    End Sub
 
     Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
         If e.KeyChar = Chr(13) Then
@@ -509,7 +495,7 @@ Public Class MainWindow
     End Sub
 
     Private Sub Button6_Click(sender As Object, e As EventArgs) Handles Button6.Click
-        myAPI.SyncChannelRedemptions()
+        Dim APItask As Task = myAPI.SyncChannelRedemptions()
     End Sub
 
     Private Sub Button8_Click(sender As Object, e As EventArgs) Handles Button8.Click
@@ -589,7 +575,7 @@ Public Class MainWindow
             Else
                 If Button13.Text = "END STREAM" Then
                     Button13.Enabled = False
-                    OBS.StopStreaming()
+                    OBS.StopStream()
                 Else
                     Button13.Text = "END STREAM"
                     Button13.BackColor = ActiveBUTT
@@ -624,7 +610,7 @@ Public Class MainWindow
             Case = "Play Sound-Alert"
                 MyOBSevents.PlaySoundAlert(e.RewardRedeemed.Redemption.User.DisplayName, Replace(e.RewardRedeemed.Redemption.UserInput, "_", " "))
             Case = "Rock and Stone"
-                Ember.Says("ROCK AND STONE" & vbCrLf & e.RewardRedeemed.Redemption.User.DisplayName,
+                Dim Speak As Task = Ember.Says("ROCK AND STONE" & vbCrLf & e.RewardRedeemed.Redemption.User.DisplayName,
                            Ember.Mood.RockandStone, "Rock And Stone",, 2800)
             Case Else
                 Rewardstring = "#CHPTS " & e.RewardRedeemed.Redemption.User.DisplayName & " Redeemed: " &
@@ -637,6 +623,7 @@ Public Class MainWindow
 
     Public Sub iGOTStheBITS(sender As Object, e As Events.OnBitsReceivedV2Args)
         Dim MYSTRING As String = e.TotalBitsUsed
+
     End Sub
 
     Public Sub SubscriberAcquired(sender As Object, e As Events.OnChannelSubscriptionArgs)
@@ -651,27 +638,25 @@ Public Class MainWindow
 
 
     Private Sub UpdateChatBox(UserName As String, MessageData As String, TimeString As String, ColorIndex As Integer)
-
         Dim SplitString() As String = TimeString.Split(" ")
-                Dim OutputText As String = UserName & "(" & SplitString(1) & "): " & MessageData
-                'Audio Notifications:
-                My.Computer.Audio.Play(My.Resources.LOZ_Alert_2, AudioPlayMode.Background)
-                ChatBox.ForeColor = ChatUserInfo.ChatColor(ColorIndex)
-                ChatBox.Text = OutputText
-                ChatHighlighter.Image = My.Resources.gradient
-                NextMessage.Visible = True
-
+        Dim OutputText As String = UserName & "(" & SplitString(1) & "): " & MessageData
+        My.Computer.Audio.Play(My.Resources.LOZ_Alert_2, AudioPlayMode.Background)
+        ChatBox.ForeColor = ChatUserInfo.ChatColor(ColorIndex)
+        ChatBox.Text = OutputText
+        ChatHighlighter.Image = My.Resources.gradient
+        NextMessage.Visible = True
     End Sub
 
     Private Sub UpdateEventBox(EventString As String)
-
         Dim OutputText As String = ""
         EventHighlighter.Image = My.Resources.gradient
         NextEvent.Visible = True
         My.Computer.Audio.Play(My.Resources.LOZ_secret, AudioPlayMode.Background)
         EventBox.Text = EventString
-
     End Sub
 
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+        MyOBSevents.ViewerEvent(RandomInt(0, 1), ChatUserInfo.AllChatUsers(RandomInt(0, ChatUserInfo.AllChatUsers.Count - 1)).UserName)
+    End Sub
 End Class
 
