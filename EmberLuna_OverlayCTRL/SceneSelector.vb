@@ -7,7 +7,7 @@ Public Class SceneSelector
     Private Sub SceneSelector_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ToggleVolumeControls(0)
         SourceWindow.SCENE_SELECTOR.BackColor = ActiveBUTT
-        AddHandler OBS.SceneChanged, AddressOf RemoteDisplayChange
+        AddHandler OBS.SceneTransitionEnded, AddressOf RemoteDisplayChange
         AddHandler MySceneCollection.ScenesUpdated, AddressOf UpdateSceneListBox
         AddHandler AudioControl.MyMixer.MixerChannelChanged, AddressOf ImportSingleR
         UpdateSceneListBox(MySceneCollection.GetSceneList)
@@ -49,14 +49,14 @@ Public Class SceneSelector
 
     Private Sub SceneSelector_Closing(sender As Object, e As EventArgs) Handles MyBase.Closing
         RemoveHandler AudioControl.MyMixer.MixerChannelChanged, AddressOf ImportSingleR
-        RemoveHandler OBS.SceneChanged, AddressOf RemoteDisplayChange
+        RemoveHandler OBS.SceneTransitionEnded, AddressOf RemoteDisplayChange
         SourceWindow.SCENE_SELECTOR.BackColor = StandardBUTT
     End Sub
 
-    Private Sub RemoteDisplayChange(Sender As Object, SceneName As String)
+    Private Sub RemoteDisplayChange(Sender As Object, TransitionName As String)
 TryAgain:
         Try
-            BeginInvoke(Sub() DisplayChange(SceneName))
+            BeginInvoke(Sub() DisplayChange(CurrentScene.Name))
         Catch
             GoTo TryAgain
         End Try

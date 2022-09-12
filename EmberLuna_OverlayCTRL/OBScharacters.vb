@@ -497,7 +497,7 @@ TryAgain:
     End Sub
 
     Private Sub E_Woohoo_Click(sender As Object, e As EventArgs) Handles E_Woohoo.Click
-        Ember.ChangeMood(Ember.Mood.WooHoo, 4200)
+        Ember.ChangeMood(Ember.Mood.WooHoo, 2800)
     End Sub
 
     Private Sub L_Woohoo_Click(sender As Object, e As EventArgs) Handles L_Woohoo.Click

@@ -960,7 +960,7 @@ Public Module TwitchFunctions
         Private Async Function ChatSpeaker() As Task
             SendBuffer = New ConcurrentQueue(Of String)
             Dim OutputMessage As String = ""
-            Do Until ChannelPart = True
+            Do Until ChannelPart = True Or ChatActive = False
                 If SendBuffer.Count <> 0 Then
                     If SendBuffer.TryDequeue(OutputMessage) = True Then
                         If OutputMessage <> "" Then SendPublicChatMessage(OutputMessage)
@@ -970,14 +970,25 @@ Public Module TwitchFunctions
                     Await Task.Delay(20)
                 End If
             Loop
-            SendIrcMessage("PART #" & Broadcastername)
-            ChannelPart = False
+            If ChannelPart = True Then
+                SendIrcMessage("PART #" & Broadcastername)
+                ChannelPart = False
+            End If
         End Function
 
         Private Async Function ChatReader() As Task
             Dim InputMessage As String = ""
             Do Until ChatActive = False
                 InputMessage = Await ReadMessage()
+                If InStr(InputMessage, "Error recieving message: ") > 0 Then
+                    RaiseEvent IRCmessageRecieved(InputMessage)
+                    ChatActive = False
+                    Close()
+                    RaiseEvent IRCdisconnected()
+                    Await Task.Delay(1000)
+                    ConnectChat()
+                    Exit Function
+                End If
                 If InputMessage = "PING :tmi.twitch.tv" Then SendIrcMessage("PONG :tmi.twitch.tv")
                 If InputMessage <> "" Then ReadChat(InputMessage)
                 If InputMessage = ":" & BotName & "!" & BotName & "@" & BotName & ".tmi.twitch.tv PART #" & Broadcastername Then _
@@ -1066,7 +1077,7 @@ Public Module TwitchFunctions
 
                             Case = "count"
                                 If Splitstring.Length > 1 Then
-                                    If CheckOBSconnect() = True Then
+                                    If MainWindow.OBSconnected Then
                                         If CounterData.UserCount(Splitstring(1)) = True Then
                                             SendBuffer.Enqueue("@" & UserName & " Counted " & Splitstring(1))
                                         End If

@@ -18,7 +18,7 @@
                 ChatUserInfo.ResetCurrentUsers()
             End If
             Await myAPI.SetStreamInfo()
-            OBS.StartStreaming()
+            OBS.StartStream()
             Starting = True
             Close()
         Else

@@ -28,8 +28,7 @@ Public Class MainWindow
         'InitializeCountersAndTimers()
         ReadProgramSettings(ProgramSettingsFile)
 
-        OBS = New OBSWebsocket
-        OBSmutex = New Mutex
+        InitializeOBS_WS()
         SourceWindow = Me
         ChannelPointsDisplay = New ChannelPointsForm
         MyResourceManager = New ResourceManager
@@ -60,10 +59,8 @@ Public Class MainWindow
         PubSub = New TwitchPubSub
 
         AddHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
-        AddHandler OBS.SceneTransitionStarted, AddressOf SceneChangeDetected
         AddHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
-        AddHandler OBS.Connected, AddressOf OBSisConnected
-        AddHandler OBS.Disconnected, AddressOf OBSdisConnected
+        'AddHandler OBS.Connected, AddressOf OBSisConnected
 
         AddHandler IRC.IRCconnected, AddressOf IRCisConnected
         AddHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
@@ -113,7 +110,7 @@ Public Class MainWindow
         OBStimerObject(TimerIDs.Luna).State = False
         OBStimerObject(TimerIDs.GlobalCC).State = False
         If AudioControl.MusicPlayer.Active = True Then AudioControl.StopMusic()
-
+        Thread.Sleep(100)
         'MainProgramRunning = False
         'Port1Active = False
         'Port2Active = False
@@ -125,16 +122,15 @@ Public Class MainWindow
         'End If
         If PSubConnected Then PubSub.Disconnect()
         If IRCconnected Then IRC.DisconnectChat()
-        If OBSconnected Then DisconnectOBS()
+        If OBSconnected Then Dim Disconnecttask As Task = DisconnectOBS()
         Do Until AmIdisconnected()
             Application.DoEvents()
             Thread.Sleep(100)
         Loop
 
         RemoveHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
-        RemoveHandler OBS.SceneTransitionStarted, AddressOf SceneChangeDetected
         RemoveHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
-        RemoveHandler OBS.Connected, AddressOf OBSisConnected
+        'RemoveHandler OBS.Connected, AddressOf OBSisConnected
 
         RemoveHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
         RemoveHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
@@ -175,13 +171,13 @@ Public Class MainWindow
 
     Private PSubConnected As Boolean = False
     Private IRCconnected As Boolean = False
-    Private OBSconnected As Boolean = False
+    Public OBSconnected As Boolean = False
     Private TwitchAuthorized As Boolean = False
     Private APIconnected As Boolean = False
 
     Private Async Function Startup() As Task
         Me.Enabled = False
-        CheckOBSconnect()
+        OBSstateChanged(Await CheckOBSconnect())
         IRC.ConnectChat()
         myAPI.APIauthorization(True)
 
@@ -197,7 +193,7 @@ Public Class MainWindow
 
         SyncSceneDisplay()
         AudioControl.MyMixer.SyncAll()
-
+        'AudioControl.MusicPlayer.SyncState()
 
         Me.Enabled = True
     End Function
@@ -250,7 +246,7 @@ Public Class MainWindow
                 LogEventString(TaskString & " Abandoned")
         End Select
     End Sub
-    Private Sub OBSstateChanged(OBSState As Boolean)
+    Public Sub OBSstateChanged(OBSState As Boolean)
         If OBSState <> OBSconnected Then
             OBSconnected = OBSState
             If OBSconnected = True Then
@@ -263,12 +259,7 @@ Public Class MainWindow
         End If
     End Sub
 
-    Private Sub OBSisConnected()
-        OBSstateChanged(True)
-    End Sub
-    Private Sub OBSdisConnected()
-        OBSstateChanged(False)
-    End Sub
+
 
     Private Sub PubSubStateChanged(PubSubState As Boolean)
         If PubSubState <> PSubConnected Then
@@ -381,8 +372,9 @@ Public Class MainWindow
     End Sub
 
     Private Sub CountersButt_Click(sender As Object, e As EventArgs) Handles CountersButt.Click
+
         If Counters.Visible = False Then
-            If CheckOBSconnect() = True Then
+            If OBSconnected Then
                 Counters = New OBScounters
                 Counters.Show()
             End If
@@ -391,9 +383,10 @@ Public Class MainWindow
         End If
     End Sub
 
+
     Private Sub SOUND_BOARD_Click(sender As Object, e As EventArgs) Handles SOUND_BOARD.Click
         If SoundBoard.Visible = False Then
-            If CheckOBSconnect() = True Then
+            If OBSconnected Then
                 SoundBoard = New OBSSoundBoard
                 SoundBoard.Show()
             End If
@@ -422,7 +415,7 @@ Public Class MainWindow
 
     Private Sub SCENE_SELECTOR_Click(sender As Object, e As EventArgs) Handles SCENE_SELECTOR.Click
         If SceneChanger.Visible = False Then
-            If CheckOBSconnect() = True Then
+            If OBSconnected Then
                 SceneChanger = New SceneSelector
                 SceneChanger.Show()
             End If
@@ -432,7 +425,7 @@ Public Class MainWindow
     End Sub
     Private Sub TimersButt_Click(sender As Object, e As EventArgs) Handles TimersButt.Click
         If OBSTimers.Visible = False Then
-            If CheckOBSconnect() = True Then
+            If OBSconnected Then
                 OBSTimers = New TimerControls
                 OBSTimers.Show()
             End If
@@ -443,7 +436,7 @@ Public Class MainWindow
 
     Private Sub CHARACTERS_Click(sender As Object, e As EventArgs) Handles CHARACTERS.Click
         If SpriteControls.Visible = False Then
-            If CheckOBSconnect() = True Then
+            If OBSconnected Then
                 SpriteControls = New OBScharacters
                 SpriteControls.Show()
             End If
@@ -455,7 +448,7 @@ Public Class MainWindow
 
     Private Sub MUSIC_PLAYER_Click(sender As Object, e As EventArgs) Handles MUSIC_PLAYER.Click
         If MusicPlayer.Visible = False Then
-            If CheckOBSconnect() = True Then
+            If OBSconnected Then
                 MusicPlayer = New OBSMusicPlayer
                 MusicPlayer.Show()
             End If
@@ -563,7 +556,7 @@ Public Class MainWindow
     End Sub
 
     Private Sub Button13_Click(sender As Object, e As EventArgs) Handles Button13.Click
-        If CheckOBSconnect() = True Then
+        If OBSconnected Then
             If OBSstreamState() = False Then
                 If Button13.Text = "START STREAM" Then
                     Button13.Enabled = False
