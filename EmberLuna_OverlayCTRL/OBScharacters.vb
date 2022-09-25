@@ -485,7 +485,7 @@ TryAgain:
     End Sub
 
     Private Sub L_PooBrain_Click(sender As Object, e As EventArgs) Handles L_PooBrain.Click
-        Luna.ChangeMood(Luna.Mood.PooBrain, 4700)
+        Luna.ChangeMood(Luna.Mood.PooBrain, 4050,, "Luna Poo Brain")
     End Sub
 
     Private Sub TextBox1_TextChanged(sender As Object, e As EventArgs) Handles TextBox1.TextChanged
@@ -501,6 +501,6 @@ TryAgain:
     End Sub
 
     Private Sub L_Woohoo_Click(sender As Object, e As EventArgs) Handles L_Woohoo.Click
-        Luna.ChangeMood(Luna.Mood.WooHoo, 2100)
+        Luna.ChangeMood(Luna.Mood.WooHoo, 2250)
     End Sub
 End Class

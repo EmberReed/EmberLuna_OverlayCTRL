@@ -30,6 +30,7 @@ Public Class MainWindow
 
         InitializeOBS_WS()
         SourceWindow = Me
+        DemoPlayer = New DemoModule
         ChannelPointsDisplay = New ChannelPointsForm
         MyResourceManager = New ResourceManager
         ChannelPoints = New ChannelPointData
@@ -103,69 +104,79 @@ Public Class MainWindow
         Dim STARTYOURENGINES As Task = Startup()
     End Sub
 
-    Private Sub MainWindow_Closing(sender As Object, e As EventArgs) Handles MyBase.Closing
-        Me.Enabled = False
+    Private Async Function CloseMe() As Task
         CounterData.SaveCounterData()
         OBStimerObject(TimerIDs.Ember).State = False
         OBStimerObject(TimerIDs.Luna).State = False
         OBStimerObject(TimerIDs.GlobalCC).State = False
         If AudioControl.MusicPlayer.Active = True Then AudioControl.StopMusic()
-        Thread.Sleep(100)
-        'MainProgramRunning = False
-        'Port1Active = False
-        'Port2Active = False
-        'If ChatActive = True Then
-        '    ChannelPart = True
-        '    Do Until ChatActive = False
-        '        Application.DoEvents()
-        '    Loop
-        'End If
+
+        Await Task.Delay(100)
+
         If PSubConnected Then PubSub.Disconnect()
         If IRCconnected Then IRC.DisconnectChat()
-        If OBSconnected Then Dim Disconnecttask As Task = DisconnectOBS()
+        If OBSconnected Then DisconnectOBS()
+
         Do Until AmIdisconnected()
-            Application.DoEvents()
-            Thread.Sleep(100)
+            Await Task.Delay(200)
+            If OBSconnected Then
+                If DisconnectOBS() = False Then
+                    OBSstateChanged(False)
+                End If
+            End If
         Loop
+        Await Task.Delay(1000)
+        Close()
+    End Function
 
-        RemoveHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
-        RemoveHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
-        'RemoveHandler OBS.Connected, AddressOf OBSisConnected
+    Private Sub MainWindow_Closing(sender As Object, e As FormClosingEventArgs) Handles MyBase.Closing
+        If Enabled = True Then
+            Enabled = False
 
-        RemoveHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
-        RemoveHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
-        RemoveHandler myAPI.TokenAcquired, AddressOf GenericNotification
+            e.Cancel = True
+            Dim CloseTask = CloseMe()
+        End If
 
-        RemoveHandler IRC.IRCconnected, AddressOf IRCisConnected
-        RemoveHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
 
-        AddHandler MyResourceManager.TaskEvent, AddressOf RMeventHandler
 
-        'RemoveHandler Ember.Said, AddressOf GenericNotification
-        'RemoveHandler Luna.Said, AddressOf GenericNotification
+        'RemoveHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
+        'RemoveHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
+        ''RemoveHandler OBS.Connected, AddressOf OBSisConnected
 
-        RemoveHandler ChatUserInfo.ChatUserDetected, AddressOf NewUserHandler
-        RemoveHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
-        'RemoveHandler CounterData.CounterStarted, AddressOf CounterUpdated
+        'RemoveHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
+        'RemoveHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
+        'RemoveHandler myAPI.TokenAcquired, AddressOf GenericNotification
 
-        RemoveHandler PubSub.OnViewCount, AddressOf ViewCountChanged
-        RemoveHandler PubSub.OnChannelPointsRewardRedeemed, AddressOf ChannelPointsNotification
-        RemoveHandler PubSub.OnListenResponse, AddressOf ListenResponse
-        RemoveHandler PubSub.OnBitsReceivedV2, AddressOf iGOTStheBITS
-        RemoveHandler PubSub.OnChannelSubscription, AddressOf SubscriberAcquired
-        RemoveHandler PubSub.OnPubSubServiceConnected, AddressOf PubSubConnected
-        RemoveHandler PubSub.OnPubSubServiceClosed, AddressOf PubSubDisconnect
+        'RemoveHandler IRC.IRCconnected, AddressOf IRCisConnected
+        'RemoveHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
 
-        RemoveHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
-        RemoveHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
-        RemoveHandler AudioControl.MusicPlayer.Stopped, AddressOf MediaEnded
-        RemoveHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf GenericNotification
+        'AddHandler MyResourceManager.TaskEvent, AddressOf RMeventHandler
+
+        ''RemoveHandler Ember.Said, AddressOf GenericNotification
+        ''RemoveHandler Luna.Said, AddressOf GenericNotification
+
+        'RemoveHandler ChatUserInfo.ChatUserDetected, AddressOf NewUserHandler
+        'RemoveHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
+        ''RemoveHandler CounterData.CounterStarted, AddressOf CounterUpdated
+
+        'RemoveHandler PubSub.OnViewCount, AddressOf ViewCountChanged
+        'RemoveHandler PubSub.OnChannelPointsRewardRedeemed, AddressOf ChannelPointsNotification
+        'RemoveHandler PubSub.OnListenResponse, AddressOf ListenResponse
+        'RemoveHandler PubSub.OnBitsReceivedV2, AddressOf iGOTStheBITS
+        'RemoveHandler PubSub.OnChannelSubscription, AddressOf SubscriberAcquired
+        'RemoveHandler PubSub.OnPubSubServiceConnected, AddressOf PubSubConnected
+        'RemoveHandler PubSub.OnPubSubServiceClosed, AddressOf PubSubDisconnect
+
+        'RemoveHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
+        'RemoveHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
+        'RemoveHandler AudioControl.MusicPlayer.Stopped, AddressOf MediaEnded
+        'RemoveHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf GenericNotification
         'RemoveHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
         'RemoveHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
 
         'Call DisconnectOBS()
-        Application.DoEvents()
-        Thread.Sleep(500)
+        'Application.DoEvents()
+        'Thread.Sleep(500)
 
     End Sub
 
@@ -246,6 +257,7 @@ Public Class MainWindow
                 LogEventString(TaskString & " Abandoned")
         End Select
     End Sub
+
     Public Sub OBSstateChanged(OBSState As Boolean)
         If OBSState <> OBSconnected Then
             OBSconnected = OBSState
@@ -372,7 +384,6 @@ Public Class MainWindow
     End Sub
 
     Private Sub CountersButt_Click(sender As Object, e As EventArgs) Handles CountersButt.Click
-
         If Counters.Visible = False Then
             If OBSconnected Then
                 Counters = New OBScounters
@@ -383,6 +394,16 @@ Public Class MainWindow
         End If
     End Sub
 
+    Private Sub Button11_Click(sender As Object, e As EventArgs) Handles Button11.Click
+        If DemoPlayer.Visible Then
+            DemoPlayer.Select()
+        Else
+            If OBSconnected Then
+                DemoPlayer = New DemoModule
+                DemoPlayer.Show()
+            End If
+        End If
+    End Sub
 
     Private Sub SOUND_BOARD_Click(sender As Object, e As EventArgs) Handles SOUND_BOARD.Click
         If SoundBoard.Visible = False Then
@@ -649,7 +670,13 @@ Public Class MainWindow
     End Sub
 
     Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
-        MyOBSevents.ViewerEvent(RandomInt(0, 1), ChatUserInfo.AllChatUsers(RandomInt(0, ChatUserInfo.AllChatUsers.Count - 1)).UserName)
+        'MyOBSevents.ViewerEvent(RandomInt(0, 1), ChatUserInfo.AllChatUsers(RandomInt(0, ChatUserInfo.AllChatUsers.Count - 1)).UserName)
+        MyOBSevents.Roll6(RandomInt(1, 3), ChatUserInfo.AllChatUsers(RandomInt(0, ChatUserInfo.AllChatUsers.Count - 1)).UserName)
     End Sub
+
+    Private Sub CTRL1display_Click(sender As Object, e As EventArgs) Handles CTRL1display.Click
+
+    End Sub
+
 End Class
 

@@ -41,6 +41,9 @@ Public Class SceneSelector
         OutputSelection.Add("Gaming Console")
         OutputSelection.Add("Aux Cam 1")
         OutputSelection.Add("Aux Cam 2")
+        OutputSelection.Add("StreamPC 1")
+        OutputSelection.Add("StreamPC 2")
+
         EscreenSelect.Items.AddRange(OutputSelection.ToArray)
         LscreenSelect.Items.AddRange(OutputSelection.ToArray)
         EcamSelect.Items.AddRange(OutputSelection.ToArray)

@@ -234,6 +234,12 @@
     <Compile Include="ChannelPointsForm.vb">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="DemoModule.Designer.vb">
+      <DependentUpon>DemoModule.vb</DependentUpon>
+    </Compile>
+    <Compile Include="DemoModule.vb">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="OBScharacters.Designer.vb">
       <DependentUpon>OBScharacters.vb</DependentUpon>
     </Compile>
@@ -322,6 +328,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ChannelPointsForm.resx">
       <DependentUpon>ChannelPointsForm.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DemoModule.resx">
+      <DependentUpon>DemoModule.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="OBScharacters.resx">
       <DependentUpon>OBScharacters.vb</DependentUpon>

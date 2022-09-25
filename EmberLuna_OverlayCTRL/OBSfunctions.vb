@@ -46,20 +46,24 @@ Public Module OBSfunctions
     End Sub
 
     Private Sub OBSdisconnected(sender As Object, e As Communication.ObsDisconnectionInfo) Handles OBS.Disconnected
-        'SendMessage(e.DisconnectReason)
-        If WaitForDisconnect Then OBSended.SetResult(False)
-        MainWindow.OBSstateChanged(False)
+        'MainWindow.(e.DisconnectReason)
+        'If WaitForDisconnect Then OBSended.SetResult(False)
+        SourceWindow.OBSstateChanged(False)
+        'SendMessage("OBS Disconnected")
     End Sub
 
-    Public Async Function DisconnectOBS() As Task
+    Public Function DisconnectOBS() As Boolean
         OBSmutex.WaitOne()
-        If OBS.IsConnected = True Then
-            OBSended = New TaskCompletionSource(Of Boolean)
-            WaitForDisconnect = True
+        Dim ReturnBool = OBS.IsConnected
+        If ReturnBool Then
+            'OBSended = New TaskCompletionSource(Of Boolean)
+            'WaitForDisconnect = True
             OBS.Disconnect()
-            WaitForDisconnect = Await OBSended.Task
+            'SendMessage("Disconnecting OBS")
+            'WaitForDisconnect = Await OBSended.Task
         End If
         OBSmutex.ReleaseMutex()
+        Return ReturnBool
     End Function
     Private Sub OBSconnected(sender As Object, e As EventArgs) Handles OBS.Connected
         If WaitForConnect Then OBSstarted.SetResult(False)
@@ -138,6 +142,7 @@ Public Module OBSfunctions
             OBS.TriggerMediaInputAction(SourceName, MediaActions.Restart)
             OutputFile = FileName
         Else
+            'If InStr(SourceName, "Roll") > 0 Then SendMessage(SourceName & " " & ActionType)
             Select Case ActionType
                 Case = MediaFcode.Play
                     If OBS.GetMediaInputStatus(SourceName).State = MediaActions.Paused Then
@@ -469,6 +474,8 @@ Public Module OBSfunctions
         Public Const Aux2 As Integer = 5
         Public Const Aux3 As Integer = 6
         Public Const Aux4 As Integer = 7
+        Public Const StreamPC1 As Integer = 8
+        Public Const StreamPC2 As Integer = 9
     End Structure
 
     Public Structure OBSinput
@@ -513,6 +520,10 @@ Public Module OBSfunctions
                     If OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId) Then Output = ScreenSetting.Aux3
                 Case = "Aux-Cam 2"
                     If OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId) Then Output = ScreenSetting.Aux4
+                Case = "StreamPC Screen1"
+                    If OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId) Then Output = ScreenSetting.StreamPC1
+                Case = "StreamPC Screen2"
+                    If OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId) Then Output = ScreenSetting.StreamPC2
                 Case = AwayName
                     Select Case AwayName
                         Case "Ember Is Away"
@@ -520,16 +531,43 @@ Public Module OBSfunctions
                         Case "Luna Is Away"
                             LunaAwayB = OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId)
                         Case "Jerin Montage"
-                            If Screen2 Then
-                                Screen2AwayMode = OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId)
-                            Else
-                                Screen1AwayMode = OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId)
-                            End If
+                            Screen1AwayMode = OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId)
+                        Case "Jerin Montage S2"
+                            Screen2AwayMode = OBS.GetSceneItemEnabled(ActiveScene.Name, SceneItem.ItemId)
                     End Select
             End Select
         Next
         Return Output
     End Function
+    Public Sub SetScreenSettings(ActiveScene As SceneBasicInfo, Setting As Integer, Awaymode As Boolean, AwayName As String)
+        For Each SceneItem In OBS.GetSceneItemList(ActiveScene.Name)
+            Select Case SceneItem.SourceName
+                Case = "Ember's PC"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.EmberPC)
+                Case = "Luna's PC"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.LunaPC)
+                Case = "J-Cam 1"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.EmberCam)
+                Case = "E-Cam 1"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.LunaCam)
+                Case = "Aux In 1"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux1)
+                Case = "Aux In 2"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux2)
+                Case = "Aux-Cam 1"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux3)
+                Case = "Aux-Cam 2"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux4)
+                Case = "StreamPC Screen1"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.StreamPC1)
+                Case = "StreamPC Screen2"
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.StreamPC2)
+                Case = AwayName
+                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Awaymode)
+            End Select
+        Next
+    End Sub
+
     Public Sub SyncSceneDisplay()
 
         SceneChangeInProgress = True
@@ -635,7 +673,7 @@ Public Module OBSfunctions
                             SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, LunaSpriteB)
                         End If
                     Next
-                Case "Dual Screen Mode", "Center Screen Mode", "Single Screen Mode", "Split Screen Mode"
+                Case "Counters&Timers"
                     ItemsList = OBS.GetSceneItemList(ActiveScene.Name)
                     For Each SceneItem In ItemsList
                         Select Case SceneItem.SourceName
@@ -651,12 +689,18 @@ Public Module OBSfunctions
                             Case = "LunaCounter"
                                 SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name,
                                                     OBScounterObject(CounterIDs.Luna).State)
-                            Case = "GlobalTimer"
-                                SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name,
-                                                    OBStimerObject(TimerIDs.GlobalCC).State)
                             Case = "GlobalCounter"
                                 SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name,
                                                     OBScounterObject(CounterIDs.Glob).State)
+                        End Select
+                    Next
+                Case "Dual Screen Mode", "Center Screen Mode", "Single Screen Mode", "Split Screen Mode"
+                    ItemsList = OBS.GetSceneItemList(ActiveScene.Name)
+                    For Each SceneItem In ItemsList
+                        Select Case SceneItem.SourceName
+                            Case = "GlobalTimer"
+                                SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name,
+                                                    OBStimerObject(TimerIDs.GlobalCC).State)
                             Case = "Screen 1"
                                 If ActiveScene.Name = "Center Screen Mode" Or ActiveScene.Name = "Single Screen Mode" Then
                                     SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Screen2Enabled = False)
@@ -724,30 +768,7 @@ Public Module OBSfunctions
         OBSmutex.ReleaseMutex()
 
     End Function
-    Public Sub SetScreenSettings(ActiveScene As SceneBasicInfo, Setting As Integer, Awaymode As Boolean, AwayName As String)
-        For Each SceneItem In OBS.GetSceneItemList(ActiveScene.Name)
-            Select Case SceneItem.SourceName
-                Case = "Ember's PC"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.EmberPC)
-                Case = "Luna's PC"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.LunaPC)
-                Case = "J-Cam 1"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.EmberCam)
-                Case = "E-Cam 1"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.LunaCam)
-                Case = "Aux In 1"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux1)
-                Case = "Aux In 2"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux2)
-                Case = "Aux-Cam 1"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux3)
-                Case = "Aux-Cam 2"
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Setting = ScreenSetting.Aux4)
-                Case = AwayName
-                    SetSourceVisibility(SceneItem.ItemId, ActiveScene.Name, Awaymode)
-            End Select
-        Next
-    End Sub
+
 
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     '///////////////////////////////////////////////////SPRITE CONTROLS///////////////////////////////////////////////////////
@@ -829,39 +850,39 @@ Public Module OBSfunctions
         Public WooHoo As String
         Public PooBrain As String
 
-        Public Sub InitializeMoods(CharacterSelect As Boolean)
+        Public Sub InitializeMoods(CharacterSelect As Boolean, FileHeader As String)
             If CharacterSelect = SpriteID.Ember Then
-                Neutral = "blink.avi"
-                Happy = "happy.avi"
-                Sadge = "sadge.avi"
-                Angy = "angery.avi"
-                Wumpy = "wumpy.avi"
+                Neutral = FileHeader & "blink.gif"
+                Happy = FileHeader & "happy.gif"
+                Sadge = FileHeader & "sadge.gif"
+                Angy = FileHeader & "angery.gif"
+                Wumpy = FileHeader & "wumpy.gif"
                 Cringe = ""
                 Wow = ""
                 Sparkle = ""
-                WTF = "wtf.avi"
+                WTF = FileHeader & "wtf.gif"
                 OMG = ""
-                RockandStone = "rocknstone.avi"
+                RockandStone = FileHeader & "rocknstone.gif"
                 Wibble = ""
                 DeepBreath = ""
-                WooHoo = "woo.mp4"
+                WooHoo = FileHeader & "woo.gif"
                 PooBrain = ""
             Else
-                Neutral = "blink.avi"
-                Happy = "manic.avi"
-                Sadge = "sad.mp4"
-                Angy = "angery.mp4"
-                Wumpy = "pissed.mp4"
-                Cringe = "cringe.avi"
-                Wow = "nowai.avi"
-                Sparkle = "sparkles.mp4"
+                Neutral = FileHeader & "blink.gif"
+                Happy = FileHeader & "manic.gif"
+                Sadge = FileHeader & "sad.gif"
+                Angy = FileHeader & "angery.gif"
+                Wumpy = FileHeader & "pissed.gif"
+                Cringe = FileHeader & "cringe.gif"
+                Wow = FileHeader & "nowai.gif"
+                Sparkle = FileHeader & "sparkles.gif"
                 WTF = ""
-                OMG = "omg.avi"
+                OMG = FileHeader & "omg.gif"
                 RockandStone = ""
-                Wibble = "wibble.avi"
-                DeepBreath = "deepbreath.avi"
-                WooHoo = "woo.avi"
-                PooBrain = "poobrain.avi"
+                Wibble = FileHeader & "wibble.gif"
+                DeepBreath = FileHeader & "deepbreath.gif"
+                WooHoo = FileHeader & "woo.gif"
+                PooBrain = FileHeader & "poobrain.gif"
             End If
         End Sub
 
@@ -873,10 +894,9 @@ Public Module OBSfunctions
         Private CurrentMood As String
         Private SourceName As String
         Private Bubble As SpeechBubble
-        Private SoundPlayer As SoundController
+        Public SoundPlayer As SoundController
         Public Mood As CharacterMoods
         Private ResourceID As Integer
-        Private FileHeader As String
         'Public Event Said(MessageData As String)
         Public Event MoodChange(MoodString As String)
         Public LeftHand As Boolean
@@ -893,11 +913,10 @@ Public Module OBSfunctions
 
         Public Sub initLUNA()
             Name = "Luna"
-            FileHeader = "\luna_"
-            Mood.InitializeMoods(SpriteID.Luna)
-            Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name
-            CurrentMood = Directory & FileHeader & Mood.Neutral
-            SourceName = Name & " Sprite"
+            Mood.InitializeMoods(SpriteID.Luna, "luna_")
+            Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name & "Source.html"
+            CurrentMood = ApplyMoodChange()
+            SourceName = Name & "SpriteHTML"
             ResourceID = ResourceIDs.LunaSprite
             LeftHand = False
             RightHand = False
@@ -907,17 +926,40 @@ Public Module OBSfunctions
 
         Public Sub initEMBER()
             Name = "Ember"
-            FileHeader = "\ember_"
-            Mood.InitializeMoods(SpriteID.Ember)
-            Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name
-            CurrentMood = Directory & FileHeader & Mood.Neutral
-            SourceName = Name & " Sprite"
+            Mood.InitializeMoods(SpriteID.Ember, "ember_")
+            Directory = "\\StreamPC-V2\OBS Assets\Characters\" & Name & "Source.html"
+            CurrentMood = ApplyMoodChange()
+            SourceName = Name & "SpriteHTML"
             ResourceID = ResourceIDs.EmberSprite
             LeftHand = False
             RightHand = False
             Bubble = New SpeechBubble(Name)
             SoundPlayer = New SoundController(SoundSource.SFX, Name)
         End Sub
+
+        Public Function ApplyMoodChange(Optional NewMood As String = "") As String
+            Dim HTMLinput As String = File.ReadAllText(Directory)
+            Dim ActualMood As String = DataExtract(HTMLinput, """GIF/", """>" & vbCrLf)
+            If NewMood <> "" Then
+                HTMLinput = Replace(HTMLinput, ActualMood, NewMood)
+                File.WriteAllText(Directory, HTMLinput)
+                OBSmutex.WaitOne()
+
+
+                'Dim OutputString As String = ""
+                'For I As Integer = 0 To Input.Count - 1
+                ' OutputString = OutputString & Input(I).ToString & vbCrLf
+                'Next
+                'SendMessage(OutputString)
+                OBS.PressInputPropertiesButton(SourceName, "refreshnocache")
+                OBSmutex.ReleaseMutex()
+                CurrentMood = NewMood
+                Return NewMood
+            Else
+                Return ActualMood
+            End If
+        End Function
+
 
         Public Async Function Says(InputMessage As String,
                         Optional MessageMood As String = "",
@@ -936,7 +978,8 @@ Public Module OBSfunctions
                  If StaticMoodChange = False And MessageMood <> "" Then
                      TempMood = CurrentMood
                      MessageMood = AppendMood(MessageMood, Lefth, Righth)
-                     CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MessageMood)
+                     'CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MessageMood)
+                     ApplyMoodChange(MessageMood)
                      RaiseEvent MoodChange(CurrentMood)
                  Else
                      TempMood = ""
@@ -963,12 +1006,14 @@ Public Module OBSfunctions
                  If MoodTask IsNot Nothing Then
                      Await MoodTask
                      If InterimMood <> "" And TempMood <> "" Then
-                         CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+                         'CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+                         ApplyMoodChange(TempMood)
                          RaiseEvent MoodChange(CurrentMood)
                      End If
                  Else
                      If MessageMood <> "" And TempMood <> "" Then
-                         CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+                         'CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+                         ApplyMoodChange(TempMood)
                          RaiseEvent MoodChange(CurrentMood)
                      End If
                  End If
@@ -990,16 +1035,18 @@ Public Module OBSfunctions
         Private Async Function DelayedSetMood(MoodString As String, Delay As Integer, InterimMood As String) As Task
             Await Task.Delay(Delay)
             If InterimMood = "" Then
-                CurrentMood = MediaSourceChange(SourceName, 1, MoodString)
+                'CurrentMood = MediaSourceChange(SourceName, 1, MoodString)
+                ApplyMoodChange(MoodString)
             Else
-                CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & InterimMood)
+                'CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & InterimMood)
+                ApplyMoodChange(InterimMood)
             End If
             RaiseEvent MoodChange(CurrentMood)
 
         End Function
 
         Public Function MyMood(Optional Input As String = "", Optional LeftH As Integer = -1, Optional RightH As Integer = -1) As String
-            Dim OutputString As String = Replace(CurrentMood, Directory & FileHeader, "")
+            Dim OutputString As String = CurrentMood
             Dim HandsInt As Integer = 0
             If LeftH > -1 Then
                 HandsInt = HandsInt + (LeftH * 1)
@@ -1080,10 +1127,13 @@ Public Module OBSfunctions
             End Select
         End Function
 
-        Public Sub ChangeMood(MoodFileName As String, Optional duration As Integer = 0, Optional BypassManager As Boolean = False)
+        Public Sub ChangeMood(MoodFileName As String,
+                              Optional duration As Integer = 0,
+                              Optional BypassManager As Boolean = False,
+                              Optional PlaySound As String = "")
             Dim MoodTask As Task(Of Task) = New Task(Of Task) _
             (Async Function() As Task
-                 Await ChangeMoodAsync(MoodFileName, duration)
+                 Await ChangeMoodAsync(MoodFileName, duration, PlaySound)
              End Function)
             If BypassManager Then
                 MoodTask.Start()
@@ -1093,23 +1143,29 @@ Public Module OBSfunctions
             End If
         End Sub
 
-        Private Async Function ChangeMoodAsync(MoodFileName As String, Optional duration As Integer = 0) As Task
+        Private Async Function ChangeMoodAsync(MoodFileName As String,
+                                               Optional duration As Integer = 0,
+                                               Optional PlaySound As String = "") As Task
             If MoodFileName <> "" Then
+                If PlaySound <> "" Then Dim SoundTask As Task = SoundPlayer.PlaySound(AudioControl.GetSoundFileDataByName(PlaySound))
                 MoodFileName = AppendMood(MoodFileName)
-                If duration > 0 Then
-                    Dim TempMood As String = CurrentMood
-                    CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MoodFileName)
-                    RaiseEvent MoodChange(CurrentMood)
-                    Await Task.Delay(duration)
-                    CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
-                    RaiseEvent MoodChange(CurrentMood)
-                Else
-                    If CurrentMood <> Directory & FileHeader & MoodFileName Then
-                        CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MoodFileName)
+                    If duration > 0 Then
+                        Dim TempMood As String = CurrentMood
+                        'CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MoodFileName)
+                        ApplyMoodChange(MoodFileName)
                         RaiseEvent MoodChange(CurrentMood)
+                        Await Task.Delay(duration)
+                        'CurrentMood = MediaSourceChange(SourceName, 1, TempMood)
+                        ApplyMoodChange(TempMood)
+                        RaiseEvent MoodChange(CurrentMood)
+                    Else
+                        If CurrentMood <> MoodFileName Then
+                            'CurrentMood = MediaSourceChange(SourceName, 1, Directory & FileHeader & MoodFileName)
+                            ApplyMoodChange(MoodFileName)
+                            RaiseEvent MoodChange(CurrentMood)
+                        End If
                     End If
                 End If
-            End If
         End Function
     End Class
 
@@ -1181,8 +1237,10 @@ Public Module OBSfunctions
         Else
             OBScounterObject(CounterSelection).Value = NewValue
         End If
-        SetOBSsourceText(OBScounterObject(CounterSelection).ValueSource, OBScounterObject(CounterSelection).Value)
+        Dim Splode As Task = OBScounterObject(CounterSelection).CounterBoom.Show()
         If CounterTick <> "" Then Dim TickTask As Task = CounterTicker.PlaySound(CounterTick)
+        Await Task.Delay(10)
+        SetOBSsourceText(OBScounterObject(CounterSelection).ValueSource, OBScounterObject(CounterSelection).Value)
 
         Await Task.Delay(2200)
         OBScounterObject(CounterSelection).Title = ""
@@ -1197,21 +1255,9 @@ Public Module OBSfunctions
 
     Public Sub InitializeCountersObjects()
         ReDim OBScounterObject(0 To 2)
-        OBScounterObject(CounterIDs.Glob) = New TimerCounterData("Global Counter",
-                                                                ResourceIDs.GlobalCounter,
-                                                                "GlobalCounterTitle",
-                                                                "GlobalCounterValue")
-
-        OBScounterObject(CounterIDs.Ember) = New TimerCounterData("Ember Counter",
-                                                                ResourceIDs.EmberCounter,
-                                                                "EmberCounterTitle",
-                                                                "EmberCounterValue")
-
-        OBScounterObject(CounterIDs.Luna) = New TimerCounterData("Luna Counter",
-                                                                ResourceIDs.LunaCounter,
-                                                                "LunaCounterTitle",
-                                                                "LunaCounterValue")
-
+        OBScounterObject(CounterIDs.Glob) = New TimerCounterData("Global Counter", ResourceIDs.GlobalCounter)
+        OBScounterObject(CounterIDs.Ember) = New TimerCounterData("Ember Counter", ResourceIDs.EmberCounter)
+        OBScounterObject(CounterIDs.Luna) = New TimerCounterData("Luna Counter", ResourceIDs.LunaCounter)
         CounterTicker = New SoundController(SoundSource.BeepBoop, "Counter Tick")
     End Sub
 
@@ -1224,15 +1270,17 @@ Public Module OBSfunctions
         Public Name As String
         Public ResourceID As Integer
         Public SoundPlayer As SoundController
-        Public Sub New(MyName As String, RID As Integer, TSource As String, VSource As String)
+        Public CounterBoom As VideoPlayer
+        Public Sub New(MyName As String, RID As Integer)
             State = False
             Title = ""
             Value = "00"
             Name = MyName
             ResourceID = RID
-            TitleSource = TSource
-            ValueSource = VSource
+            TitleSource = Replace(Name, " ", "") & "Title"
+            ValueSource = Replace(Name, " ", "") & "Value"
             SoundPlayer = New SoundController(SoundSource.SFX, Name)
+            CounterBoom = New VideoPlayer(Replace(Name, " ", "") & "Splode", "Counters&Timers")
         End Sub
     End Class
 
@@ -3128,7 +3176,11 @@ FoundPlayer:
         Public Sub Stopp()
             Access.WaitOne()
             If Active = True Then
-                Current = Replace(MediaSourceChange(Name, 3), Path, "")
+                If Path <> "" Then
+                    Current = Replace(MediaSourceChange(Name, 3), Path, "")
+                Else
+                    Current = MediaSourceChange(Name, 3)
+                End If
             End If
             Access.ReleaseMutex()
         End Sub
@@ -3136,9 +3188,17 @@ FoundPlayer:
         Public Sub Pausing()
             Access.WaitOne()
             If Pause = True Then
-                If Path <> "" Then Current = Replace(MediaSourceChange(Name, 1), Path, "")
+                If Path <> "" Then
+                    Current = Replace(MediaSourceChange(Name, 1), Path, "")
+                Else
+                    Current = MediaSourceChange(Name, 1)
+                End If
             Else
-                If Path <> "" Then Current = Replace(MediaSourceChange(Name, 2), Path, "")
+                If Path <> "" Then
+                    Current = Replace(MediaSourceChange(Name, 2), Path, "")
+                Else
+                    Current = MediaSourceChange(Name, 2)
+                End If
             End If
             Access.ReleaseMutex()
         End Sub
@@ -3223,12 +3283,17 @@ FoundPlayer:
             End If
             SceneName = Scene
             SoundFile = Sound
-            If InfiniteLoop Then
-                StayVisible = True
-            Else
-                LoopDuration = LoopTime
-                HoldDuration = HoldTime
-            End If
+
+
+            'If InfiniteLoop Then
+            '    StayVisible = True
+            '    LoopDuration = 0
+            '    HoldDuration = 0
+            'Else
+            StayVisible = InfiniteLoop
+            LoopDuration = LoopTime
+            HoldDuration = HoldTime
+            'End If
 
             MediaActive = False
             'SetSourceVisibility(Player.Name, SceneName, False, True)
@@ -3277,26 +3342,32 @@ FoundPlayer:
                         SoundTask = Audio.PlaySound(CustomSound)
                     End If
                 End If
-                If StayVisible = False Then
-                    If LoopDuration > 0 Or CustomLoop > -1 Then
-                        EndMe = True
-                        If CustomLoop > -1 Then
-                            Await Task.Delay(CustomLoop)
-                        Else
-                            Await Task.Delay(LoopDuration)
-                        End If
+                'If StayVisible = False Then
+                If LoopDuration > 0 Or CustomLoop > -1 Then
+                    EndMe = True
+                    If CustomLoop > -1 Then
+                        Await Task.Delay(CustomLoop)
+                    Else
+                        Await Task.Delay(LoopDuration)
                     End If
-                    If HoldDuration > 0 Or CustomHold > -1 Then
-                        EndMe = True
-                        Player.Pausing()
-                        If CustomHold > -1 Then
-                            Await Task.Delay(CustomHold)
-                        Else
-                            Await Task.Delay(HoldDuration)
-                        End If
-                    End If
-                    If WaitForSound = True Then EndMe = True
                 End If
+                If HoldDuration > 0 Or CustomHold > -1 Then
+                    EndMe = True
+                    Player.Pausing()
+                    'SendMessage(Player.Name & " Paused")
+                    If CustomHold > -1 Then
+                        Await Task.Delay(CustomHold)
+                    Else
+                        Await Task.Delay(HoldDuration)
+                    End If
+                    If StayVisible = False Then
+                        Player.Pausing()
+                        EndMe = False
+                    End If
+                    'SendMessage(Player.Name & " Resumed")
+                End If
+                If WaitForSound = True Then EndMe = True
+                'End If
                 If EndMe Then
                     If WaitForSound = True And SoundTask IsNot Nothing Then
                         'If SoundTask.Status = TaskStatus.Running Then
@@ -3332,6 +3403,7 @@ FoundPlayer:
         Public SoundAlert As VideoPlayer
         Public UserAlert As VideoPlayer
         Public Confetti As VideoPlayer
+        Public Rollers() As VideoPlayer
 
         Public Sub New()
 
@@ -3342,10 +3414,30 @@ FoundPlayer:
             UserEventVidSources(UserEvents.BitsDetected) = "\\StreamPC-V2\OBS Assets\Video\New Follower.mp4"
             UserEventVidSources(UserEvents.RaidDetected) = "\\StreamPC-V2\OBS Assets\Video\New Follower.mp4"
 
+            Dim Roll6vidSources(0 To 5) As String
+            Roll6vidSources(0) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rolldiamond.mp4"
+            Roll6vidSources(1) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollclub.mp4"
+            Roll6vidSources(2) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollheart.mp4"
+            Roll6vidSources(3) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollspade.mp4"
+            Roll6vidSources(4) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollmoon.mp4"
+            Roll6vidSources(5) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollflame.mp4"
+
+            Dim ConfettiSources(0 To 4) As String
+            ConfettiSources(0) = "\\StreamPC-V2\OBS Assets\Media\confetti1.mp4"
+            ConfettiSources(1) = "\\StreamPC-V2\OBS Assets\Media\confetti2.mp4"
+            ConfettiSources(2) = "\\StreamPC-V2\OBS Assets\Media\confetti3.mp4"
+            ConfettiSources(3) = "\\StreamPC-V2\OBS Assets\Media\confetti5.mp4"
+            ConfettiSources(4) = "\\StreamPC-V2\OBS Assets\Media\confetti7.mp4"
+
+            ReDim Rollers(0 To 4)
+            For I As Integer = 0 To 4
+                Rollers(I) = New VideoPlayer("Roll" & I + 1, "Roll For Prizes",, Roll6vidSources, 6000, 3000)
+            Next
+
             Hats = New VideoPlayer("EmbersHats", "Events and Alerts", "Hats.wav")
             SoundAlert = New VideoPlayer("Sound Alert Diplay", "Events and Alerts",,, 4000,,, "SoundAlert")
             UserAlert = New VideoPlayer("Viewer Generated Event", "Events and Alerts",, UserEventVidSources)
-            Confetti = New VideoPlayer("ConfettiBlast", "Events and Alerts", "Yay.wav")
+            Confetti = New VideoPlayer("ConfettiBlast", "Events and Alerts", "Yay.wav", ConfettiSources)
         End Sub
 
         Public Sub PlayHats()
@@ -3371,6 +3463,114 @@ FoundPlayer:
             End Function)
             Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, AlertTask, "Sound Alert")
         End Sub
+
+        Public Function Roll6(RollTier As Integer, Username As String, Optional ForceWin As Boolean = False) As Integer()
+            Dim Output As New List(Of Integer), GottaDouble As Boolean, GottaTripple As Boolean, PauseTime As Integer
+            Select Case RollTier
+                Case 1
+                    Output.Add(RandomInt(0, 5))
+                    'SendMessage(Output(0))
+                    GottaDouble = False
+                    GottaTripple = False
+                    PauseTime = 300
+                Case 2
+                    If ForceWin Then
+                        Dim InputInt As Integer = RandomInt(0, 5)
+                        Output.Add(InputInt)
+                        Output.Add(InputInt)
+                    Else
+                        Output.Add(RandomInt(0, 5))
+                        Output.Add(RandomInt(0, 5))
+                        'SendMessage(Output(0) & ", " & Output(1))
+                    End If
+                    GottaDouble = (Output(0) = Output(1))
+                    If GottaDouble Then
+                        PauseTime = 3000
+                    Else
+                        PauseTime = 300
+                    End If
+                    GottaTripple = False
+                Case 3
+                    If ForceWin Then
+                        Dim InputInt As Integer = RandomInt(0, 5)
+                        Output.Add(InputInt)
+                        Output.Add(InputInt)
+                        Output.Add(InputInt)
+                    Else
+                        Output.Add(RandomInt(0, 5))
+                        Output.Add(RandomInt(0, 5))
+                        Output.Add(RandomInt(0, 5))
+                        'SendMessage(Output(0) & ", " & Output(1) & ", " & Output(2))
+                    End If
+
+                    Select Case Output.Distinct.Count
+                        Case = 3
+                            GottaDouble = False
+                            GottaTripple = False
+                            PauseTime = 100
+                        Case = 2
+                            GottaDouble = True
+                            GottaTripple = False
+                            PauseTime = 3000
+                        Case = 1
+                            GottaDouble = False
+                            GottaTripple = True
+                            PauseTime = 5000
+                    End Select
+            End Select
+            Dim RollTask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Dim TaskList As New List(Of Task)
+                Select Case RollTier
+                    Case 1
+                        SetOBSsourceText("Roll Text", Username & "  Redeemed  roll6  tier1")
+                        SetSourceVisibility(0, "Events and Alerts", True,, "Roll6")
+                        Await Task.Delay(250)
+                        TaskList.Add(Rollers(1).Show(Output(0),,,, PauseTime))
+                        Await Task.WhenAll(TaskList.ToArray)
+                        SetSourceVisibility(0, "Events and Alerts", False,, "Roll6")
+                        Await Task.Delay(1500)
+                    Case 2
+                        SetOBSsourceText("Roll Text", Username & "  Redeemed  roll6  tier2")
+                        SetSourceVisibility(0, "Events and Alerts", True,, "Roll6")
+                        Await Task.Delay(250)
+                        TaskList.Add(Rollers(3).Show(Output(0),,,, PauseTime))
+                        Await Task.Delay(150)
+                        TaskList.Add(Rollers(4).Show(Output(1),,,, PauseTime))
+                        If GottaDouble Or GottaTripple Then
+                            Await Task.Delay(6000)
+                            Dim Celebrate As Task = Confetti.Show(RandomInt(0, 3))
+                            Await Task.WhenAll(TaskList.ToArray)
+                            Confetti.Hide()
+                        Else
+                            Await Task.WhenAll(TaskList.ToArray)
+                        End If
+                        SetSourceVisibility(0, "Events and Alerts", False,, "Roll6")
+                        Await Task.Delay(1500)
+                    Case 3
+                        SetOBSsourceText("Roll Text", Username & "  Redeemed  roll6  tier3")
+                        SetSourceVisibility(0, "Events and Alerts", True,, "Roll6")
+                        Await Task.Delay(250)
+                        TaskList.Add(Rollers(0).Show(Output(0),,,, PauseTime))
+                        Await Task.Delay(150)
+                        TaskList.Add(Rollers(1).Show(Output(1),,,, PauseTime))
+                        Await Task.Delay(150)
+                        TaskList.Add(Rollers(2).Show(Output(2),,,, PauseTime))
+                        If GottaDouble Or GottaTripple Then
+                            Await Task.Delay(6000)
+                            Dim Celebrate As Task = Confetti.Show(RandomInt(0, 3))
+                            Await Task.WhenAll(TaskList.ToArray)
+                            Confetti.Hide()
+                        Else
+                            Await Task.WhenAll(TaskList.ToArray)
+                        End If
+                        SetSourceVisibility(0, "Events and Alerts", False,, "Roll6")
+                        Await Task.Delay(1500)
+                End Select
+            End Function)
+            Dim RunRollTask As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, RollTask, "Rolling Tier " & RollTier)
+            Return Output.ToArray
+        End Function
 
         Public Sub ViewerEvent(EventType As Integer, Optional Username As String = "", Optional Amount As Double = 0)
             Dim AlertTask As Task(Of Task) = New Task(Of Task) _
@@ -3411,20 +3611,20 @@ FoundPlayer:
                         If Speaker2 IsNot Nothing Then Await Speaker2
                     Case UserEvents.NewSubscriber
                         Show = UserAlert.Show(EventType, "PKM Achievement 3.wav")
-                        Dim Celebrate As Task = Confetti.Show
+                        Dim Celebrate As Task = Confetti.Show(RandomInt(0, 3))
                         Await Task.Delay(250)
                         Dim Messenger1 As Integer = EmberOrLuna()
                         Select Case Messenger1
                             Case WhichSprite.Ember
                                 Speaker1 = Ember.Says("THANK YOU SO MUCH " & Username & "!!!", Ember.Mood.WooHoo,,, 2800, True, ,, Ember.Mood.Happy)
                             Case WhichSprite.Luna
-                                Speaker1 = Luna.Says("THANK YOU SO MUCH " & Username & "!!!", Luna.Mood.WooHoo,,, 2100, True,,, Luna.Mood.Happy)
+                                Speaker1 = Luna.Says("THANK YOU SO MUCH " & Username & "!!!", Luna.Mood.WooHoo,,, 2250, True,,, Luna.Mood.Happy)
                         End Select
                         Await Task.Delay(250)
                         Select Case Messenger1
                             Case WhichSprite.Ember
                                 If LunaSpriteB Then
-                                    Speaker2 = Luna.Says(RandomMessage(Username, "NewSubscriber"), Luna.Mood.WooHoo,,, 2100, True,,, Luna.Mood.Happy)
+                                    Speaker2 = Luna.Says(RandomMessage(Username, "NewSubscriber"), Luna.Mood.WooHoo,,, 2250, True,,, Luna.Mood.Happy)
                                 Else
                                     Await Speaker1
                                     Speaker1 = Nothing
@@ -3560,12 +3760,12 @@ FromTheTop:
                         QueueTex.ReleaseMutex()
                         ReleaseMe = False
                         SetRIDs(MyRequest.RIDs, True)
-                        RaiseEvent TaskEvent(MyRequest.TaskString & " (Q#" & MyRequest.QID & ")", RMtaskStates.Started)
+                        RaiseEvent TaskEvent(MyRequest.TaskString & " (Q#I" & MyRequest.QID & "/O" & I & "/R" & Rqueue.Count & ")", RMtaskStates.Started)
                         If MyRequest.MyTask IsNot Nothing Then
                             MyRequest.MyTask.Start()
                             Await MyRequest.MyTask.Result
                         End If
-                        RaiseEvent TaskEvent(MyRequest.TaskString & " (Q#" & MyRequest.QID & ")", RMtaskStates.Ended)
+                        RaiseEvent TaskEvent(MyRequest.TaskString & " (Q#I" & MyRequest.QID & "/O" & I & "/R" & Rqueue.Count & ")", RMtaskStates.Ended)
                         SetRIDs(MyRequest.RIDs, False)
                         GoTo FromTheTop
                     End If

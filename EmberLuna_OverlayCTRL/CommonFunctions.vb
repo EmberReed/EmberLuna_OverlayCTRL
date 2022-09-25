@@ -1,9 +1,11 @@
-﻿Imports OBSWebsocketDotNet
-Imports OBSWebsocketDotNet.Types
-Imports System.Net.Sockets
+﻿Imports System.Net.Sockets
 Imports System.Threading
 Imports System.IO
 Imports TwitchLib.PubSub
+Imports System.Net
+Imports System.Text
+Imports System.Collections.Concurrent
+
 Public Module CommonFunctions
     Public Declare Function SetDrawing Lib "user32" Alias "SendMessageA" (ByVal hwndLock As IntPtr, ByVal Msg As Integer, ByVal wParam As Boolean, ByVal lParam As IntPtr) As Integer
     Public Const WM_SETREDRAW As Integer = 11
@@ -20,6 +22,7 @@ Public Module CommonFunctions
     Public SpriteControls As OBScharacters
     Public GamesList As TwitchGames
     Public ChannelPointsDisplay As ChannelPointsForm
+    Public WithEvents DemoPlayer As DemoModule
 
     Public WithEvents ChannelPoints As ChannelPointData
     Public WithEvents myAPI As APIfunctions
@@ -50,11 +53,16 @@ Public Module CommonFunctions
         Public Const Art As Integer = 6
     End Structure
 
+    Public Function RandomUsername() As String
+        Return ChatUserInfo.AllChatUsers(RandomInt(0, ChatUserInfo.AllChatUsers.Count - 1)).UserName
+    End Function
+
     Public Function ConvertStringToInteger(input As String) As Integer
         Dim output As Integer
         Integer.TryParse(input, output)
         Return output
     End Function
+
     Public Function ConvertStringToBool(input As String) As Boolean
         Dim output As Boolean
         Boolean.TryParse(input, output)
@@ -162,7 +170,7 @@ Public Module CommonFunctions
     End Function
 
     Public Function RandomInt(Lbound As Integer, Ubound As Integer) As Integer
-        Dim Thagomizer As Random = New Random
+        Static Thagomizer As Random = New Random
         Dim Output As Integer = Thagomizer.Next(Lbound, Ubound + 1)
         Return Output
     End Function
@@ -178,8 +186,6 @@ Public Module CommonFunctions
         Dim r As Random = New Random()
         Shuffle = collection.OrderBy(Function(a) r.Next()).ToList()
     End Function
-
-
 
     Public Sub sendlist(InputList As List(Of String))
         Dim inputstring As String = ""
@@ -261,8 +267,151 @@ Public Module CommonFunctions
     End Class
 
 
+    Public Class ExternalConnections
+        Private WithEvents EmberRemote As EmberLunaControlServer
+        Private WithEvents LunaRemote As EmberLunaControlServer
+        Private WithEvents EmberSprite As EmberLunaControlServer
+        Private WithEvents LunaSprite As EmberLunaControlServer
+
+        Private EmberSwaiting As Boolean
+        Private EmberSresponseRecieved As TaskCompletionSource(Of Boolean)
+
+        Public Sub New()
+            EmberRemote = New EmberLunaControlServer(8001)
+            LunaRemote = New EmberLunaControlServer(8002)
+            EmberSprite = New EmberLunaControlServer(8003)
+            LunaSprite = New EmberLunaControlServer(8004)
+        End Sub
+
+        Public Sub EmberSdataRecieved(DataString As String) Handles EmberSprite.DataReceived
+            If EmberSwaiting Then EmberSresponseRecieved.SetResult(False)
+        End Sub
+
+        Public Async Function EmberSpriteMood(MoodString As String) As Task
+            EmberSwaiting = True
+            EmberSresponseRecieved = New TaskCompletionSource(Of Boolean)
+            EmberSprite.SendString(MoodString)
+            EmberSwaiting = Await EmberSresponseRecieved.Task
+        End Function
 
 
+    End Class
 
+    Public Class EmberLunaControlServer
+
+        Public Event ServerEvent(EventString As String)
+        Public Event ConnectionEstablished(IPaddress As String, PortNumber As Integer)
+        Public Event DataReceived(DataString As String)
+        Private RunServer As Boolean = False
+        Private ConnectionAlive As Boolean = False
+        Private StringQueue As ConcurrentQueue(Of String)
+        Private RunTask As Task
+
+        Public Sub New(PortNumber As Integer)
+            StringQueue = New ConcurrentQueue(Of String)
+            RunServer = True
+            ConnectionAlive = False
+            RunTask = RuntcpServer(PortNumber)
+        End Sub
+
+        Public Function IsAlive() As Boolean
+            Return ConnectionAlive
+        End Function
+
+        Public Async Function CloseServer() As Task
+            RunServer = False
+            Await RunTask
+        End Function
+
+        Public Sub SendString(StringToSend As String)
+            StringQueue.Enqueue(StringToSend)
+        End Sub
+
+
+        Private Async Function RuntcpServer(PortNumber As Integer) As Task
+            Dim serverSocket As New TcpListener(Net.IPAddress.Any, PortNumber)
+            Dim hostname As String = Dns.GetHostName()
+            Dim iphe As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(hostname)
+            Dim STRipaddress As String = "", SendString As String
+
+
+            For Each ipheal As System.Net.IPAddress In iphe.AddressList
+                If ipheal.AddressFamily = System.Net.Sockets.AddressFamily.InterNetwork Then
+                    STRipaddress = ipheal.ToString()
+                End If
+            Next
+
+            Dim clientSocket As TcpClient
+            Dim MynetworkStream As NetworkStream
+            Dim bytesFrom() As Byte
+            Dim dataFromClient As String
+            Dim SendBytes() As Byte
+
+            serverSocket.Start()
+            RaiseEvent ConnectionEstablished(STRipaddress, PortNumber)
+            RaiseEvent ServerEvent("-Server Started: " & STRipaddress & ":" & PortNumber & vbCrLf)
+ReconnectClient:
+            Do Until serverSocket.Pending = True
+                If RunServer = False Then GoTo StopServer
+                Await Task.Delay(20)
+            Loop
+            clientSocket = Await serverSocket.AcceptTcpClientAsync()
+            RaiseEvent ServerEvent("-Connected to: " & clientSocket.Client.RemoteEndPoint.ToString & vbCrLf)
+            Try
+                MynetworkStream = clientSocket.GetStream()
+                ConnectionAlive = True
+            Catch ex As Exception
+                MsgBox("-Connection fail: " & ex.ToString)
+                GoTo didntwork
+            End Try
+
+            While RunServer And MynetworkStream.CanRead And serverSocket.Pending = False 'And serverSocket.Pending = False And MynetworkStream.CanRead
+                Try
+                    If MynetworkStream.DataAvailable = True Then
+                        dataFromClient = ""
+                        Await MynetworkStream.ReadAsync(bytesFrom, 0, clientSocket.Available)
+                        For Each DataByte In bytesFrom
+                            dataFromClient &= Chr(DataByte)
+                        Next
+                        RaiseEvent DataReceived(dataFromClient)
+                        RaiseEvent ServerEvent("-Recieved: " & dataFromClient & vbCrLf)
+                    Else
+                        If StringQueue.Count > 0 Then
+                            Do Until StringQueue.Count = 0
+                                If StringQueue.TryDequeue(SendString) Then
+                                    If SendString <> "" Then
+                                        SendBytes = Encoding.ASCII.GetBytes(SendString & vbCrLf)
+                                        MynetworkStream.Write(SendBytes, 0, SendBytes.Length)
+                                        RaiseEvent ServerEvent("-Sent: " & SendString & vbCrLf)
+                                        SendString = ""
+                                    End If
+                                End If
+                            Loop
+                        Else
+                            Await Task.Delay(20)
+                        End If
+                    End If
+                Catch ex As Exception
+                    MsgBox("socket fail: " & ex.ToString)
+                    GoTo didntwork
+                End Try
+            End While
+
+            If RunServer = True Then
+                ConnectionAlive = False
+                clientSocket.Close()
+                RaiseEvent ServerEvent("-Disconnected" & vbCrLf)
+                GoTo ReconnectClient
+            End If
+didntwork:
+            ConnectionAlive = False
+            clientSocket.Close()
+            RaiseEvent ServerEvent("-Disconnected" & vbCrLf)
+StopServer:
+            serverSocket.Stop()
+            RaiseEvent ServerEvent("-Server Stopped")
+            Await Task.Delay(100)
+        End Function
+    End Class
 
 End Module
