@@ -31,7 +31,6 @@ Partial Class ChannelPointsEditor
         Me.ColorDialog1 = New System.Windows.Forms.ColorDialog()
         Me.CHPenable = New System.Windows.Forms.Button()
         Me.CHPcolor = New System.Windows.Forms.Button()
-        Me.CHPtype = New System.Windows.Forms.NumericUpDown()
         Me.TypeLabel = New System.Windows.Forms.Label()
         Me.CHPcost = New System.Windows.Forms.NumericUpDown()
         Me.Label3 = New System.Windows.Forms.Label()
@@ -39,12 +38,12 @@ Partial Class ChannelPointsEditor
         Me.CHPuserinput = New System.Windows.Forms.CheckBox()
         Me.Label7 = New System.Windows.Forms.Label()
         Me.CHPmps = New System.Windows.Forms.NumericUpDown()
-        Me.Label2 = New System.Windows.Forms.Label()
         Me.CHPcooldown = New System.Windows.Forms.NumericUpDown()
         Me.Label5 = New System.Windows.Forms.Label()
         Me.CHPmpups = New System.Windows.Forms.NumericUpDown()
-        Me.Label6 = New System.Windows.Forms.Label()
-        CType(Me.CHPtype, System.ComponentModel.ISupportInitialize).BeginInit()
+        Me.Label4 = New System.Windows.Forms.Label()
+        Me.AutoEnable = New System.Windows.Forms.CheckBox()
+        Me.ProgramDependant = New System.Windows.Forms.CheckBox()
         CType(Me.CHPcost, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.CHPmps, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.CHPcooldown, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -57,9 +56,9 @@ Partial Class ChannelPointsEditor
         Me.CANCELBUTT.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.CANCELBUTT.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CANCELBUTT.ForeColor = System.Drawing.Color.White
-        Me.CANCELBUTT.Location = New System.Drawing.Point(229, 174)
+        Me.CANCELBUTT.Location = New System.Drawing.Point(230, 215)
         Me.CANCELBUTT.Name = "CANCELBUTT"
-        Me.CANCELBUTT.Size = New System.Drawing.Size(120, 38)
+        Me.CANCELBUTT.Size = New System.Drawing.Size(243, 31)
         Me.CANCELBUTT.TabIndex = 72
         Me.CANCELBUTT.Text = "CANCEL"
         Me.CANCELBUTT.UseVisualStyleBackColor = False
@@ -70,9 +69,9 @@ Partial Class ChannelPointsEditor
         Me.APPLYBUTT.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.APPLYBUTT.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.APPLYBUTT.ForeColor = System.Drawing.Color.White
-        Me.APPLYBUTT.Location = New System.Drawing.Point(229, 114)
+        Me.APPLYBUTT.Location = New System.Drawing.Point(5, 215)
         Me.APPLYBUTT.Name = "APPLYBUTT"
-        Me.APPLYBUTT.Size = New System.Drawing.Size(119, 54)
+        Me.APPLYBUTT.Size = New System.Drawing.Size(219, 31)
         Me.APPLYBUTT.TabIndex = 71
         Me.APPLYBUTT.Text = "OK"
         Me.APPLYBUTT.UseVisualStyleBackColor = False
@@ -86,7 +85,7 @@ Partial Class ChannelPointsEditor
         Me.CHPprompt.Location = New System.Drawing.Point(18, 81)
         Me.CHPprompt.Multiline = True
         Me.CHPprompt.Name = "CHPprompt"
-        Me.CHPprompt.Size = New System.Drawing.Size(194, 119)
+        Me.CHPprompt.Size = New System.Drawing.Size(194, 116)
         Me.CHPprompt.TabIndex = 75
         Me.CHPprompt.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
         '
@@ -97,7 +96,7 @@ Partial Class ChannelPointsEditor
         Me.Label1.ForeColor = System.Drawing.Color.White
         Me.Label1.Location = New System.Drawing.Point(5, 64)
         Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(219, 148)
+        Me.Label1.Size = New System.Drawing.Size(219, 146)
         Me.Label1.TabIndex = 76
         Me.Label1.Text = "PROMPT"
         Me.Label1.TextAlign = System.Drawing.ContentAlignment.TopCenter
@@ -133,7 +132,7 @@ Partial Class ChannelPointsEditor
         Me.CHPenable.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.CHPenable.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CHPenable.ForeColor = System.Drawing.Color.White
-        Me.CHPenable.Location = New System.Drawing.Point(229, 64)
+        Me.CHPenable.Location = New System.Drawing.Point(354, 166)
         Me.CHPenable.Name = "CHPenable"
         Me.CHPenable.Size = New System.Drawing.Size(119, 44)
         Me.CHPenable.TabIndex = 77
@@ -146,36 +145,23 @@ Partial Class ChannelPointsEditor
         Me.CHPcolor.FlatStyle = System.Windows.Forms.FlatStyle.Flat
         Me.CHPcolor.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CHPcolor.ForeColor = System.Drawing.Color.White
-        Me.CHPcolor.Location = New System.Drawing.Point(354, 174)
+        Me.CHPcolor.Location = New System.Drawing.Point(354, 124)
         Me.CHPcolor.Name = "CHPcolor"
         Me.CHPcolor.Size = New System.Drawing.Size(119, 38)
         Me.CHPcolor.TabIndex = 78
         Me.CHPcolor.Text = "BG"
         Me.CHPcolor.UseVisualStyleBackColor = False
         '
-        'CHPtype
-        '
-        Me.CHPtype.BackColor = System.Drawing.Color.Black
-        Me.CHPtype.Font = New System.Drawing.Font("Calibri", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.CHPtype.ForeColor = System.Drawing.Color.White
-        Me.CHPtype.Location = New System.Drawing.Point(367, 130)
-        Me.CHPtype.Maximum = New Decimal(New Integer() {5, 0, 0, 0})
-        Me.CHPtype.Name = "CHPtype"
-        Me.CHPtype.ReadOnly = True
-        Me.CHPtype.Size = New System.Drawing.Size(91, 31)
-        Me.CHPtype.TabIndex = 82
-        Me.CHPtype.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        '
         'TypeLabel
         '
         Me.TypeLabel.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
         Me.TypeLabel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.TypeLabel.ForeColor = System.Drawing.Color.White
-        Me.TypeLabel.Location = New System.Drawing.Point(354, 114)
+        Me.TypeLabel.Location = New System.Drawing.Point(230, 65)
         Me.TypeLabel.Name = "TypeLabel"
         Me.TypeLabel.Size = New System.Drawing.Size(119, 54)
         Me.TypeLabel.TabIndex = 81
-        Me.TypeLabel.Text = "GLOBAL"
+        Me.TypeLabel.Text = "MAX PER STREAM"
         Me.TypeLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'CHPcost
@@ -209,7 +195,7 @@ Partial Class ChannelPointsEditor
         '
         Me.CHPskipqueue.AutoSize = True
         Me.CHPskipqueue.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.CHPskipqueue.Location = New System.Drawing.Point(372, 88)
+        Me.CHPskipqueue.Location = New System.Drawing.Point(237, 150)
         Me.CHPskipqueue.Name = "CHPskipqueue"
         Me.CHPskipqueue.Size = New System.Drawing.Size(82, 17)
         Me.CHPskipqueue.TabIndex = 85
@@ -220,7 +206,7 @@ Partial Class ChannelPointsEditor
         '
         Me.CHPuserinput.AutoSize = True
         Me.CHPuserinput.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.CHPuserinput.Location = New System.Drawing.Point(372, 68)
+        Me.CHPuserinput.Location = New System.Drawing.Point(237, 130)
         Me.CHPuserinput.Name = "CHPuserinput"
         Me.CHPuserinput.Size = New System.Drawing.Size(83, 17)
         Me.CHPuserinput.TabIndex = 84
@@ -232,9 +218,9 @@ Partial Class ChannelPointsEditor
         Me.Label7.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
         Me.Label7.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.Label7.ForeColor = System.Drawing.Color.White
-        Me.Label7.Location = New System.Drawing.Point(354, 64)
+        Me.Label7.Location = New System.Drawing.Point(230, 124)
         Me.Label7.Name = "Label7"
-        Me.Label7.Size = New System.Drawing.Size(119, 44)
+        Me.Label7.Size = New System.Drawing.Size(119, 86)
         Me.Label7.TabIndex = 83
         Me.Label7.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
@@ -243,25 +229,13 @@ Partial Class ChannelPointsEditor
         Me.CHPmps.BackColor = System.Drawing.Color.Black
         Me.CHPmps.Font = New System.Drawing.Font("Calibri", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CHPmps.ForeColor = System.Drawing.Color.White
-        Me.CHPmps.Location = New System.Drawing.Point(642, 22)
-        Me.CHPmps.Maximum = New Decimal(New Integer() {2, 0, 0, 0})
+        Me.CHPmps.Location = New System.Drawing.Point(240, 82)
+        Me.CHPmps.Maximum = New Decimal(New Integer() {50, 0, 0, 0})
         Me.CHPmps.Name = "CHPmps"
         Me.CHPmps.ReadOnly = True
-        Me.CHPmps.Size = New System.Drawing.Size(91, 31)
+        Me.CHPmps.Size = New System.Drawing.Size(98, 31)
         Me.CHPmps.TabIndex = 89
         Me.CHPmps.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
-        '
-        'Label2
-        '
-        Me.Label2.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.Label2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-        Me.Label2.ForeColor = System.Drawing.Color.White
-        Me.Label2.Location = New System.Drawing.Point(629, 6)
-        Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(119, 54)
-        Me.Label2.TabIndex = 88
-        Me.Label2.Text = "MAX PER STREAM"
-        Me.Label2.TextAlign = System.Drawing.ContentAlignment.TopCenter
         '
         'CHPcooldown
         '
@@ -294,44 +268,65 @@ Partial Class ChannelPointsEditor
         Me.CHPmpups.BackColor = System.Drawing.Color.Black
         Me.CHPmpups.Font = New System.Drawing.Font("Calibri", 14.25!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.CHPmpups.ForeColor = System.Drawing.Color.White
-        Me.CHPmpups.Location = New System.Drawing.Point(642, 94)
-        Me.CHPmpups.Maximum = New Decimal(New Integer() {2, 0, 0, 0})
+        Me.CHPmpups.Location = New System.Drawing.Point(364, 82)
+        Me.CHPmpups.Maximum = New Decimal(New Integer() {50, 0, 0, 0})
         Me.CHPmpups.Name = "CHPmpups"
         Me.CHPmpups.ReadOnly = True
-        Me.CHPmpups.Size = New System.Drawing.Size(91, 31)
+        Me.CHPmpups.Size = New System.Drawing.Size(98, 31)
         Me.CHPmpups.TabIndex = 91
         Me.CHPmpups.TextAlign = System.Windows.Forms.HorizontalAlignment.Center
         '
-        'Label6
+        'Label4
         '
-        Me.Label6.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.Label6.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-        Me.Label6.ForeColor = System.Drawing.Color.White
-        Me.Label6.Location = New System.Drawing.Point(629, 65)
-        Me.Label6.Name = "Label6"
-        Me.Label6.Size = New System.Drawing.Size(119, 69)
-        Me.Label6.TabIndex = 90
-        Me.Label6.Text = "MAX PER USER PER STREAM"
-        Me.Label6.TextAlign = System.Drawing.ContentAlignment.TopCenter
+        Me.Label4.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.Label4.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.Label4.ForeColor = System.Drawing.Color.White
+        Me.Label4.Location = New System.Drawing.Point(354, 65)
+        Me.Label4.Name = "Label4"
+        Me.Label4.Size = New System.Drawing.Size(119, 54)
+        Me.Label4.TabIndex = 92
+        Me.Label4.Text = "MAX PUP STREAM"
+        Me.Label4.TextAlign = System.Drawing.ContentAlignment.TopCenter
+        '
+        'AutoEnable
+        '
+        Me.AutoEnable.AutoSize = True
+        Me.AutoEnable.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.AutoEnable.Location = New System.Drawing.Point(237, 190)
+        Me.AutoEnable.Name = "AutoEnable"
+        Me.AutoEnable.Size = New System.Drawing.Size(111, 17)
+        Me.AutoEnable.TabIndex = 95
+        Me.AutoEnable.Text = "Enable on Startup"
+        Me.AutoEnable.UseVisualStyleBackColor = False
+        '
+        'ProgramDependant
+        '
+        Me.ProgramDependant.AutoSize = True
+        Me.ProgramDependant.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.ProgramDependant.Location = New System.Drawing.Point(237, 170)
+        Me.ProgramDependant.Name = "ProgramDependant"
+        Me.ProgramDependant.Size = New System.Drawing.Size(91, 17)
+        Me.ProgramDependant.TabIndex = 94
+        Me.ProgramDependant.Text = "Program Req."
+        Me.ProgramDependant.UseVisualStyleBackColor = False
         '
         'ChannelPointsEditor
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(482, 219)
+        Me.ClientSize = New System.Drawing.Size(478, 252)
+        Me.Controls.Add(Me.AutoEnable)
+        Me.Controls.Add(Me.ProgramDependant)
         Me.Controls.Add(Me.CANCELBUTT)
         Me.Controls.Add(Me.APPLYBUTT)
         Me.Controls.Add(Me.CHPmpups)
-        Me.Controls.Add(Me.Label6)
         Me.Controls.Add(Me.CHPmps)
-        Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.CHPcooldown)
         Me.Controls.Add(Me.Label5)
         Me.Controls.Add(Me.CHPskipqueue)
         Me.Controls.Add(Me.CHPuserinput)
         Me.Controls.Add(Me.Label7)
-        Me.Controls.Add(Me.CHPtype)
         Me.Controls.Add(Me.TypeLabel)
         Me.Controls.Add(Me.CHPcost)
         Me.Controls.Add(Me.Label3)
@@ -341,13 +336,13 @@ Partial Class ChannelPointsEditor
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.CHPtitle)
         Me.Controls.Add(Me.CounterLabel0)
+        Me.Controls.Add(Me.Label4)
         Me.ForeColor = System.Drawing.Color.White
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "ChannelPointsEditor"
         Me.Text = "ChannelPointsEditor"
-        CType(Me.CHPtype, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.CHPcost, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.CHPmps, System.ComponentModel.ISupportInitialize).EndInit()
         CType(Me.CHPcooldown, System.ComponentModel.ISupportInitialize).EndInit()
@@ -366,7 +361,6 @@ Partial Class ChannelPointsEditor
     Friend WithEvents ColorDialog1 As ColorDialog
     Friend WithEvents CHPenable As Button
     Friend WithEvents CHPcolor As Button
-    Friend WithEvents CHPtype As NumericUpDown
     Friend WithEvents TypeLabel As Label
     Friend WithEvents CHPcost As NumericUpDown
     Friend WithEvents Label3 As Label
@@ -374,9 +368,10 @@ Partial Class ChannelPointsEditor
     Friend WithEvents CHPuserinput As CheckBox
     Friend WithEvents Label7 As Label
     Friend WithEvents CHPmps As NumericUpDown
-    Friend WithEvents Label2 As Label
     Friend WithEvents CHPcooldown As NumericUpDown
     Friend WithEvents Label5 As Label
     Friend WithEvents CHPmpups As NumericUpDown
-    Friend WithEvents Label6 As Label
+    Friend WithEvents Label4 As Label
+    Friend WithEvents AutoEnable As CheckBox
+    Friend WithEvents ProgramDependant As CheckBox
 End Class

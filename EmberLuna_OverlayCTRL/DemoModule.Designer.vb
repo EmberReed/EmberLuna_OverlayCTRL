@@ -34,14 +34,10 @@ Partial Class DemoModule
         Me.Button9 = New System.Windows.Forms.Button()
         Me.Button10 = New System.Windows.Forms.Button()
         Me.Button11 = New System.Windows.Forms.Button()
-        Me.Button12 = New System.Windows.Forms.Button()
-        Me.Button13 = New System.Windows.Forms.Button()
         Me.Button14 = New System.Windows.Forms.Button()
         Me.Button15 = New System.Windows.Forms.Button()
         Me.Button16 = New System.Windows.Forms.Button()
         Me.Button17 = New System.Windows.Forms.Button()
-        Me.Button18 = New System.Windows.Forms.Button()
-        Me.Button19 = New System.Windows.Forms.Button()
         Me.Button20 = New System.Windows.Forms.Button()
         Me.Button21 = New System.Windows.Forms.Button()
         Me.Button22 = New System.Windows.Forms.Button()
@@ -204,30 +200,6 @@ Partial Class DemoModule
         Me.Button11.Text = "SHOW TIMERS"
         Me.Button11.UseVisualStyleBackColor = False
         '
-        'Button12
-        '
-        Me.Button12.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.Button12.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button12.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button12.ForeColor = System.Drawing.Color.White
-        Me.Button12.Location = New System.Drawing.Point(213, 433)
-        Me.Button12.Name = "Button12"
-        Me.Button12.Size = New System.Drawing.Size(204, 35)
-        Me.Button12.TabIndex = 93
-        Me.Button12.UseVisualStyleBackColor = False
-        '
-        'Button13
-        '
-        Me.Button13.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.Button13.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button13.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button13.ForeColor = System.Drawing.Color.White
-        Me.Button13.Location = New System.Drawing.Point(213, 394)
-        Me.Button13.Name = "Button13"
-        Me.Button13.Size = New System.Drawing.Size(204, 35)
-        Me.Button13.TabIndex = 92
-        Me.Button13.UseVisualStyleBackColor = False
-        '
         'Button14
         '
         Me.Button14.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
@@ -275,30 +247,6 @@ Partial Class DemoModule
         Me.Button17.Size = New System.Drawing.Size(204, 35)
         Me.Button17.TabIndex = 88
         Me.Button17.UseVisualStyleBackColor = False
-        '
-        'Button18
-        '
-        Me.Button18.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.Button18.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button18.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button18.ForeColor = System.Drawing.Color.White
-        Me.Button18.Location = New System.Drawing.Point(5, 433)
-        Me.Button18.Name = "Button18"
-        Me.Button18.Size = New System.Drawing.Size(204, 35)
-        Me.Button18.TabIndex = 87
-        Me.Button18.UseVisualStyleBackColor = False
-        '
-        'Button19
-        '
-        Me.Button19.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
-        Me.Button19.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-        Me.Button19.Font = New System.Drawing.Font("Calibri", 12.0!, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.Button19.ForeColor = System.Drawing.Color.White
-        Me.Button19.Location = New System.Drawing.Point(5, 394)
-        Me.Button19.Name = "Button19"
-        Me.Button19.Size = New System.Drawing.Size(204, 35)
-        Me.Button19.TabIndex = 86
-        Me.Button19.UseVisualStyleBackColor = False
         '
         'Button20
         '
@@ -357,15 +305,11 @@ Partial Class DemoModule
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer))
-        Me.ClientSize = New System.Drawing.Size(422, 473)
-        Me.Controls.Add(Me.Button12)
-        Me.Controls.Add(Me.Button13)
+        Me.ClientSize = New System.Drawing.Size(422, 396)
         Me.Controls.Add(Me.Button14)
         Me.Controls.Add(Me.Button15)
         Me.Controls.Add(Me.Button16)
         Me.Controls.Add(Me.Button17)
-        Me.Controls.Add(Me.Button18)
-        Me.Controls.Add(Me.Button19)
         Me.Controls.Add(Me.Button20)
         Me.Controls.Add(Me.Button21)
         Me.Controls.Add(Me.Button22)
@@ -401,14 +345,10 @@ Partial Class DemoModule
     Friend WithEvents Button9 As Button
     Friend WithEvents Button10 As Button
     Friend WithEvents Button11 As Button
-    Friend WithEvents Button12 As Button
-    Friend WithEvents Button13 As Button
     Friend WithEvents Button14 As Button
     Friend WithEvents Button15 As Button
     Friend WithEvents Button16 As Button
     Friend WithEvents Button17 As Button
-    Friend WithEvents Button18 As Button
-    Friend WithEvents Button19 As Button
     Friend WithEvents Button20 As Button
     Friend WithEvents Button21 As Button
     Friend WithEvents Button22 As Button

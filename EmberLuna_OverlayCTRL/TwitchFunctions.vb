@@ -14,35 +14,40 @@ Public Module TwitchFunctions
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Public Class APIfunctions
-        Public Authorized As Boolean
+        Private Authorized As Boolean
         Public AccessToken As String
-        Public RefreshToken As String
-        Public AuthDirectory As String = "\\StreamPC-V2\OBS Assets\Auth"
+        Private RefreshToken As String
+        Private AuthDirectory As String = "\\StreamPC-V2\OBS Assets\Auth"
         Private CodeString As String
         Private ScopesList As List(Of Core.Enums.AuthScopes)
-        Public api As TwitchAPI
-        Public APIqueue As List(Of String)
+        Private MyAPI As TwitchAPI
         Public Event TokenAcquired(TokenMessage As String)
         Public Event AuthorizationInitialized()
         Public Event StreamInfoAvailable(StreamInfoString)
         Public Event StreamInfoUpdated()
 
+        Private AuthorizationRecieved As TaskCompletionSource(Of Boolean)
+        Private WaitingForAuthorization As Boolean = False
+
+        Private AutoRefreshTask As Task
+
         Public Sub New()
             AddHandler TokenAcquired, AddressOf AuthorizationAcquired
             Authorized = False
-            api = New TwitchAPI()
-            api.Settings.ClientId = JHclientID
-            api.Settings.Secret = JHsecret
+            MyAPI = New TwitchAPI()
+            MyAPI.Settings.ClientId = JHclientID
+            MyAPI.Settings.Secret = JHsecret
             ScopesList = New List(Of Core.Enums.AuthScopes)
             ScopesList.Add(Core.Enums.AuthScopes.Helix_Channel_Read_Redemptions)
             ScopesList.Add(Core.Enums.AuthScopes.Helix_Channel_Manage_Redemptions)
             ScopesList.Add(Core.Enums.AuthScopes.Helix_Bits_Read)
             ScopesList.Add(Core.Enums.AuthScopes.Helix_Channel_Manage_Broadcast)
             ScopesList.Add(Core.Enums.AuthScopes.Helix_Channel_Read_Subscriptions)
-            api.Settings.Scopes = ScopesList
+            MyAPI.Settings.Scopes = ScopesList
         End Sub
 
         Private Sub AuthorizationAcquired(TokenMessage As String)
+            If WaitingForAuthorization Then AuthorizationRecieved.SetResult(False)
             If Authorized = False Then
                 Authorized = True
                 'SendMessage(TokenMessage, "Authorization Successful")
@@ -86,6 +91,13 @@ Public Module TwitchFunctions
         End Sub
 
         Public Sub APIauthorization(Optional ForceRefresh As Boolean = False, Optional ForceReset As Boolean = False)
+            AuthorizationRecieved = New TaskCompletionSource(Of Boolean)
+            WaitingForAuthorization = True
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+                (Async Function() As Task
+                     WaitingForAuthorization = Await AuthorizationRecieved.Task
+                 End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Getting Authorization")
             If ForceReset = False Then
                 If ForceRefresh = False Then
                     If AccessToken = "" Then
@@ -95,7 +107,6 @@ Public Module TwitchFunctions
                         GetAMotherFukkenToken()
                     Else
                         Dim CheckToken As Task = CheckTheFukkenToken()
-                        'CheckToken.Start()
                     End If
                 Else
                     Dim FreshToken As New Task(AddressOf RefreshTheFukkenToken)
@@ -106,72 +117,11 @@ Public Module TwitchFunctions
             End If
         End Sub
 
-        'Public Function CheckScopes(InputScopesList As List(Of String)) As Boolean
-        'For i As Integer = 0 To InputScopesList.Count
-        ''Core.Enums.AuthScopes.
-
-
-        'Next
-        'End Function
-
-        Public Sub GetStreamInfoSub()
-            If Authorized = True Then
-                Dim TaskMaster As Task = GetStreamInfo()
-                'TaskMaster.Start()
-            End If
-        End Sub
-        Public Sub SetStreamInfoSub()
-            If Authorized = True Then
-                Dim TaskMaster As Task = SetStreamInfo()
-                'TaskMaster.Start()
-            End If
-        End Sub
-
-        Public Async Function SetStreamInfo() As Task
-            Dim InfoRequest As New Helix.Models.Channels.ModifyChannelInformation.ModifyChannelInformationRequest
-            InfoRequest.BroadcasterLanguage = GamesList.StreamLanguage
-            InfoRequest.GameId = GamesList.StreamGameID
-            InfoRequest.Title = GamesList.StreamTitle
-            Await api.Helix.Channels.ModifyChannelInformationAsync(JHID, InfoRequest)
-            If GamesList.StreamGameIndex > -1 Then
-                Dim TagList As List(Of String) = GamesList.GetTagsList
-                'Dim TagData As Helix.Models.Streams.GetStreamTags.GetStreamTagsResponse = Await api.Helix.Streams.GetStreamTagsAsync(JHID)
-                'For I As Integer = 0 To TagData.Data.Length - 1
-                'If TagData.Data(I).IsAuto Then
-                'TagList.Add(TagData.Data(I).TagId)
-                'End If
-                'Next
-                If TagList.Count < 6 Then
-                    Await api.Helix.Streams.ReplaceStreamTagsAsync(JHID, TagList, AccessToken)
-                End If
-            End If
-            RaiseEvent StreamInfoUpdated()
-        End Function
-
-        Private Async Function GetStreamInfo() As Task
-            Dim InputData As Helix.Models.Channels.GetChannelInformation.GetChannelInformationResponse = Await api.Helix.Channels.GetChannelInformationAsync(JHID)
-            Dim ChannelData As Helix.Models.Channels.GetChannelInformation.ChannelInformation = InputData.Data(0)
-            GamesList.StreamLanguage = ChannelData.BroadcasterLanguage
-            GamesList.SetGameID(ChannelData.GameId)
-            Dim GameName As String = ChannelData.GameName
-            Dim Delay As Integer = ChannelData.Delay
-            GamesList.StreamTitle = ChannelData.Title
-            Dim OUTPUTSTRING As String = "STREAM INFO" & vbCrLf
-            OUTPUTSTRING = OUTPUTSTRING & "Title: " & GamesList.StreamTitle & vbCrLf
-            OUTPUTSTRING = OUTPUTSTRING & "Language: " & GamesList.StreamLanguage & vbCrLf
-            OUTPUTSTRING = OUTPUTSTRING & "GameID: " & GamesList.StreamGameID & vbCrLf
-            OUTPUTSTRING = OUTPUTSTRING & "GameName: " & GameName & vbCrLf
-            'OUTPUTSTRING = OUTPUTSTRING & "Delay: " & Delay & vbCrLf
-            'OUTPUTSTRING = OUTPUTSTRING & TagDataString
-            'SendMessage(OUTPUTSTRING)
-            RaiseEvent StreamInfoAvailable(OUTPUTSTRING)
-        End Function
-
         Public Async Sub RefreshTheFukkenToken()
             Dim OutputString As String = ""
             ReadRefreshToken()
             If RefreshToken <> "" Then
-                Dim ffff As Auth.RefreshResponse = Await api.Auth.RefreshAuthTokenAsync(RefreshToken, JHsecret)
+                Dim ffff As Auth.RefreshResponse = Await MyAPI.Auth.RefreshAuthTokenAsync(RefreshToken, JHsecret)
                 If ffff IsNot Nothing Then
                     OutputString = "Refreshed" & vbCrLf
                     OutputString = OutputString & "ExpiresIn: " & ffff.ExpiresIn & vbCrLf
@@ -181,7 +131,7 @@ Public Module TwitchFunctions
                     Next
                     WriteAccessToken(ffff.AccessToken)
                     WriteRefreshToken(ffff.RefreshToken)
-                    api.Settings.AccessToken = AccessToken
+                    MyAPI.Settings.AccessToken = AccessToken
                     RaiseEvent TokenAcquired(OutputString)
                 Else
                     GetAMotherFukkenToken()
@@ -192,7 +142,7 @@ Public Module TwitchFunctions
         End Sub
 
         Public Async Function CheckTheFukkenToken() As Task
-            Dim fff As Auth.ValidateAccessTokenResponse = Await api.Auth.ValidateAccessTokenAsync(AccessToken)
+            Dim fff As Auth.ValidateAccessTokenResponse = Await MyAPI.Auth.ValidateAccessTokenAsync(AccessToken)
             Dim OutputString As String = ""
             If fff IsNot Nothing Then
                 OutputString = OutputString & "Login: " & fff.Login & vbCrLf
@@ -204,7 +154,7 @@ Public Module TwitchFunctions
                     OutputString = OutputString & "-" & fff.Scopes(i) & vbCrLf
                 Next
                 If fff.ExpiresIn > 0 Then
-                    api.Settings.AccessToken = AccessToken
+                    MyAPI.Settings.AccessToken = AccessToken
                     RaiseEvent TokenAcquired(OutputString)
                 Else
                     Dim FreshToken As New Task(AddressOf RefreshTheFukkenToken)
@@ -217,7 +167,7 @@ Public Module TwitchFunctions
         End Function
 
         Public Async Sub GetAFuckingToken()
-            Dim TokenResponse As Auth.AuthCodeResponse = Await api.Auth.GetAccessTokenFromCodeAsync(CodeString, JHsecret, "http://localhost:8080")
+            Dim TokenResponse As Auth.AuthCodeResponse = Await MyAPI.Auth.GetAccessTokenFromCodeAsync(CodeString, JHsecret, "http://localhost:8080")
             Dim OutputString As String = ""
             OutputString = OutputString & "ExpiresIn: " & TokenResponse.ExpiresIn & vbCrLf
             OutputString = OutputString & "Scopes: " & vbCrLf
@@ -226,12 +176,12 @@ Public Module TwitchFunctions
             Next
             WriteAccessToken(TokenResponse.AccessToken)
             WriteRefreshToken(TokenResponse.RefreshToken)
-            api.Settings.AccessToken = AccessToken
+            MyAPI.Settings.AccessToken = AccessToken
             RaiseEvent TokenAcquired(OutputString)
         End Sub
 
         Public Sub GetAMotherFukkenToken()
-            Dim urlstring As String = api.Auth.GetAuthorizationCodeUrl("http://localhost:8080", ScopesList)
+            Dim urlstring As String = MyAPI.Auth.GetAuthorizationCodeUrl("http://localhost:8080", ScopesList)
             Process.Start(urlstring)
 
             Dim Server As HttpListener = New HttpListener
@@ -249,186 +199,210 @@ Public Module TwitchFunctions
             GetToken.Start()
         End Sub
 
-        'Private Async Function getusersubs() As Task
-        'Checks subscription for a specific user and the channel specified.
-        'Dim subscription As V5.Models.Subscriptions.Subscription = Await api.V5.Channels.CheckChannelSubscriptionByUserAsync("channel_id", "user_id")
-        '   Console.WriteLine("User subed: " + subscription.User.Name.ToString)
-        'End Function
 
-        'Private Async Sub Streaming()
-        'shows if the channel is streaming or not (true/false)
-
-        'Dim isStreaming As Boolean = Await api.V5.Streams.BroadcasterOnlineAsync(Broadcastername)
-        'Dim isStreaming As Boolean = Await api.Helix.ChannelPoints.GetCustomRewardRedemption()
-        'If isStreaming = True Then
-        '       APIqueue.Add("Streaming")
-        'Else
-        '       APIqueue.Add("Not Streaming")
-        'End If
-        'End Sub
-
-        'Private Async Function chanupdate() As Task
-        'Update Channel Title/Game
-        'not used this yet
-        'Await api.V5.Channels.UpdateChannelAsync(JHID, "New stream title", "Stronghold Crusader")
-        'End Function
-
-
-        Private Async Sub CreateCustomReward()
-            Dim CustomReward As New Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsRequest
-            CustomReward.Title = "Custom Reward Test"
-            CustomReward.Title = "Custom Reward Test"
-
-            Dim response2 As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsResponse =
-                Await api.Helix.ChannelPoints.CreateCustomRewards(JHID, CustomReward)
+        Public Sub SetStreamInfo()
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Dim InfoRequest As New Helix.Models.Channels.ModifyChannelInformation.ModifyChannelInformationRequest
+                InfoRequest.BroadcasterLanguage = GamesList.StreamLanguage
+                InfoRequest.GameId = GamesList.StreamGameID
+                InfoRequest.Title = GamesList.StreamTitle
+                Await MyAPI.Helix.Channels.ModifyChannelInformationAsync(JHID, InfoRequest)
+                If GamesList.StreamGameIndex > -1 Then
+                    Dim TagList As List(Of String) = GamesList.GetTagsList
+                    If TagList.Count < 6 Then
+                        Await MyAPI.Helix.Streams.ReplaceStreamTagsAsync(JHID, TagList, AccessToken)
+                    End If
+                End If
+                RaiseEvent StreamInfoUpdated()
+            End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Set Stream Info")
         End Sub
 
+        Public Sub GetStreamInfo()
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Dim InputData As Helix.Models.Channels.GetChannelInformation.GetChannelInformationResponse = Await MyAPI.Helix.Channels.GetChannelInformationAsync(JHID)
+                Dim ChannelData As Helix.Models.Channels.GetChannelInformation.ChannelInformation = InputData.Data(0)
+                GamesList.StreamLanguage = ChannelData.BroadcasterLanguage
+                GamesList.SetGameID(ChannelData.GameId)
+                Dim GameName As String = ChannelData.GameName
+                Dim Delay As Integer = ChannelData.Delay
+                GamesList.StreamTitle = ChannelData.Title
+                Dim OUTPUTSTRING As String = "STREAM INFO" & vbCrLf
+                OUTPUTSTRING = OUTPUTSTRING & "Title: " & GamesList.StreamTitle & vbCrLf
+                OUTPUTSTRING = OUTPUTSTRING & "Language: " & GamesList.StreamLanguage & vbCrLf
+                OUTPUTSTRING = OUTPUTSTRING & "GameID: " & GamesList.StreamGameID & vbCrLf
+                OUTPUTSTRING = OUTPUTSTRING & "GameName: " & GameName & vbCrLf
+                'OUTPUTSTRING = OUTPUTSTRING & "Delay: " & Delay & vbCrLf
+                'OUTPUTSTRING = OUTPUTSTRING & TagDataString
+                'SendMessage(OUTPUTSTRING)
+                RaiseEvent StreamInfoAvailable(OUTPUTSTRING)
+            End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Get Stream Info")
+        End Sub
+
+
+
+
+        '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        '////////////////////////////////////////////////CHANNEL POINT REWARDS////////////////////////////////////////////////////
+        '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         Public Sub DeleteChannelPointsReward(RewardIndex As Integer)
-            If Authorized = True Then
-                Dim TaskMaster As Task =
-                    New Task(
-                    Async Sub()
-                        Await api.Helix.ChannelPoints.DeleteCustomReward(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id)
-                        Await GetChannelPointData()
-                    End Sub)
-                TaskMaster.Start()
-            Else
-                SendMessage("Not Authorized")
-            End If
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Await MyAPI.Helix.ChannelPoints.DeleteCustomRewardAsync(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id)
+                Await GetChannelPointData()
+            End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Deleting Channel Point Reward")
         End Sub
 
-        Public Sub UpdateChannelPointDataExplicit(RewardIndex As Integer, Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest)
-            If Authorized = True Then
-                Dim TaskMaster As Task =
-                    New Task(
-                    Async Sub()
-                        Dim Response As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardResponse =
-                        Await api.Helix.ChannelPoints.UpdateCustomReward(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id, Request)
-                        ChannelPoints.Rewards(RewardIndex).ReadResponse(Response)
-                        ChannelPoints.RewardUpdated(RewardIndex)
-                    End Sub)
-                TaskMaster.Start()
-            Else
-                SendMessage("Not Authorized")
-            End If
+        Public Sub UpdateChannelPointDataExplicit(RewardIndex As Integer,
+                                                  Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest)
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Dim Response As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardResponse =
+                        Await MyAPI.Helix.ChannelPoints.UpdateCustomRewardAsync(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id, Request)
+                ChannelPoints.Rewards(RewardIndex).ReadResponse(Response)
+                ChannelPoints.RewardUpdated(RewardIndex)
+            End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Updating Channel Point Reward")
         End Sub
 
         Public Sub CreateChannelPointReward(Request As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsRequest)
-            If Authorized = True Then
-                Dim TaskMaster As Task =
-                    New Task(
-                    Async Sub()
-                        Dim Response As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsResponse =
-                        Await api.Helix.ChannelPoints.CreateCustomRewards(JHID, Request)
-                        ChannelPoints.RewardCreated()
-                        Await GetChannelPointData()
-                    End Sub)
-                TaskMaster.Start()
-            Else
-                SendMessage("Not Authorized")
-            End If
-        End Sub
-
-        Public Sub UpdateChannelPointData(RewardIndex As Integer)
-            If Authorized = True Then
-                Dim TaskMaster As Task = UpdateChannelPointReward(RewardIndex)
-            Else
-                SendMessage("Not Authorized")
-            End If
-        End Sub
-
-        Private Async Function UpdateChannelPointReward(RewardIndex As Integer) As Task
-            Dim Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest =
-                ChannelPoints.Rewards(RewardIndex).GetUpdateData
-            Dim Response As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardResponse =
-                 Await api.Helix.ChannelPoints.UpdateCustomReward(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id, Request)
-            ChannelPoints.Rewards(RewardIndex).ReadResponse(Response)
-            ChannelPoints.RewardUpdated(RewardIndex)
-        End Function
-
-        Public Async Function SyncChannelRedemptions() As Task
-            If Authorized = True Then
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Dim Response As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsResponse =
+                Await MyAPI.Helix.ChannelPoints.CreateCustomRewardsAsync(JHID, Request)
                 Await GetChannelPointData()
-                'TaskMaster.Start()
-                'TaskMaster.Wait()
-            Else
-                SendMessage("Not Authorized")
-            End If
-        End Function
+            End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Creating Channel Point Reward")
+        End Sub
+
+        Public Sub UpdateChannelPointReward(RewardIndex As Integer)
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Dim Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest =
+                    ChannelPoints.Rewards(RewardIndex).GetUpdateData
+                Dim Response As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardResponse =
+                 Await MyAPI.Helix.ChannelPoints.UpdateCustomRewardAsync(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id, Request)
+                ChannelPoints.Rewards(RewardIndex).ReadResponse(Response)
+                ChannelPoints.RewardUpdated(RewardIndex)
+            End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Updating Channel Point Reward")
+        End Sub
+
+        Public Sub SyncChannelRedemptions()
+            Dim APItask As Task(Of Task) = New Task(Of Task) _
+           (Async Function() As Task
+                Await GetChannelPointData()
+            End Function)
+            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Syncing All Channel Point Data")
+        End Sub
 
         Private Async Function GetChannelPointData() As Task
             Dim ChannelPointData As Helix.Models.ChannelPoints.GetCustomReward.GetCustomRewardsResponse =
-                Await api.Helix.ChannelPoints.GetCustomReward(JHID)
+                Await MyAPI.Helix.ChannelPoints.GetCustomRewardAsync(JHID)
 
             ChannelPoints.InitRewardData(ChannelPointData.Data.Length)
             Dim RewardData As Helix.Models.ChannelPoints.CustomReward
-            'Dim Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest
-            'Dim Response As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardResponse
-            'Dim Copy As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsRequest
-            'Dim response2 As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsResponse
             For i As Integer = 0 To ChannelPointData.Data.Length - 1
                 RewardData = ChannelPointData.Data.GetValue(i)
                 ChannelPoints.Rewards(i).ReadRedemptionDatafromTwitch(RewardData)
-                'Request = ChannelPoints.Rewards(i).GetUpdateData
-                'Response = Await api.Helix.ChannelPoints.UpdateCustomReward(JHID, ChannelPoints.Rewards(i).TwitchData.Id, Request)
-                'ChannelPoints.Rewards(i).ReadResponse(Response)
-                'End If
-                'Copy = ChannelPoints.Rewards(i).GetCopyRedemptionData
-                'response2 = Await api.Helix.ChannelPoints.CreateCustomRewards(JHID, Copy, AccessToken)
             Next
-
             ChannelPoints.RewardsUpdated()
-            'SendMessage("Reward Data Synced")
+
         End Function
 
-        Private Async Sub Getchanfollows()
-            'Get Specified Channel Follows
-            'Dim channelFollowers = Await api.V5.Channels.GetChannelFollowersAsync(Broadcastername)
-            Dim channelFollowers = Await api.Helix.Channels.GetChannelInformationAsync(JHID)
-            SendMessage(channelFollowers.Data.Length)
-            SendMessage(channelFollowers.Data.Rank)
+    End Class
 
-            'SendMessage(channelFollowers.Data.ToString)
-            APIqueue.Add(channelFollowers.Data.ToString)
+    Public Class ChannelPointData
+
+        Public Rewards() As RedemptionData
+        Public Event AllRewardsUpdated()
+        Public Event SingleRewardUpdated(RewardNum As Integer)
+        Public Event SingleRewardRedeemed(RewardNum As Integer)
+        Public Event NewRewardCreated()
+
+        Public Sub UpdateProgramRewards(EnableProgramRewards As Boolean)
+            For I As Integer = 0 To Rewards.Length - 1
+                If Rewards(I).TwitchData.IsEnabled <> EnableProgramRewards Then
+                    If EnableProgramRewards Then
+                        If Rewards(I).IsProgramDependant And Rewards(I).IsAutoEnabled Then
+                            ToggleRewardEnable(I)
+                        End If
+                    Else
+                        If Rewards(I).IsProgramDependant Then
+                            ToggleRewardEnable(I)
+                        End If
+                    End If
+                End If
+            Next
         End Sub
 
-        Private Async Sub getchanuserfollow()
-            'Get channels a specified user follows.
-            Dim userFollows As V5.Models.Users.UserFollows = Await api.V5.Users.GetUserFollowsAsync(Broadcastername)
-            APIqueue.Add(userFollows.Total.ToString)
+        Public Sub New()
+            Rewards = Nothing
         End Sub
 
-        Private Async Sub Getnumberofsubs()
-            'Get the number of subs to your channel
-            Dim numberofsubs = Await api.V5.Channels.GetChannelSubscribersAsync(Broadcastername)
-            APIqueue.Add(numberofsubs.Total.ToString)
+        Public Sub UpdateReward(RewardIndex As Integer, Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest)
+            myAPI.UpdateChannelPointDataExplicit(RewardIndex, Rewards(RewardIndex).GetUpdateData(, Request))
         End Sub
 
-        Private Async Sub getsubstochannel()
-            'Gets a list of all the subscritions of the specified channel.
-            Dim allSubscriptions As List(Of V5.Models.Subscriptions.Subscription) = Await api.V5.Channels.GetAllSubscribersAsync(Broadcastername)
-            Dim num As Integer
-            For num = 0 To allSubscriptions.Count - 1
-                APIqueue.Add(allSubscriptions.Item(num).User.Name.ToString)
-            Next num
+        Public Sub ToggleRewardEnable(RewardIndex As Integer)
+            Dim Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest = New Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest
+            If Rewards(RewardIndex).TwitchData.IsEnabled Then
+                Request.IsEnabled = False
+            Else
+                Request.IsEnabled = True
+            End If
+            myAPI.UpdateChannelPointDataExplicit(RewardIndex, Rewards(RewardIndex).GetUpdateData(, Request))
         End Sub
+
+        Public Sub RewardsUpdated()
+            RaiseEvent AllRewardsUpdated()
+        End Sub
+
+        Public Sub RewardUpdated(RewardIndex As Integer)
+            RaiseEvent SingleRewardUpdated(RewardIndex)
+        End Sub
+
+        Public Sub InitRewardData(RewardCount As Integer)
+            ReDim Rewards(0 To RewardCount - 1)
+            For i As Integer = 0 To RewardCount - 1
+                Rewards(i) = New RedemptionData
+            Next
+        End Sub
+
+        Public Sub DeleteRward(RewardIndex As Integer)
+            Rewards(RewardIndex).DeleteLocalData()
+            myAPI.DeleteChannelPointsReward(RewardIndex)
+        End Sub
+
+        Public Sub SyncRewardData(RewardsList As List(Of RedemptionData))
+            Dim RewardCount As Integer = RewardsList.Count - 1
+            ReDim Rewards(0 To RewardCount)
+            For I = 0 To RewardCount
+                Rewards(I) = RewardsList(I)
+            Next
+        End Sub
+
     End Class
 
     Public RewardDataDirectory As String = "\\StreamPC-V2\OBS Assets\Rewards"
 
-    Public Structure RedemptionData
+    Public Class RedemptionData
         Public TwitchData As Helix.Models.ChannelPoints.CustomReward
-        Public Type As Integer '0=Global, 1=Ember, 2=Luna
-        Public Sound As String
+        Public IsProgramDependant As Boolean
+        Public IsAutoEnabled As Boolean
         Public Access As Mutex
 
-        Public Sub InitRewardData()
+        Public Sub New()
             If Access Is Nothing Then Access = New Mutex
             Access.WaitOne()
             TwitchData = Nothing
-            Type = 0
-            Sound = ""
+            IsProgramDependant = False
+            IsAutoEnabled = False
             Access.ReleaseMutex()
         End Sub
 
@@ -472,19 +446,25 @@ Public Module TwitchFunctions
                 End If
             End If
 
-            'If Request.IsMaxPerStreamEnabled Is Nothing Then
-            'If TwitchData.MaxPerStreamSetting.MaxPerStream <> 0 Then
-            'Request.IsMaxPerStreamEnabled = True
-            'Request.MaxPerStream = TwitchData.MaxPerStreamSetting.MaxPerStream
-            'End If
-            'End If
+            If Request.IsMaxPerStreamEnabled Is Nothing Then
+                If TwitchData.MaxPerStreamSetting.MaxPerStream <> 0 Then
+                    Request.IsMaxPerStreamEnabled = True
+                    Request.MaxPerStream = TwitchData.MaxPerStreamSetting.MaxPerStream
+                Else
+                    Request.IsMaxPerStreamEnabled = False
+                    Request.MaxPerStream = 0
+                End If
+            End If
 
-            'If Request.IsMaxPerUserPerStreamEnabled Is Nothing Then
-            'If TwitchData.MaxPerUserPerStreamSetting.MaxPerStream <> 0 Then
-            'Request.IsMaxPerUserPerStreamEnabled = True
-            'Request.MaxPerUserPerStream = TwitchData.MaxPerUserPerStreamSetting.MaxPerStream
-            'End If
-            'End If
+            If Request.IsMaxPerUserPerStreamEnabled Is Nothing Then
+                If TwitchData.MaxPerUserPerStreamSetting.MaxPerUserPerStream <> 0 Then
+                    Request.IsMaxPerUserPerStreamEnabled = True
+                    Request.MaxPerUserPerStream = TwitchData.MaxPerUserPerStreamSetting.MaxPerUserPerStream
+                Else
+                    Request.IsMaxPerUserPerStreamEnabled = False
+                    Request.MaxPerUserPerStream = 0
+                End If
+            End If
 
             'SendMessage("MPSE: " & Request.IsMaxPerStreamEnabled & " MPSV: " & Request.MaxPerStream & " MPUPS: " & Request.IsMaxPerUserPerStreamEnabled & " MPUPSV: " & Request.MaxPerUserPerStream)
 
@@ -511,12 +491,12 @@ Public Module TwitchFunctions
         Public Sub SyncLocalData(Optional BypassMutex As Boolean = False)
             If Access Is Nothing Then Access = New Mutex
             If BypassMutex = False Then Access.WaitOne()
-            Dim ReturnBool As Boolean = True
             Dim Path As String = RewardDataDirectory & "\" & TwitchData.Id
-            Dim InputString As String = ""
             If Directory.Exists(Path) Then
-                File.WriteAllText(Path & "\Sound.txt", Sound)
-                File.WriteAllText(Path & "\Type.txt", Type)
+                Dim OutputData As New List(Of String)
+                OutputData.Add("IsProgramDependant<>" & IsProgramDependant)
+                OutputData.Add("IsAutoEnabled<>" & IsAutoEnabled)
+                File.WriteAllText(Path & "\Reward Properties.txt", Join(OutputData.ToArray, vbCrLf))
             End If
             If BypassMutex = False Then Access.ReleaseMutex()
         End Sub
@@ -525,7 +505,6 @@ Public Module TwitchFunctions
             If Access Is Nothing Then Access = New Mutex
             If BypassMutex = False Then Access.WaitOne()
             Dim Path As String = RewardDataDirectory & "\" & TwitchData.Id
-            Dim InputString As String = ""
             If Directory.Exists(Path) Then
                 Directory.Delete(Path, True)
             End If
@@ -536,31 +515,19 @@ Public Module TwitchFunctions
             If Access Is Nothing Then Access = New Mutex
             If BypassMutex = False Then Access.WaitOne()
             Dim Path As String = RewardDataDirectory & "\" & TwitchData.Id
-            Dim InputString As String = ""
             If Directory.Exists(Path) Then
-                If File.Exists(Path & "\Type.txt") Then
-                    InputString = File.ReadAllText(Path & "\Type.txt")
-                    If IsNumeric(InputString) Then
-                        Type = InputString
-                    Else
-                        Type = 0
-                    End If
-                Else
-                    Type = 0
-                    File.WriteAllText(Path & "\Type.txt", Type)
+                If File.Exists(Path & "\Reward Properties.txt") Then
+                    Dim InputData() As String = Split(File.ReadAllText(Path & "\Reward Properties.txt"), vbCrLf)
+                    For i As Integer = 0 To InputData.Length - 1
+                        Dim InputDataPoint() As String = Split(InputData(i), "<>")
+                        Select Case InputDataPoint(0)
+                            Case "IsProgramDependant"
+                                IsProgramDependant = InputDataPoint(1)
+                            Case "IsAutoEnabled"
+                                IsAutoEnabled = InputDataPoint(1)
+                        End Select
+                    Next
                 End If
-                If File.Exists(Path & "\Sound.txt") Then
-                    Sound = File.ReadAllText(Path & "\Type.txt")
-                Else
-                    Sound = ""
-                    File.WriteAllText(Path & "\Sound.txt", Sound)
-                End If
-            Else
-                Directory.CreateDirectory(Path)
-                Sound = ""
-                File.WriteAllText(Path & "\Sound.txt", Sound)
-                Type = 0
-                File.WriteAllText(Path & "\Type.txt", Type)
             End If
             If BypassMutex = False Then Access.ReleaseMutex()
         End Sub
@@ -587,7 +554,7 @@ Public Module TwitchFunctions
                 outputstring = outputstring & "Max RpStream(en): " & TwitchData.MaxPerStreamSetting.IsEnabled & vbCrLf
                 outputstring = outputstring & "Max RpStream(ct): " & TwitchData.MaxPerStreamSetting.MaxPerStream & vbCrLf
                 outputstring = outputstring & "Max RpStream/Usr(en): " & TwitchData.MaxPerUserPerStreamSetting.IsEnabled & vbCrLf
-                outputstring = outputstring & "Max RpStream/Usr(ct): " & TwitchData.MaxPerUserPerStreamSetting.MaxPerStream & vbCrLf
+                outputstring = outputstring & "Max RpStream/Usr(ct): " & TwitchData.MaxPerUserPerStreamSetting.MaxPerUserPerStream & vbCrLf
                 outputstring = outputstring & "BG Color: " & TwitchData.BackgroundColor & vbCrLf & vbCrLf
             End If
             If BypassMutex = False Then Access.ReleaseMutex()
@@ -602,69 +569,15 @@ Public Module TwitchFunctions
             Access.ReleaseMutex()
         End Sub
 
-    End Structure
-
-    Public Class ChannelPointData
-
-        Public Rewards() As RedemptionData
-        Public Event AllRewardsUpdated()
-        Public Event SingleRewardUpdated(RewardNum As Integer)
-        Public Event SingleRewardRedeemed(RewardNum As Integer)
-        Public Event NewRewardCreated()
-
-        Public Sub New()
-            Rewards = Nothing
-        End Sub
-
-        Public Sub UpdateReward(RewardIndex As Integer, Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest)
-            myAPI.UpdateChannelPointDataExplicit(RewardIndex, Rewards(RewardIndex).GetUpdateData(, Request))
-        End Sub
-
-        Public Sub ToggleRewardEnable(RewardIndex As Integer)
-            Dim Request As Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest = New Helix.Models.ChannelPoints.UpdateCustomReward.UpdateCustomRewardRequest
-            If Rewards(RewardIndex).TwitchData.IsEnabled Then
-                Request.IsEnabled = False
-            Else
-                Request.IsEnabled = True
-            End If
-            myAPI.UpdateChannelPointDataExplicit(RewardIndex, Rewards(RewardIndex).GetUpdateData(, Request))
-        End Sub
-
-        Public Sub RewardCreated()
-            Dim SyncTask As Task = myAPI.SyncChannelRedemptions()
-            SyncTask.Wait()
-        End Sub
-
-        Public Sub RewardsUpdated()
-            RaiseEvent AllRewardsUpdated()
-        End Sub
-
-
-        Public Sub RewardUpdated(RewardIndex As Integer)
-            RaiseEvent SingleRewardUpdated(RewardIndex)
-        End Sub
-
-        Public Sub InitRewardData(RewardCount As Integer)
-            ReDim Rewards(0 To RewardCount - 1)
-            For i As Integer = 0 To RewardCount - 1
-                Rewards(i).InitRewardData()
-            Next
-        End Sub
-
-        Public Sub DeleteRward(RewardIndex As Integer)
-            Rewards(RewardIndex).DeleteLocalData()
-            myAPI.DeleteChannelPointsReward(RewardIndex)
-        End Sub
-
-        Public Sub SyncRewardData(RewardsList As List(Of RedemptionData))
-            Dim RewardCount As Integer = RewardsList.Count - 1
-            ReDim Rewards(0 To RewardCount)
-            For I = 0 To RewardCount
-                Rewards(I) = RewardsList(I)
-            Next
-        End Sub
-
     End Class
+
+
+
+
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    '///////////////////////////////////////////////////STREAM SETTINGS///////////////////////////////////////////////////////
+    '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     Public Class TwitchGames
         Public Games() As GameSet
@@ -911,7 +824,7 @@ Public Module TwitchFunctions
     End Class
 
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    '///////////////////////////////////////////////////CHAT FUNCTIONS////////////////////////////////////////////////////////
+    '/////////////////////////////////////////////CHAT & USER FUNCTIONS///////////////////////////////////////////////////////
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Public Class IrcClient
@@ -1139,34 +1052,6 @@ Public Module TwitchFunctions
             VarTcpClient.Dispose()
         End Sub
     End Class
-
-    'Public Class PingSender
-
-    '    Private ThisIRC As IrcClient
-    '    Private PingSenderThread As Thread
-
-    '    Public Sub New(IRC As IrcClient)
-    '        ThisIRC = IRC
-    '        PingSenderThread = New Thread(New ThreadStart(AddressOf Run))
-    '    End Sub
-
-    '    Public Sub Start()
-    '        PingSenderThread.IsBackground = True
-    '        PingSenderThread.Start()
-    '    End Sub
-
-    '    Public Sub Run()
-    '        Do While True
-    '            ThisIRC.SendIrcMessage("PING irc.twitch.tv")
-    '            Thread.Sleep(300000)
-    '        Loop
-    '    End Sub
-
-    '    Public Sub StopPing()
-    '        'PingSenderThread.Suspend()
-    '        PingSenderThread.Abort()
-    '    End Sub
-    'End Class
 
     Public ChatLogDirectory As String = "\\StreamPC-V2\OBS Assets\Chat Log"
 

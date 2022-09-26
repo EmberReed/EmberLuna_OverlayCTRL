@@ -8,7 +8,7 @@
     Private ButtonsHigh As Integer = 12
     Private BaseHeight As Integer = 130
     Private RewardEditor As ChannelPointsEditor
-
+    Private Loaded As Boolean = False
     Private Sub ChannelPointsForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         RewardEditor = New ChannelPointsEditor
 
@@ -17,6 +17,7 @@
         DisplayRewards()
         AddHandler ChannelPoints.AllRewardsUpdated, AddressOf RemoteDisplayAll
         AddHandler ChannelPoints.SingleRewardUpdated, AddressOf RemoteDisplaySingle
+        Loaded = True
     End Sub
 
     Private Sub ChannelPointsForm_Closing(sender As Object, e As EventArgs) Handles MyBase.Closing
@@ -57,11 +58,14 @@
         Dim RewardDisplay As GroupBox = CType(Controls("Redemption" & DisplayIndex), GroupBox)
         If ActualIndex < TotalRewards Then
             RewardDisplay.Visible = True
+
             Dim EnableButt As Button = CType(RewardDisplay.Controls("Enabled" & DisplayIndex), Button)
-            Dim CategoryLab As Label = CType(RewardDisplay.Controls("Category" & DisplayIndex), Label)
             Dim TitleLab As Label = CType(RewardDisplay.Controls("Title" & DisplayIndex), Label)
             Dim CostLab As Label = CType(RewardDisplay.Controls("Cost" & DisplayIndex), Label)
             Dim BGcolorLab As Label = CType(RewardDisplay.Controls("BGcolor" & DisplayIndex), Label)
+            Dim PGMrequired As CheckBox = CType(RewardDisplay.Controls("PD" & DisplayIndex), CheckBox)
+            Dim AutoEnable As CheckBox = CType(RewardDisplay.Controls("AE" & DisplayIndex), CheckBox)
+
             If ChannelPoints.Rewards(ActualIndex).TwitchData.IsEnabled = True Then
                 EnableButt.BackColor = ActiveBUTT
                 EnableButt.Text = "ON"
@@ -69,9 +73,20 @@
                 EnableButt.BackColor = StandardBUTT
                 EnableButt.Text = "OFF"
             End If
-            CategoryLab.Text = TypeName(ChannelPoints.Rewards(ActualIndex).Type)
+
+            'CategoryLab.Text = TypeName(ChannelPoints.Rewards(ActualIndex).Type)
             TitleLab.Text = ChannelPoints.Rewards(ActualIndex).TwitchData.Title
+            PGMrequired.Checked = ChannelPoints.Rewards(ActualIndex).IsProgramDependant
+            AutoEnable.Checked = ChannelPoints.Rewards(ActualIndex).IsAutoEnabled
+
+            If PGMrequired.Checked Then
+                AutoEnable.Visible = True
+            Else
+                AutoEnable.Visible = False
+            End If
             BGcolorLab.BackColor = ColorTranslator.FromHtml(ChannelPoints.Rewards(ActualIndex).TwitchData.BackgroundColor)
+            PGMrequired.BackColor = ColorTranslator.FromHtml(ChannelPoints.Rewards(ActualIndex).TwitchData.BackgroundColor)
+            AutoEnable.BackColor = ColorTranslator.FromHtml(ChannelPoints.Rewards(ActualIndex).TwitchData.BackgroundColor)
             CostLab.Text = ChannelPoints.Rewards(ActualIndex).TwitchData.Cost
         Else
             RewardDisplay.Visible = False
@@ -238,6 +253,104 @@
     End Sub
     Private Sub Delete11_Click(sender As Object, e As EventArgs) Handles Delete11.Click
         DeleteButt(11)
+    End Sub
+    Private Sub PDClick(MyBox As CheckBox)
+        If Loaded Then
+            Dim DisplayIndex As Integer = Replace(MyBox.Name, "PD", "")
+            Dim ActualIndex As Integer = DisplayIndex + (SourceIndex * DisplayTotal)
+            ChannelPoints.Rewards(ActualIndex).IsProgramDependant = MyBox.Checked
+            ChannelPoints.Rewards(ActualIndex).SyncLocalData()
+            Dim RewardBox As GroupBox = CType(Controls("Redemption" & DisplayIndex), GroupBox)
+            Dim AEbox As CheckBox = CType(RewardBox.Controls("AE" & DisplayIndex), CheckBox)
+            If MyBox.Checked Then
+                AEbox.Visible = True
+            Else
+                AEbox.Visible = False
+            End If
+        End If
+    End Sub
+    Private Sub PD0_CheckedChanged(sender As Object, e As EventArgs) Handles PD0.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD1_CheckedChanged(sender As Object, e As EventArgs) Handles PD1.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD2_CheckedChanged(sender As Object, e As EventArgs) Handles PD2.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD3_CheckedChanged(sender As Object, e As EventArgs) Handles PD3.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD4_CheckedChanged(sender As Object, e As EventArgs) Handles PD4.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD5_CheckedChanged(sender As Object, e As EventArgs) Handles PD5.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD6_CheckedChanged(sender As Object, e As EventArgs) Handles PD6.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD7_CheckedChanged(sender As Object, e As EventArgs) Handles PD7.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD8_CheckedChanged(sender As Object, e As EventArgs) Handles PD8.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD9_CheckedChanged(sender As Object, e As EventArgs) Handles PD9.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD10_CheckedChanged(sender As Object, e As EventArgs) Handles PD10.CheckedChanged
+        PDClick(sender)
+    End Sub
+    Private Sub PD11_CheckedChanged(sender As Object, e As EventArgs) Handles PD11.CheckedChanged
+        PDClick(sender)
+    End Sub
+
+
+    Private Sub AEClick(MyBox As CheckBox)
+        If Loaded Then
+            Dim DisplayIndex As Integer = Replace(MyBox.Name, "AE", "")
+            Dim ActualIndex As Integer = DisplayIndex + (SourceIndex * DisplayTotal)
+            ChannelPoints.Rewards(ActualIndex).IsAutoEnabled = MyBox.Checked
+            ChannelPoints.Rewards(ActualIndex).SyncLocalData()
+        End If
+
+    End Sub
+    Private Sub AE0_CheckedChanged(sender As Object, e As EventArgs) Handles AE0.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE1_CheckedChanged(sender As Object, e As EventArgs) Handles AE1.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE2_CheckedChanged(sender As Object, e As EventArgs) Handles AE2.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE3_CheckedChanged(sender As Object, e As EventArgs) Handles AE3.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE4_CheckedChanged(sender As Object, e As EventArgs) Handles AE4.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE5_CheckedChanged(sender As Object, e As EventArgs) Handles AE5.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE6_CheckedChanged(sender As Object, e As EventArgs) Handles AE6.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE7_CheckedChanged(sender As Object, e As EventArgs) Handles AE7.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE8_CheckedChanged(sender As Object, e As EventArgs) Handles AE8.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE9_CheckedChanged(sender As Object, e As EventArgs) Handles AE9.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE10_CheckedChanged(sender As Object, e As EventArgs) Handles AE10.CheckedChanged
+        AEClick(sender)
+    End Sub
+    Private Sub AE11_CheckedChanged(sender As Object, e As EventArgs) Handles AE11.CheckedChanged
+        AEClick(sender)
     End Sub
 
 End Class

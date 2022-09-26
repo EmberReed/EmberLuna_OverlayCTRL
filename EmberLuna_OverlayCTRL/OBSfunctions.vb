@@ -19,6 +19,20 @@ Public Module OBSfunctions
         OBSmutex = New Mutex
     End Sub
 
+    Public UpTime As Integer
+    Public StopCount As Boolean
+    Public Async Function CountUpTime() As Task
+        UpTime = 0
+        StopCount = False
+        Await Task.Delay(1000)
+        Do Until StopCount = True
+            UpTime = UpTime + 1
+            Await Task.Delay(1000)
+        Loop
+        StopCount = False
+        SendMessage(UpTime)
+    End Function
+
     Public Function OBSstreamState() As Boolean
         OBSmutex.WaitOne()
         Dim MyStatus As OutputStatus = OBS.GetStreamStatus
@@ -48,7 +62,14 @@ Public Module OBSfunctions
     Private Sub OBSdisconnected(sender As Object, e As Communication.ObsDisconnectionInfo) Handles OBS.Disconnected
         'MainWindow.(e.DisconnectReason)
         'If WaitForDisconnect Then OBSended.SetResult(False)
-        SourceWindow.OBSstateChanged(False)
+        OBSmutex.WaitOne()
+        Dim StateBool As Boolean = OBS.IsConnected
+        OBSmutex.ReleaseMutex()
+        If StateBool = False Then
+            SourceWindow.OBSstateChanged(False)
+        End If
+
+        StopCount = True
         'SendMessage("OBS Disconnected")
     End Sub
 
@@ -67,6 +88,7 @@ Public Module OBSfunctions
     End Function
     Private Sub OBSconnected(sender As Object, e As EventArgs) Handles OBS.Connected
         If WaitForConnect Then OBSstarted.SetResult(False)
+        Dim CountTask As Task = CountUpTime()
     End Sub
 
     Public Async Function CheckOBSconnect() As Task(Of Boolean)
@@ -185,7 +207,7 @@ Public Module OBSfunctions
     '///////////////////////////////////////////////////SCENE FUNCTIONS///////////////////////////////////////////////////////
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    Public CurrentScene As ObsScene
+    Public CurrentScene As String
 
     'AWAY MODE
     Public EmberAwayB As Boolean = False
@@ -306,7 +328,7 @@ Public Module OBSfunctions
                                             {EmberAwayB, LunaAwayB, Screen1AwayMode, Screen2AwayMode},
                                             {EmberSpriteB, EmberCamera, LunaSpriteB, LunaCamera},
                                             {Screen1Setting, Screen2Setting, Cam1Setting, Cam2Setting},
-                                            Screen2Enabled, CurrentScene.Name, PIPenabled)
+                                            Screen2Enabled, CurrentScene, PIPenabled)
 
             NewScene.WriteSceneFile(SceneDirectory)
             SceneCollection(SceneIndex) = NewScene
@@ -328,7 +350,7 @@ Public Module OBSfunctions
                                             {EmberAwayB, LunaAwayB, Screen1AwayMode, Screen2AwayMode},
                                             {EmberSpriteB, EmberCamera, LunaSpriteB, LunaCamera},
                                             {Screen1Setting, Screen2Setting, Cam1Setting, Cam2Setting},
-                                            Screen2Enabled, CurrentScene.Name, PIPenabled)
+                                            Screen2Enabled, CurrentScene, PIPenabled)
                 NewScene.WriteSceneFile(SceneDirectory)
                 RefreshSceneCollection()
             Else
@@ -397,7 +419,7 @@ Public Module OBSfunctions
             Screen2Enabled = Screen2en
             PIPenabled = PIPen
             Await UpdateSceneDisplay()
-            If CurrentScene.Name <> Sname Then
+            If CurrentScene <> Sname Then
                 Await Task.Delay(350)
                 Await UpdateSceneDisplay(Sname)
                 'Await Task.Delay(1000)
@@ -577,7 +599,7 @@ Public Module OBSfunctions
 
         OBSmutex.WaitOne()
         CurrentScene = OBS.GetCurrentProgramScene
-        Dim SceneName As String = CurrentScene.Name
+        Dim SceneName As String = CurrentScene
 
         PIPenabled = False
 
@@ -638,7 +660,7 @@ Public Module OBSfunctions
 
         OBSmutex.WaitOne()
         CurrentScene = OBS.GetCurrentProgramScene
-        Dim SceneName As String = CurrentScene.Name
+        Dim SceneName As String = CurrentScene
 
         CurrentSceneList = OBS.GetSceneList()
         For Each ActiveScene In CurrentSceneList.Scenes
@@ -753,7 +775,7 @@ Public Module OBSfunctions
             End Select
         Next
 
-        If ChangeSceneString <> "" And CurrentScene.Name <> ChangeSceneString Then
+        If ChangeSceneString <> "" And CurrentScene <> ChangeSceneString Then
             RaiseEvent SceneChangeInitiated()
             SceneHasChanged = New TaskCompletionSource(Of Boolean)
             SceneChangeNeeded = True
@@ -806,8 +828,8 @@ Public Module OBSfunctions
         Dim EmberAvailable As Boolean = MyResourceManager.OKtoGO({ResourceIDs.EmberSprite})
         Dim LunaAvailable As Boolean = MyResourceManager.OKtoGO({ResourceIDs.EmberSprite})
 
-        If CurrentScene.Name = "Center Screen Mode" Or
-            CurrentScene.Name = "Dual Screen Mode" Or
+        If CurrentScene = "Center Screen Mode" Or
+            CurrentScene = "Dual Screen Mode" Or
             (EmberSpriteB = True And LunaSpriteB = True) Then
             If PreferAvailable = False Or
                 (EmberAvailable And LunaAvailable) Or
@@ -3133,9 +3155,9 @@ FoundPlayer:
             OBSmutex.ReleaseMutex()
         End Sub
 
-        Private Sub MediaTriggered(Sender As OBSWebsocket, SourceName As String, EventString As String)
-            If SourceName = Name Then
-                Select Case EventString
+        Private Sub MediaTriggered(Sender As Object, E As Events.MediaInputActionTriggeredEventArgs)
+            If E.InputName = Name Then
+                Select Case E.MediaAction
                     Case MediaActions.Restart, MediaActions.Play
                         mediastarted()
                     Case MediaActions.Pause
@@ -3143,8 +3165,8 @@ FoundPlayer:
                 End Select
             End If
         End Sub
-        Private Sub mediastopped(sender As OBSWebsocket, medianame As String)
-            If medianame = Name Then
+        Private Sub mediastopped(Sender As Object, E As Events.MediaInputPlaybackEndedEventArgs)
+            If E.InputName = Name Then
                 'Access.WaitOne()
                 If AsyncTrigg = True Then
                     AsyncSigg.SetResult(False)
@@ -3406,7 +3428,6 @@ FoundPlayer:
         Public Rollers() As VideoPlayer
 
         Public Sub New()
-
             Dim UserEventVidSources(0 To UserEvents.MaxEvents) As String
             UserEventVidSources(UserEvents.NewFollower) = "\\StreamPC-V2\OBS Assets\Video\New Follower.mp4"
             UserEventVidSources(UserEvents.NewSubscriber) = "\\StreamPC-V2\OBS Assets\Video\New Subscriber.mp4"
@@ -3419,8 +3440,8 @@ FoundPlayer:
             Roll6vidSources(1) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollclub.mp4"
             Roll6vidSources(2) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollheart.mp4"
             Roll6vidSources(3) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollspade.mp4"
-            Roll6vidSources(4) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollmoon.mp4"
-            Roll6vidSources(5) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollflame.mp4"
+            Roll6vidSources(4) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollflame.mp4"
+            Roll6vidSources(5) = "\\StreamPC-V2\OBS Assets\Video\Roll6\rollmoon.mp4"
 
             Dim ConfettiSources(0 To 4) As String
             ConfettiSources(0) = "\\StreamPC-V2\OBS Assets\Media\confetti1.mp4"
@@ -3670,8 +3691,8 @@ FoundPlayer:
         Public Const LunaCounter As Integer = 9
         Public Const GlobalCounter As Integer = 10
         Public Const CenterScreen As Integer = 11
-
-        Public Const LastID As Integer = 11
+        Public Const TwitchAPI As Integer = 12
+        Public Const LastID As Integer = 12
     End Structure
 
     Public Structure RMtaskStates
@@ -3687,11 +3708,11 @@ FoundPlayer:
         Private QueueTex As Mutex
         Public Event TaskEvent(TaskString As String, StateID As Integer)
 
-        Public Sub New()
+        Public Sub New(ResourceCount As Integer)
             QueueTex = New Mutex
             Rqueue = New List(Of ResourceRequest)
-            ReDim Reservations(0 To ResourceIDs.LastID)
-            For i As Integer = 0 To ResourceIDs.LastID
+            ReDim Reservations(0 To ResourceCount)
+            For i As Integer = 0 To ResourceCount
                 Reservations(i) = False
             Next
         End Sub

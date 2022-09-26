@@ -1,14 +1,8 @@
 ﻿
-Imports System.Net.Sockets
 Imports System.Threading
-Imports System.Media
 Imports System.Math
 Imports System.IO
-Imports System.Collections.Concurrent
-Imports OBSWebsocketDotNet
-Imports OBSWebsocketDotNet.Types
 Imports TwitchLib.PubSub
-Imports System.Windows.Forms.VisualStyles.VisualStyleElement.ToolBar
 
 Public Class MainWindow
 
@@ -32,7 +26,7 @@ Public Class MainWindow
         SourceWindow = Me
         DemoPlayer = New DemoModule
         ChannelPointsDisplay = New ChannelPointsForm
-        MyResourceManager = New ResourceManager
+        MyResourceManager = New ResourceManager(ResourceIDs.LastID)
         ChannelPoints = New ChannelPointData
         SceneChanger = New SceneSelector
         GamesList = New TwitchGames
@@ -105,13 +99,14 @@ Public Class MainWindow
     End Sub
 
     Private Async Function CloseMe() As Task
+        ChannelPoints.UpdateProgramRewards(False)
         CounterData.SaveCounterData()
         OBStimerObject(TimerIDs.Ember).State = False
         OBStimerObject(TimerIDs.Luna).State = False
         OBStimerObject(TimerIDs.GlobalCC).State = False
         If AudioControl.MusicPlayer.Active = True Then AudioControl.StopMusic()
 
-        Await Task.Delay(100)
+        Await Task.Delay(500)
 
         If PSubConnected Then PubSub.Disconnect()
         If IRCconnected Then IRC.DisconnectChat()
@@ -125,7 +120,7 @@ Public Class MainWindow
                 End If
             End If
         Loop
-        Await Task.Delay(1000)
+        Await Task.Delay(500)
         Close()
     End Function
 
@@ -191,6 +186,7 @@ Public Class MainWindow
         OBSstateChanged(Await CheckOBSconnect())
         IRC.ConnectChat()
         myAPI.APIauthorization(True)
+        myAPI.GetStreamInfo()
 
         Dim StartupCounter As Integer = 0
         Do Until AmIconnected()
@@ -202,8 +198,11 @@ Public Class MainWindow
             'End If
         Loop
 
+        ChannelPointStarterState = True
+        myAPI.SyncChannelRedemptions()
         SyncSceneDisplay()
         AudioControl.MyMixer.SyncAll()
+
         'AudioControl.MusicPlayer.SyncState()
 
         Me.Enabled = True
@@ -421,12 +420,14 @@ Public Class MainWindow
             ChannelPointsDisplay.Select()
         Else
             'If myAPI.Authorized = True Then
-            If ChannelPoints.Rewards IsNot Nothing Then
-                LaunchChannelPointsControls()
-            Else
-                ChannelPointStarterState = True
-                Dim SyncTask As Task = myAPI.SyncChannelRedemptions()
-            End If
+            'If ChannelPoints.Rewards IsNot Nothing Then
+            'LaunchChannelPointsControls()
+            'Else
+            ChannelPointsDisplay = New ChannelPointsForm
+            ChannelPointsDisplay.Show()
+            'ChannelPointStarterState = True
+            'myAPI.SyncChannelRedemptions()
+            'End If
             'Else
             'ChannelPointStarterState = True
             'myAPI.APIauthorization(True)
@@ -509,7 +510,7 @@ Public Class MainWindow
     End Sub
 
     Private Sub Button6_Click(sender As Object, e As EventArgs) Handles Button6.Click
-        Dim APItask As Task = myAPI.SyncChannelRedemptions()
+        myAPI.SyncChannelRedemptions()
     End Sub
 
     Private Sub Button8_Click(sender As Object, e As EventArgs) Handles Button8.Click
@@ -559,22 +560,22 @@ Public Class MainWindow
         If PSubConnected = False Then
             ConnectPubSub()
         End If
-        myAPI.GetStreamInfoSub()
+
 
     End Sub
 
     Private Sub ChannelPointsStarter()
-        LogEventString("Channel-Point Reward Data Updated")
+        'LogEventString("Channel-Point Reward Data Updated")
         If ChannelPointStarterState = True Then
+            ChannelPoints.UpdateProgramRewards(True)
             ChannelPointStarterState = False
-            LaunchChannelPointsControls()
+            'LaunchChannelPointsControls()
         End If
     End Sub
 
-    Private Sub LaunchChannelPointsControls()
-        ChannelPointsDisplay = New ChannelPointsForm
-        ChannelPointsDisplay.Show()
-    End Sub
+    'Private Sub LaunchChannelPointsControls()
+
+    'End Sub
 
     Private Sub Button13_Click(sender As Object, e As EventArgs) Handles Button13.Click
         If OBSconnected Then

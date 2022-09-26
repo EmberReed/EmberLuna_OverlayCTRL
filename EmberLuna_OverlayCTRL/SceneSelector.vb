@@ -1,4 +1,6 @@
-﻿Imports System.Math
+﻿Imports OBSWebsocketDotNet
+Imports OBSWebsocketDotNet.Types
+Imports System.Math
 Public Class SceneSelector
     Private CurrentSceneName As String = ""
     Private OutputSelection As List(Of String)
@@ -12,7 +14,7 @@ Public Class SceneSelector
         AddHandler AudioControl.MyMixer.MixerChannelChanged, AddressOf ImportSingleR
         UpdateSceneListBox(MySceneCollection.GetSceneList)
         BuildOutputSelection()
-        DisplayChange(CurrentScene.Name)
+        DisplayChange(CurrentScene)
         UpdateScene()
         ImportAll()
         Loaded = True
@@ -56,10 +58,11 @@ Public Class SceneSelector
         SourceWindow.SCENE_SELECTOR.BackColor = StandardBUTT
     End Sub
 
-    Private Sub RemoteDisplayChange(Sender As Object, TransitionName As String)
+    Private Sub RemoteDisplayChange(Sender As Object, E As Events.SceneTransitionEndedEventArgs)
+        CurrentScene = Sender.GetCurrentProgramScene
 TryAgain:
         Try
-            BeginInvoke(Sub() DisplayChange(CurrentScene.Name))
+            Invoke(Sub() DisplayChange(CurrentScene))
         Catch
             GoTo TryAgain
         End Try
@@ -666,7 +669,7 @@ TryAgain:
         'Enabled = False
         CurrentSceneLabel.Text = SceneFile
         Await MySceneCollection.SceneCollection(MySceneCollection.IndexByName(SceneFile)).ApplySceneSettings()
-        DisplayChange(CurrentScene.Name)
+        DisplayChange(CurrentScene)
         'Enabled = True
     End Function
 
