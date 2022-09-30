@@ -19,19 +19,19 @@ Public Module OBSfunctions
         OBSmutex = New Mutex
     End Sub
 
-    Public UpTime As Integer
-    Public StopCount As Boolean
-    Public Async Function CountUpTime() As Task
-        UpTime = 0
-        StopCount = False
-        Await Task.Delay(1000)
-        Do Until StopCount = True
-            UpTime = UpTime + 1
-            Await Task.Delay(1000)
-        Loop
-        StopCount = False
-        SendMessage(UpTime)
-    End Function
+    'Public UpTime As Integer
+    'Public StopCount As Boolean
+    'Public Async Function CountUpTime() As Task
+    '    UpTime = 0
+    '    StopCount = False
+    '    Await Task.Delay(1000)
+    '    Do Until StopCount = True
+    '        UpTime = UpTime + 1
+    '        Await Task.Delay(1000)
+    '    Loop
+    '    StopCount = False
+    '    SendMessage(UpTime)
+    'End Function
 
     Public Function OBSstreamState() As Boolean
         OBSmutex.WaitOne()
@@ -60,7 +60,8 @@ Public Module OBSfunctions
     End Sub
 
     Private Sub OBSdisconnected(sender As Object, e As Communication.ObsDisconnectionInfo) Handles OBS.Disconnected
-        'MainWindow.(e.DisconnectReason)
+        'StopCount = True
+        'SendMessage(e.DisconnectReason)
         'If WaitForDisconnect Then OBSended.SetResult(False)
         OBSmutex.WaitOne()
         Dim StateBool As Boolean = OBS.IsConnected
@@ -68,9 +69,6 @@ Public Module OBSfunctions
         If StateBool = False Then
             SourceWindow.OBSstateChanged(False)
         End If
-
-        StopCount = True
-        'SendMessage("OBS Disconnected")
     End Sub
 
     Public Function DisconnectOBS() As Boolean
@@ -88,7 +86,7 @@ Public Module OBSfunctions
     End Function
     Private Sub OBSconnected(sender As Object, e As EventArgs) Handles OBS.Connected
         If WaitForConnect Then OBSstarted.SetResult(False)
-        Dim CountTask As Task = CountUpTime()
+        'Dim CountTask As Task = CountUpTime()
     End Sub
 
     Public Async Function CheckOBSconnect() As Task(Of Boolean)
@@ -97,7 +95,7 @@ Public Module OBSfunctions
             Try
                 OBSstarted = New TaskCompletionSource(Of Boolean)
                 WaitForConnect = True
-                OBS.Connect(OBSsocketString, OBSsocketPassword)
+                OBS.ConnectAsync(OBSsocketString, OBSsocketPassword)
                 WaitForConnect = Await OBSstarted.Task
                 CurrentScene = OBS.GetCurrentProgramScene
                 OBSmutex.ReleaseMutex()
@@ -1045,8 +1043,8 @@ Public Module OBSfunctions
              End Function)
 
             If BypassManager = False Then
-                Dim Speak As Task = MyResourceManager.RequestResource({ResourceID}, SpeechTask,
-                                                                  Name & " Sprite Says: " & InputMessage)
+                Dim MyRequest As New ResourceRequest({ResourceID}, SpeechTask, Name & " Sprite Says: " & InputMessage)
+                Dim Speak As Task = MyResourceManager.RequestResource(MyRequest)
             Else
                 SpeechTask.Start()
                 Await SpeechTask.Result
@@ -1160,8 +1158,8 @@ Public Module OBSfunctions
             If BypassManager Then
                 MoodTask.Start()
             Else
-                Dim RunMood As Task = MyResourceManager.RequestResource({ResourceID}, MoodTask,
-                                                                    Name & " Sprite Mood Change")
+                Dim MyRequest As New ResourceRequest({ResourceID}, MoodTask, Name & " Sprite Mood Change")
+                Dim RunMood As Task = MyResourceManager.RequestResource(MyRequest)
             End If
         End Sub
 
@@ -1363,9 +1361,9 @@ Public Module OBSfunctions
                                          Counters(CounterIndex).Tick)
                  End Function)
 
-                Dim TheCount As Task =
-                    MyResourceManager.RequestResource({OBScounterObject(Counters(CounterIndex).Type).ResourceID},
+                Dim MyRequest As New ResourceRequest({OBScounterObject(Counters(CounterIndex).Type).ResourceID},
                                                       CountMe, "CountIndex#(" & CounterIndex & ") " & Counters(CounterIndex).Name)
+                Dim TheCount As Task = MyResourceManager.RequestResource(MyRequest)
             End If
         End Sub
 
@@ -1765,8 +1763,6 @@ SoundPlayed2:
                         StopTime = SplitString(1)
                     Case = "Type"
                         Type = SplitString(1)
-                        'Case = "Alarm"
-                        'Alarm = SplitString(1)
                     Case = "PublicBool"
                         PublicBool = SplitString(1)
                     Case = "Sounds"
@@ -1803,23 +1799,22 @@ SoundPlayed2:
             Dim GoTimer As New Task(Of Task)(Async Function() As Task
                                                  Await RunTimer(TimeInSeconds, TimerID, , OBStimerObject(TimerID).Title)
                                              End Function)
-            Dim RunThyTimer As Task = MyResourceManager.RequestResource({OBStimerObject(TimerID).ResourceID},
-                                                                    GoTimer, OBStimerObject(TimerID).Name)
+            Dim MyRequest As New ResourceRequest({OBStimerObject(TimerID).ResourceID}, GoTimer, OBStimerObject(TimerID).Name)
+            Dim RunThyTimer As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
 
 
         Public Async Function RunTimerbyIndex(TimerIndex As Integer, Optional DontQueue As Boolean = True) As Task
-
             Dim GoTimer As New Task(Of Task) _
             (Async Function() As Task
                  Await RunTimer(Timers(TimerIndex).Time, Timers(TimerIndex).Type, Timers(TimerIndex).StopTime,
                                 Timers(TimerIndex).Label, Timers(TimerIndex).Sounds)
              End Function)
 
-
-            Dim RunThyTimer As Boolean = Await MyResourceManager.RequestResource({OBStimerObject(Timers(TimerIndex).Type).ResourceID},
-                                                                       GoTimer, OBStimerObject(Timers(TimerIndex).Type).Name, DontQueue)
+            Dim MyRequest As New ResourceRequest({OBStimerObject(Timers(TimerIndex).Type).ResourceID},
+                                                GoTimer, OBStimerObject(Timers(TimerIndex).Type).Name)
+            Dim RunThyTimer As Boolean = Await MyResourceManager.RequestResource(MyRequest, DontQueue)
             If RunThyTimer = False Then SendMessage("Timer is in Use", "UH OH!")
         End Function
 
@@ -3467,7 +3462,8 @@ FoundPlayer:
                 Await Hats.Show()
                 Await Task.Delay(500)
             End Function)
-            Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, HatsTask, "Hats Hats Hats")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.CenterScreen}, HatsTask, "Hats Hats Hats")
+            Dim Alert As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Public Sub PlaySoundAlert(Username As String, Optional SoundFile As String = "")
@@ -3482,7 +3478,8 @@ FoundPlayer:
                 Await SoundAlert.Show(, SoundFile, True)
                 Await Task.Delay(500)
             End Function)
-            Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, AlertTask, "Sound Alert")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.CenterScreen}, AlertTask, "Sound Alert")
+            Dim Alert As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Public Function Roll6(RollTier As Integer, Username As String, Optional ForceWin As Boolean = False) As Integer()
@@ -3589,7 +3586,8 @@ FoundPlayer:
                         Await Task.Delay(1500)
                 End Select
             End Function)
-            Dim RunRollTask As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen}, RollTask, "Rolling Tier " & RollTier)
+            Dim MyRequest As New ResourceRequest({ResourceIDs.CenterScreen}, RollTask, "Rolling Tier " & RollTier)
+            Dim RunRollTask As Task = MyResourceManager.RequestResource(MyRequest)
             Return Output.ToArray
         End Function
 
@@ -3668,8 +3666,8 @@ FoundPlayer:
                 End Select
 
             End Function)
-            Dim Alert As Task = MyResourceManager.RequestResource({ResourceIDs.CenterScreen, ResourceIDs.EmberSprite, ResourceIDs.LunaSprite},
-                                                                  AlertTask, "Viewer Event")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.CenterScreen, ResourceIDs.EmberSprite, ResourceIDs.LunaSprite}, AlertTask, "Viewer Event")
+            Dim Alert As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
     End Class
 
@@ -3706,11 +3704,16 @@ FoundPlayer:
         Private Rqueue As List(Of ResourceRequest)
         Private Reservations() As Boolean
         Private QueueTex As Mutex
+        Private WaitingForCompletion As Boolean
+        Private TasksCompleted As TaskCompletionSource(Of Boolean)
+        Private RunningTasks As Boolean
         Public Event TaskEvent(TaskString As String, StateID As Integer)
 
         Public Sub New(ResourceCount As Integer)
             QueueTex = New Mutex
             Rqueue = New List(Of ResourceRequest)
+            WaitingForCompletion = False
+            RunningTasks = False
             ReDim Reservations(0 To ResourceCount)
             For i As Integer = 0 To ResourceCount
                 Reservations(i) = False
@@ -3743,27 +3746,38 @@ FoundPlayer:
             QueueTex.ReleaseMutex()
         End Sub
 
-        Public Async Function RequestResource(RIDs() As Integer, TaskToRun As Task(Of Task), TaskInfo As String,
+        Public Async Function WaitAllRequests() As Task
+            If RunningTasks And WaitingForCompletion = False Then
+                WaitingForCompletion = True
+                TasksCompleted = New TaskCompletionSource(Of Boolean)
+            End If
+            If WaitingForCompletion Then WaitingForCompletion = Await TasksCompleted.Task
+        End Function
+
+        Public Async Function RequestResource(InputRequest As ResourceRequest,
                                          Optional RejectIfUnavailable As Boolean = False) As Task(Of Boolean)
-            If OKtoGO(RIDs) Then
-                SetRIDs(RIDs, True)
-                RaiseEvent TaskEvent(TaskInfo, RMtaskStates.Started)
-                If TaskToRun IsNot Nothing Then
-                    TaskToRun.Start()
-                    Await TaskToRun.Result
+            If OKtoGO(InputRequest.RIDs) Then
+                RunningTasks = True
+                SetRIDs(InputRequest.RIDs, True)
+                RaiseEvent TaskEvent(InputRequest.TaskString, RMtaskStates.Started)
+                If InputRequest.MyTask IsNot Nothing Then
+                    InputRequest.MyTask.Start()
+                    Await InputRequest.MyTask.Result
+                    InputRequest.RequestCompleted.SetResult(True)
                 End If
-                RaiseEvent TaskEvent(TaskInfo, RMtaskStates.Ended)
-                SetRIDs(RIDs, False)
+                RaiseEvent TaskEvent(InputRequest.TaskString, RMtaskStates.Ended)
+                SetRIDs(InputRequest.RIDs, False)
             Else
                 If RejectIfUnavailable Then
-                    RaiseEvent TaskEvent(TaskInfo, RMtaskStates.Abandoned)
+                    RaiseEvent TaskEvent(InputRequest.TaskString, RMtaskStates.Abandoned)
                     Return False
                 Else
                     QueueTex.WaitOne()
-                    Rqueue.Add(New ResourceRequest(RIDs, TaskToRun, TaskInfo, Rqueue.Count + 1))
+                    InputRequest.QID = Rqueue.Count + 1
+                    Rqueue.Add(InputRequest)
                     Dim QueueCount As Integer = Rqueue.Count
                     QueueTex.ReleaseMutex()
-                    RaiseEvent TaskEvent(TaskInfo & " (Queue# " & QueueCount & ")", RMtaskStates.Queued)
+                    RaiseEvent TaskEvent(InputRequest.TaskString & " (Queue# " & QueueCount & ")", RMtaskStates.Queued)
                     Return True
                 End If
                 Exit Function
@@ -3785,12 +3799,16 @@ FromTheTop:
                         If MyRequest.MyTask IsNot Nothing Then
                             MyRequest.MyTask.Start()
                             Await MyRequest.MyTask.Result
+                            MyRequest.RequestCompleted.SetResult(True)
                         End If
                         RaiseEvent TaskEvent(MyRequest.TaskString & " (Q#I" & MyRequest.QID & "/O" & I & "/R" & Rqueue.Count & ")", RMtaskStates.Ended)
                         SetRIDs(MyRequest.RIDs, False)
                         GoTo FromTheTop
                     End If
                 Next
+            Else
+                RunningTasks = False
+                If WaitingForCompletion Then TasksCompleted.SetResult(False)
             End If
             If ReleaseMe Then QueueTex.ReleaseMutex()
             Return True
@@ -3799,16 +3817,21 @@ FromTheTop:
     End Class
 
     Public Class ResourceRequest
+
         Public RIDs() As Integer
         Public MyTask As Task(Of Task)
         Public TaskString As String
         Public QID As Integer
-        Public Sub New(ResourceIDs() As Integer, TaskToRun As Task(Of Task), TaskTitle As String, QueueNum As Integer)
+        Public RequestCompleted As TaskCompletionSource(Of Boolean)
+
+        Public Sub New(ResourceIDs() As Integer, TaskToRun As Task(Of Task), Optional TaskTitle As String = "RMtask")
             RIDs = ResourceIDs
             MyTask = TaskToRun
             TaskString = TaskTitle
-            QID = QueueNum
+            QID = -1
+            RequestCompleted = New TaskCompletionSource(Of Boolean)
         End Sub
+
     End Class
 
 End Module

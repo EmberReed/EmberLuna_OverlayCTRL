@@ -202,7 +202,7 @@ Public Class MainWindow
         myAPI.SyncChannelRedemptions()
         SyncSceneDisplay()
         AudioControl.MyMixer.SyncAll()
-
+        Await MyResourceManager.WaitAllRequests
         'AudioControl.MusicPlayer.SyncState()
 
         Me.Enabled = True
@@ -419,19 +419,8 @@ Public Class MainWindow
         If ChannelPointsDisplay.Visible = True Then
             ChannelPointsDisplay.Select()
         Else
-            'If myAPI.Authorized = True Then
-            'If ChannelPoints.Rewards IsNot Nothing Then
-            'LaunchChannelPointsControls()
-            'Else
             ChannelPointsDisplay = New ChannelPointsForm
             ChannelPointsDisplay.Show()
-            'ChannelPointStarterState = True
-            'myAPI.SyncChannelRedemptions()
-            'End If
-            'Else
-            'ChannelPointStarterState = True
-            'myAPI.APIauthorization(True)
-            'End If
         End If
     End Sub
 
@@ -627,11 +616,13 @@ Public Class MainWindow
             Case = "Rock and Stone"
                 Dim Speak As Task = Ember.Says("ROCK AND STONE" & vbCrLf & e.RewardRedeemed.Redemption.User.DisplayName,
                            Ember.Mood.RockandStone, "Rock And Stone",, 2800)
+            Case = "Poo-Brain"
+                Luna.ChangeMood(Luna.Mood.PooBrain, 4050,, "Luna Poo Brain")
             Case Else
                 Rewardstring = "#CHPTS " & e.RewardRedeemed.Redemption.User.DisplayName & " Redeemed: " &
                 e.RewardRedeemed.Redemption.Reward.Title & " for " &
                 e.RewardRedeemed.Redemption.Reward.Cost & " points"
-                Call UpdateEventBox(Rewardstring)
+                Invoke(Sub() UpdateEventBox(Rewardstring))
         End Select
 
     End Sub
@@ -675,9 +666,6 @@ Public Class MainWindow
         MyOBSevents.Roll6(RandomInt(1, 3), ChatUserInfo.AllChatUsers(RandomInt(0, ChatUserInfo.AllChatUsers.Count - 1)).UserName)
     End Sub
 
-    Private Sub CTRL1display_Click(sender As Object, e As EventArgs) Handles CTRL1display.Click
-
-    End Sub
 
 End Class
 

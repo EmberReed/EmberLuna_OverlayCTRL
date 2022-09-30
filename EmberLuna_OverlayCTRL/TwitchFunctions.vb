@@ -97,7 +97,8 @@ Public Module TwitchFunctions
                 (Async Function() As Task
                      WaitingForAuthorization = Await AuthorizationRecieved.Task
                  End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Getting Authorization")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Getting Authorization")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
             If ForceReset = False Then
                 If ForceRefresh = False Then
                     If AccessToken = "" Then
@@ -216,7 +217,8 @@ Public Module TwitchFunctions
                 End If
                 RaiseEvent StreamInfoUpdated()
             End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Set Stream Info")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Set Stream Info")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Public Sub GetStreamInfo()
@@ -239,7 +241,8 @@ Public Module TwitchFunctions
                 'SendMessage(OUTPUTSTRING)
                 RaiseEvent StreamInfoAvailable(OUTPUTSTRING)
             End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Get Stream Info")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Get Stream Info")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
 
@@ -255,7 +258,8 @@ Public Module TwitchFunctions
                 Await MyAPI.Helix.ChannelPoints.DeleteCustomRewardAsync(JHID, ChannelPoints.Rewards(RewardIndex).TwitchData.Id)
                 Await GetChannelPointData()
             End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Deleting Channel Point Reward")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "TwitchAPI Get Stream Info")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Public Sub UpdateChannelPointDataExplicit(RewardIndex As Integer,
@@ -267,7 +271,8 @@ Public Module TwitchFunctions
                 ChannelPoints.Rewards(RewardIndex).ReadResponse(Response)
                 ChannelPoints.RewardUpdated(RewardIndex)
             End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Updating Channel Point Reward")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "Updating Channel Point Reward")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Public Sub CreateChannelPointReward(Request As Helix.Models.ChannelPoints.CreateCustomReward.CreateCustomRewardsRequest)
@@ -277,7 +282,8 @@ Public Module TwitchFunctions
                 Await MyAPI.Helix.ChannelPoints.CreateCustomRewardsAsync(JHID, Request)
                 Await GetChannelPointData()
             End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Creating Channel Point Reward")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "Creating Channel Point Reward")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Public Sub UpdateChannelPointReward(RewardIndex As Integer)
@@ -290,7 +296,8 @@ Public Module TwitchFunctions
                 ChannelPoints.Rewards(RewardIndex).ReadResponse(Response)
                 ChannelPoints.RewardUpdated(RewardIndex)
             End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Updating Channel Point Reward")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "Updating Channel Point Reward")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Public Sub SyncChannelRedemptions()
@@ -298,7 +305,8 @@ Public Module TwitchFunctions
            (Async Function() As Task
                 Await GetChannelPointData()
             End Function)
-            Dim RunAPItask As Task = MyResourceManager.RequestResource({ResourceIDs.TwitchAPI}, APItask, "Syncing All Channel Point Data")
+            Dim MyRequest As New ResourceRequest({ResourceIDs.TwitchAPI}, APItask, "Syncing All Channel Point Data")
+            Dim RunAPItask As Task = MyResourceManager.RequestResource(MyRequest)
         End Sub
 
         Private Async Function GetChannelPointData() As Task
