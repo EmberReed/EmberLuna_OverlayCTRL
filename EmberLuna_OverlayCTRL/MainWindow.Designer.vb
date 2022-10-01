@@ -57,6 +57,7 @@ Partial Class MainWindow
         Me.AUTHdisplay = New System.Windows.Forms.Label()
         Me.EventHighlighter = New System.Windows.Forms.PictureBox()
         Me.ChatHighlighter = New System.Windows.Forms.PictureBox()
+        Me.CHPdisplay = New System.Windows.Forms.Label()
         CType(Me.EventHighlighter, System.ComponentModel.ISupportInitialize).BeginInit()
         CType(Me.ChatHighlighter, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
@@ -407,7 +408,7 @@ Partial Class MainWindow
         Me.IRCdisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.IRCdisplay.Font = New System.Drawing.Font("Calibri", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.IRCdisplay.ForeColor = System.Drawing.Color.White
-        Me.IRCdisplay.Location = New System.Drawing.Point(411, 108)
+        Me.IRCdisplay.Location = New System.Drawing.Point(411, 83)
         Me.IRCdisplay.Name = "IRCdisplay"
         Me.IRCdisplay.Size = New System.Drawing.Size(40, 22)
         Me.IRCdisplay.TabIndex = 38
@@ -433,11 +434,11 @@ Partial Class MainWindow
         Me.PUBSUBdisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.PUBSUBdisplay.Font = New System.Drawing.Font("Calibri", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.PUBSUBdisplay.ForeColor = System.Drawing.Color.White
-        Me.PUBSUBdisplay.Location = New System.Drawing.Point(411, 134)
+        Me.PUBSUBdisplay.Location = New System.Drawing.Point(411, 163)
         Me.PUBSUBdisplay.Name = "PUBSUBdisplay"
         Me.PUBSUBdisplay.Size = New System.Drawing.Size(40, 22)
         Me.PUBSUBdisplay.TabIndex = 40
-        Me.PUBSUBdisplay.Text = "API"
+        Me.PUBSUBdisplay.Text = "PUB"
         Me.PUBSUBdisplay.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         '
         'APIdisplay
@@ -446,11 +447,11 @@ Partial Class MainWindow
         Me.APIdisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.APIdisplay.Font = New System.Drawing.Font("Calibri", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.APIdisplay.ForeColor = System.Drawing.Color.White
-        Me.APIdisplay.Location = New System.Drawing.Point(411, 161)
+        Me.APIdisplay.Location = New System.Drawing.Point(411, 137)
         Me.APIdisplay.Name = "APIdisplay"
         Me.APIdisplay.Size = New System.Drawing.Size(40, 22)
         Me.APIdisplay.TabIndex = 41
-        Me.APIdisplay.Text = "PUB"
+        Me.APIdisplay.Text = "API"
         Me.APIdisplay.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
         '
         'CTRL2display
@@ -485,7 +486,7 @@ Partial Class MainWindow
         Me.AUTHdisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
         Me.AUTHdisplay.Font = New System.Drawing.Font("Calibri", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
         Me.AUTHdisplay.ForeColor = System.Drawing.Color.White
-        Me.AUTHdisplay.Location = New System.Drawing.Point(411, 82)
+        Me.AUTHdisplay.Location = New System.Drawing.Point(411, 110)
         Me.AUTHdisplay.Name = "AUTHdisplay"
         Me.AUTHdisplay.Size = New System.Drawing.Size(40, 22)
         Me.AUTHdisplay.TabIndex = 42
@@ -515,12 +516,26 @@ Partial Class MainWindow
         Me.ChatHighlighter.TabIndex = 22
         Me.ChatHighlighter.TabStop = False
         '
+        'CHPdisplay
+        '
+        Me.CHPdisplay.BackColor = System.Drawing.Color.FromArgb(CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer), CType(CType(52, Byte), Integer))
+        Me.CHPdisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+        Me.CHPdisplay.Font = New System.Drawing.Font("Calibri", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.CHPdisplay.ForeColor = System.Drawing.Color.White
+        Me.CHPdisplay.Location = New System.Drawing.Point(411, 189)
+        Me.CHPdisplay.Name = "CHPdisplay"
+        Me.CHPdisplay.Size = New System.Drawing.Size(40, 22)
+        Me.CHPdisplay.TabIndex = 45
+        Me.CHPdisplay.Text = "CHP"
+        Me.CHPdisplay.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+        '
         'MainWindow
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.Color.FromArgb(CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer), CType(CType(31, Byte), Integer))
         Me.ClientSize = New System.Drawing.Size(671, 502)
+        Me.Controls.Add(Me.CHPdisplay)
         Me.Controls.Add(Me.CTRL2display)
         Me.Controls.Add(Me.CTRL1display)
         Me.Controls.Add(Me.AUTHdisplay)
@@ -602,4 +617,5 @@ Partial Class MainWindow
     Friend WithEvents CTRL2display As Label
     Friend WithEvents CTRL1display As Label
     Friend WithEvents AUTHdisplay As Label
+    Friend WithEvents CHPdisplay As Label
 End Class

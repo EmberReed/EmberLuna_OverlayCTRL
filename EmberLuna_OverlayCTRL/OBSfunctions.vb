@@ -3416,11 +3416,13 @@ FoundPlayer:
     End Structure
 
     Public Class OBSevents
-        Public Hats As VideoPlayer
-        Public SoundAlert As VideoPlayer
-        Public UserAlert As VideoPlayer
-        Public Confetti As VideoPlayer
-        Public Rollers() As VideoPlayer
+        Private Hats As VideoPlayer
+        Private SoundAlert As VideoPlayer
+        Private UserAlert As VideoPlayer
+        Private Confetti As VideoPlayer
+        Private Rollers() As VideoPlayer
+        Private doublekill As VideoPlayer
+        Private OHBABYTRIPPLE As VideoPlayer
 
         Public Sub New()
             Dim UserEventVidSources(0 To UserEvents.MaxEvents) As String
@@ -3447,13 +3449,15 @@ FoundPlayer:
 
             ReDim Rollers(0 To 4)
             For I As Integer = 0 To 4
-                Rollers(I) = New VideoPlayer("Roll" & I + 1, "Roll For Prizes",, Roll6vidSources, 6000, 3000)
+                Rollers(I) = New VideoPlayer("Roll" & I + 1, "Roll For Prizes", "rollsound1.wav", Roll6vidSources, 6000, 3000)
             Next
 
             Hats = New VideoPlayer("EmbersHats", "Events and Alerts", "Hats.wav")
             SoundAlert = New VideoPlayer("Sound Alert Diplay", "Events and Alerts",,, 4000,,, "SoundAlert")
             UserAlert = New VideoPlayer("Viewer Generated Event", "Events and Alerts",, UserEventVidSources)
             Confetti = New VideoPlayer("ConfettiBlast", "Events and Alerts", "Yay.wav", ConfettiSources)
+            doublekill = New VideoPlayer("double", "Events and Alerts", "DoubleKilll.wav")
+            OHBABYTRIPPLE = New VideoPlayer("triple", "Events and Alerts", "OH BABY A TRIPLE.wav")
         End Sub
 
         Public Sub PlayHats()
@@ -3554,10 +3558,11 @@ FoundPlayer:
                         Await Task.Delay(250)
                         TaskList.Add(Rollers(3).Show(Output(0),,,, PauseTime))
                         Await Task.Delay(150)
-                        TaskList.Add(Rollers(4).Show(Output(1),,,, PauseTime))
-                        If GottaDouble Or GottaTripple Then
+                        TaskList.Add(Rollers(4).Show(Output(1), "rollsound2.wav",,, PauseTime))
+                        If GottaDouble Then
                             Await Task.Delay(6000)
                             Dim Celebrate As Task = Confetti.Show(RandomInt(0, 3))
+                            Await doublekill.Show()
                             Await Task.WhenAll(TaskList.ToArray)
                             Confetti.Hide()
                         Else
@@ -3571,12 +3576,18 @@ FoundPlayer:
                         Await Task.Delay(250)
                         TaskList.Add(Rollers(0).Show(Output(0),,,, PauseTime))
                         Await Task.Delay(150)
-                        TaskList.Add(Rollers(1).Show(Output(1),,,, PauseTime))
+                        TaskList.Add(Rollers(1).Show(Output(1), "rollsound2.wav",,, PauseTime))
                         Await Task.Delay(150)
-                        TaskList.Add(Rollers(2).Show(Output(2),,,, PauseTime))
+                        TaskList.Add(Rollers(2).Show(Output(2), "rollsound2.wav",,, PauseTime))
+                        If GottaTripple Then AudioControl.SoundPlayer.PlaySound("officeno_long.wav", SoundSource.SFX)
                         If GottaDouble Or GottaTripple Then
                             Await Task.Delay(6000)
                             Dim Celebrate As Task = Confetti.Show(RandomInt(0, 3))
+                            If GottaDouble Then Await doublekill.Show()
+                            If GottaTripple Then
+                                AudioControl.SoundPlayer.PlaySound("Jackpot.wav", SoundSource.SFX)
+                                Await OHBABYTRIPPLE.Show()
+                            End If
                             Await Task.WhenAll(TaskList.ToArray)
                             Confetti.Hide()
                         Else

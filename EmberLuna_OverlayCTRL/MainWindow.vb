@@ -8,16 +8,13 @@ Public Class MainWindow
 
     Private CurrentSceneName As String = ""
     Private StrimStarter As StreamStarter
-    Private StrimStarterState As Boolean = False
-    Private PubSubStarterState As Boolean = False
-    Private ChannelPointStarterState As Boolean
+    'Private ChannelPointStarterState As Boolean
 
-    Private HatsTest As VideoPlayer
-
+    Public ProgramState As Boolean = False
     'Public Event OBSSceneChanged(SceneName As String)
 
     Private Sub MainWindow_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-
+        'ProgramState = True
         SetDrawing(Me.Handle, WM_SETREDRAW, False, 0)
         'InitializeCountersAndTimers()
         ReadProgramSettings(ProgramSettingsFile)
@@ -51,9 +48,8 @@ Public Class MainWindow
         Luna = New CharacterControls("Luna")
 
         myAPI = New APIfunctions
-        PubSub = New TwitchPubSub
 
-        AddHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
+        'AddHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
         AddHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
         'AddHandler OBS.Connected, AddressOf OBSisConnected
 
@@ -64,8 +60,8 @@ Public Class MainWindow
 
         AddHandler MyResourceManager.TaskEvent, AddressOf RMeventHandler
 
-        AddHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
-        AddHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
+        'AddHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
+        'AddHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
         AddHandler myAPI.TokenAcquired, AddressOf GenericNotification
 
         'AddHandler Ember.Said, AddressOf GenericNotification
@@ -75,13 +71,6 @@ Public Class MainWindow
         AddHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
         'AddHandler CounterData.CounterStarted, AddressOf CounterUpdated
 
-        AddHandler PubSub.OnViewCount, AddressOf ViewCountChanged
-        AddHandler PubSub.OnChannelPointsRewardRedeemed, AddressOf ChannelPointsNotification
-        AddHandler PubSub.OnListenResponse, AddressOf ListenResponse
-        AddHandler PubSub.OnBitsReceivedV2, AddressOf iGOTStheBITS
-        AddHandler PubSub.OnChannelSubscription, AddressOf SubscriberAcquired
-        AddHandler PubSub.OnPubSubServiceConnected, AddressOf PubSubConnected
-        AddHandler PubSub.OnPubSubServiceClosed, AddressOf PubSubDisconnect
 
         AddHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
         AddHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
@@ -99,7 +88,7 @@ Public Class MainWindow
     End Sub
 
     Private Async Function CloseMe() As Task
-        ChannelPoints.UpdateProgramRewards(False)
+        ProgramState = False
         CounterData.SaveCounterData()
         OBStimerObject(TimerIDs.Ember).State = False
         OBStimerObject(TimerIDs.Luna).State = False
@@ -108,7 +97,7 @@ Public Class MainWindow
 
         Await Task.Delay(500)
 
-        If PSubConnected Then PubSub.Disconnect()
+        If PSubConnected Then Await myAPI.DisconnectAPI()
         If IRCconnected Then IRC.DisconnectChat()
         If OBSconnected Then DisconnectOBS()
 
@@ -131,48 +120,6 @@ Public Class MainWindow
             e.Cancel = True
             Dim CloseTask = CloseMe()
         End If
-
-
-
-        'RemoveHandler ChannelPoints.AllRewardsUpdated, AddressOf ChannelPointsStarter
-        'RemoveHandler OBS.StreamStateChanged, AddressOf StreamStartHandler
-        ''RemoveHandler OBS.Connected, AddressOf OBSisConnected
-
-        'RemoveHandler myAPI.StreamInfoAvailable, AddressOf LaunchStreamStarter
-        'RemoveHandler myAPI.AuthorizationInitialized, AddressOf WaitforAuthorization
-        'RemoveHandler myAPI.TokenAcquired, AddressOf GenericNotification
-
-        'RemoveHandler IRC.IRCconnected, AddressOf IRCisConnected
-        'RemoveHandler IRC.IRCdisconnected, AddressOf IRCdisConnected
-
-        'AddHandler MyResourceManager.TaskEvent, AddressOf RMeventHandler
-
-        ''RemoveHandler Ember.Said, AddressOf GenericNotification
-        ''RemoveHandler Luna.Said, AddressOf GenericNotification
-
-        'RemoveHandler ChatUserInfo.ChatUserDetected, AddressOf NewUserHandler
-        'RemoveHandler ChatUserInfo.MessageRecieved, AddressOf UpdateChatBox
-        ''RemoveHandler CounterData.CounterStarted, AddressOf CounterUpdated
-
-        'RemoveHandler PubSub.OnViewCount, AddressOf ViewCountChanged
-        'RemoveHandler PubSub.OnChannelPointsRewardRedeemed, AddressOf ChannelPointsNotification
-        'RemoveHandler PubSub.OnListenResponse, AddressOf ListenResponse
-        'RemoveHandler PubSub.OnBitsReceivedV2, AddressOf iGOTStheBITS
-        'RemoveHandler PubSub.OnChannelSubscription, AddressOf SubscriberAcquired
-        'RemoveHandler PubSub.OnPubSubServiceConnected, AddressOf PubSubConnected
-        'RemoveHandler PubSub.OnPubSubServiceClosed, AddressOf PubSubDisconnect
-
-        'RemoveHandler AudioControl.MusicPlayer.Started, AddressOf MediaStarted
-        'RemoveHandler AudioControl.MusicPlayer.Paused, AddressOf MediaPaused
-        'RemoveHandler AudioControl.MusicPlayer.Stopped, AddressOf MediaEnded
-        'RemoveHandler AudioControl.SoundPlayer.SoundPlayed, AddressOf GenericNotification
-        'RemoveHandler AudioControl.SoundPlayer.Paused, AddressOf SoundPaused
-        'RemoveHandler AudioControl.SoundPlayer.Stopped, AddressOf SoundEnded
-
-        'Call DisconnectOBS()
-        'Application.DoEvents()
-        'Thread.Sleep(500)
-
     End Sub
 
     Private PSubConnected As Boolean = False
@@ -180,36 +127,37 @@ Public Class MainWindow
     Public OBSconnected As Boolean = False
     Private TwitchAuthorized As Boolean = False
     Private APIconnected As Boolean = False
+    Private CHpointsReady As Boolean = False
+
+    Public Sub IMREADY()
+        If ProgramState Then Invoke(Sub() Enabled = True)
+    End Sub
+
+    Public Sub IMNOTREADY()
+        If ProgramState Then Invoke(Sub() Enabled = False)
+    End Sub
 
     Private Async Function Startup() As Task
         Me.Enabled = False
         OBSstateChanged(Await CheckOBSconnect())
         IRC.ConnectChat()
-        myAPI.APIauthorization(True)
-        myAPI.GetStreamInfo()
-
-        Dim StartupCounter As Integer = 0
+        Await myAPI.APIauthorization(True)
         Do Until AmIconnected()
             Await Task.Delay(100)
-            'startupCounter = StartupCounter + 1
-            'If StartupCounter > 100 Then
-            '    SendMessage("Failed to Start...", "UH OH")
-            '    Me.Close()
-            'End If
         Loop
-
-        ChannelPointStarterState = True
-        myAPI.SyncChannelRedemptions()
         SyncSceneDisplay()
         AudioControl.MyMixer.SyncAll()
-        Await MyResourceManager.WaitAllRequests
-        'AudioControl.MusicPlayer.SyncState()
-
-        Me.Enabled = True
+        ProgramState = True
+        Enabled = True
     End Function
 
     Private Function AmIconnected() As Boolean
-        If PSubConnected And IRCconnected And OBSconnected And APIconnected And TwitchAuthorized Then
+        If PSubConnected And
+            IRCconnected And
+            OBSconnected And
+            APIconnected And
+            TwitchAuthorized And
+            CHpointsReady Then
             Return True
         Else
             Return False
@@ -217,12 +165,42 @@ Public Class MainWindow
     End Function
 
     Private Function AmIdisconnected() As Boolean
-        If PSubConnected = False And IRCconnected = False And OBSconnected = False Then
+        If PSubConnected = False And
+            IRCconnected = False And
+            OBSconnected = False And
+            TwitchAuthorized = False And
+            CHpointsReady = False Then
             Return True
         Else
             Return False
         End If
     End Function
+
+    Public Sub CHPstateChanged(CHPState As Boolean)
+        If CHPState <> CHpointsReady Then
+            CHpointsReady = CHPState
+            If CHpointsReady = True Then
+                CHPdisplay.BackColor = ActiveBUTT
+                LogEventString("Channel Points Synced")
+            Else
+                CHPdisplay.BackColor = StandardBUTT
+                LogEventString("Channel Points Disabled")
+            End If
+        End If
+    End Sub
+
+    Public Sub APIstateChanged(APIState As Boolean)
+        If APIState <> APIconnected Then
+            APIconnected = APIState
+            If APIconnected = True Then
+                APIdisplay.BackColor = ActiveBUTT
+                LogEventString("API Connected")
+            Else
+                APIdisplay.BackColor = StandardBUTT
+                LogEventString("API Disconnected")
+            End If
+        End If
+    End Sub
 
     Private Sub IRCstateChanged(IRCState As Boolean)
         If IRCState <> IRCconnected Then
@@ -272,7 +250,7 @@ Public Class MainWindow
 
 
 
-    Private Sub PubSubStateChanged(PubSubState As Boolean)
+    Public Sub PubSubStateChanged(PubSubState As Boolean)
         If PubSubState <> PSubConnected Then
             PSubConnected = PubSubState
             If PSubConnected = True Then
@@ -283,20 +261,6 @@ Public Class MainWindow
                 LogEventString("PubSub Disconnected")
             End If
         End If
-    End Sub
-    Private Sub PubSubConnected(sender As Object, e As EventArgs)
-        PubSubStateChanged(True)
-    End Sub
-
-    Public Sub PubSubDisconnect(sender As Object, e As EventArgs)
-        PubSubStateChanged(False)
-    End Sub
-
-
-    Public Sub LaunchStreamStarter(CurrentStreamInfo As String)
-        APIconnected = True
-        APIdisplay.BackColor = ActiveBUTT
-        LogEventString(CurrentStreamInfo)
     End Sub
 
     Private Sub SceneChanged(SceneName As String)
@@ -309,7 +273,6 @@ Public Class MainWindow
     Private Sub StreamStartHandler()
         Dim StateThread As New Thread(
         Sub()
-            'SendMessage("triggered")
             If OBSstreamState() = True Then
                 BeginInvoke(
                 Sub()
@@ -337,10 +300,9 @@ Public Class MainWindow
         WelcomeNewUser(UserName, FreshUser)
     End Sub
 
-    Private Sub LogEventString(Message As String)
+    Public Sub LogEventString(Message As String)
         BeginInvoke(Sub() DatastreamBox.Text = "- " & Message & vbCrLf & vbCrLf & DatastreamBox.Text)
     End Sub
-
 
     Private Sub IRCevent(IRCstring As String)
         UpdateEventBox(IRCstring)
@@ -372,12 +334,10 @@ Public Class MainWindow
 
     Private Sub TextBox3_keypress(sender As Object, e As KeyPressEventArgs) Handles TextBox3.KeyPress
         If e.KeyChar = Chr(13) Then
-            'If ChatActive = True Then
             Dim InputText As String
             InputText = TextBox3.Text
             IRC.SendChat(InputText)
             TextBox3.Text = ""
-            'End If
             e.Handled = True
         End If
     End Sub
@@ -530,41 +490,35 @@ Public Class MainWindow
     End Sub
 
 
-    Public Sub ConnectPubSub()
-        PubSub.ListenToChannelPoints(JHID)
-        PubSub.ListenToVideoPlayback(JHID)
-        PubSub.ListenToBitsEventsV2(JHID)
-        PubSub.ListenToFollows(JHID)
-        PubSub.ListenToRaid(JHID)
-        PubSub.ListenToSubscriptions(JHID)
-        PubSub.Connect()
-        PubSub.SendTopics(myAPI.AccessToken)
-    End Sub
-
-
-    Private Sub WaitforAuthorization()
-        TwitchAuthorized = True
-        AUTHdisplay.BackColor = ActiveBUTT
-        LogEventString("Authorization Recieved")
-        If PSubConnected = False Then
-            ConnectPubSub()
-        End If
-
-
-    End Sub
-
-    Private Sub ChannelPointsStarter()
-        'LogEventString("Channel-Point Reward Data Updated")
-        If ChannelPointStarterState = True Then
-            ChannelPoints.UpdateProgramRewards(True)
-            ChannelPointStarterState = False
-            'LaunchChannelPointsControls()
+    Public Sub TwitchAuthStateChanged(TwitchState As Boolean)
+        If TwitchAuthorized <> TwitchState Then
+            TwitchAuthorized = TwitchState
+            If TwitchAuthorized = True Then
+                AUTHdisplay.BackColor = ActiveBUTT
+                LogEventString("Twitch API Authorized")
+            Else
+                AUTHdisplay.BackColor = StandardBUTT
+                LogEventString("Twitch API Disconnected")
+            End If
         End If
     End Sub
 
-    'Private Sub LaunchChannelPointsControls()
 
+    'Private Sub WaitforAuthorization()
+    '    TwitchAuthorized = True
+    '    AUTHdisplay.BackColor = ActiveBUTT
+    '    LogEventString("Authorization Recieved")
     'End Sub
+
+
+
+    'Private Sub ChannelPointsStarter()
+    '    If ChannelPointStarterState = True Then
+    '        ChannelPoints.UpdateProgramRewards(True)
+    '        ChannelPointStarterState = False
+    '    End If
+    'End Sub
+
 
     Private Sub Button13_Click(sender As Object, e As EventArgs) Handles Button13.Click
         If OBSconnected Then
@@ -588,60 +542,10 @@ Public Class MainWindow
         End If
     End Sub
 
-
-
     Private Sub ShowStrimStarter()
         StrimStarter = New StreamStarter
         StrimStarter.Show()
     End Sub
-
-    Private Sub ListenResponse(sender As Object, e As Events.OnListenResponseArgs)
-        If e.Successful = False Then
-            LogEventString("Failed to Listen: " & e.Response.Error)
-        Else
-            LogEventString(e.Topic & " Message Recieved")
-        End If
-    End Sub
-
-    Private Sub ChannelPointsNotification(sender As Object, e As Events.OnChannelPointsRewardRedeemedArgs)
-        Dim Rewardstring As String = ""
-
-        Select Case e.RewardRedeemed.Redemption.Reward.Title
-            Case = "Ember's Hats"
-                MyOBSevents.PlayHats()
-            Case = "Play Random Sound-Alert"
-                MyOBSevents.PlaySoundAlert(e.RewardRedeemed.Redemption.User.DisplayName)
-            Case = "Play Sound-Alert"
-                MyOBSevents.PlaySoundAlert(e.RewardRedeemed.Redemption.User.DisplayName, Replace(e.RewardRedeemed.Redemption.UserInput, "_", " "))
-            Case = "Rock and Stone"
-                Dim Speak As Task = Ember.Says("ROCK AND STONE" & vbCrLf & e.RewardRedeemed.Redemption.User.DisplayName,
-                           Ember.Mood.RockandStone, "Rock And Stone",, 2800)
-            Case = "Poo-Brain"
-                Luna.ChangeMood(Luna.Mood.PooBrain, 4050,, "Luna Poo Brain")
-            Case Else
-                Rewardstring = "#CHPTS " & e.RewardRedeemed.Redemption.User.DisplayName & " Redeemed: " &
-                e.RewardRedeemed.Redemption.Reward.Title & " for " &
-                e.RewardRedeemed.Redemption.Reward.Cost & " points"
-                Invoke(Sub() UpdateEventBox(Rewardstring))
-        End Select
-
-    End Sub
-
-    Public Sub iGOTStheBITS(sender As Object, e As Events.OnBitsReceivedV2Args)
-        Dim MYSTRING As String = e.TotalBitsUsed
-
-    End Sub
-
-    Public Sub SubscriberAcquired(sender As Object, e As Events.OnChannelSubscriptionArgs)
-        Dim MYSTRING As String = e.Subscription.DisplayName
-
-    End Sub
-
-    Private Sub ViewCountChanged(sender As Object, e As Events.OnViewCountArgs)
-        Dim OutputString As String = "View CouNt = " & e.Viewers
-        LogEventString(OutputString)
-    End Sub
-
 
     Private Sub UpdateChatBox(UserName As String, MessageData As String, TimeString As String, ColorIndex As Integer)
         Dim SplitString() As String = TimeString.Split(" ")
@@ -653,6 +557,9 @@ Public Class MainWindow
         NextMessage.Visible = True
     End Sub
 
+    Public Sub RemoteUpdateEventBox(EventString As String)
+        Invoke(Sub() UpdateEventBox(EventString))
+    End Sub
     Private Sub UpdateEventBox(EventString As String)
         Dim OutputText As String = ""
         EventHighlighter.Image = My.Resources.gradient
@@ -667,5 +574,13 @@ Public Class MainWindow
     End Sub
 
 
+
+    Private Sub AUTHdisplay_Click(sender As Object, e As EventArgs) Handles AUTHdisplay.Click
+        If TwitchAuthorized Then
+            Dim DisConnectTask As Task = myAPI.DisconnectAPI(True)
+        Else
+            Dim ConnectTask As Task = myAPI.APIauthorization(True)
+        End If
+    End Sub
 End Class
 

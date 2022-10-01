@@ -10,7 +10,6 @@ Public Module CommonFunctions
     Public Declare Function SetDrawing Lib "user32" Alias "SendMessageA" (ByVal hwndLock As IntPtr, ByVal Msg As Integer, ByVal wParam As Boolean, ByVal lParam As IntPtr) As Integer
     Public Const WM_SETREDRAW As Integer = 11
 
-    Public PubSub As TwitchPubSub
     Public SceneChanger As SceneSelector
     Public ChatManager As Chat
     Public SourceWindow As MainWindow
