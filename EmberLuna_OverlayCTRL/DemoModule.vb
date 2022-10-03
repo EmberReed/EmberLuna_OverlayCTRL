@@ -16,11 +16,11 @@
     End Sub
 
     Private Sub Button4_Click(sender As Object, e As EventArgs) Handles Button4.Click
-        MyOBSevents.Roll6(2, RandomUsername)
+        MyOBSevents.Roll6(2, RandomUsername, True)
     End Sub
 
     Private Sub Button5_Click(sender As Object, e As EventArgs) Handles Button5.Click
-        MyOBSevents.Roll6(3, RandomUsername)
+        MyOBSevents.Roll6(3, RandomUsername, True)
     End Sub
 
     Private Sub Button23_Click(sender As Object, e As EventArgs) Handles Button23.Click
@@ -37,5 +37,9 @@
 
     Private Sub Button22_Click(sender As Object, e As EventArgs) Handles Button22.Click
         Dim Speak As Task = Ember.Says("ROCK AND STONE", Ember.Mood.RockandStone, "Rock And Stone",, 2800)
+    End Sub
+
+    Private Sub Button12_Click(sender As Object, e As EventArgs) Handles Button12.Click
+
     End Sub
 End Class

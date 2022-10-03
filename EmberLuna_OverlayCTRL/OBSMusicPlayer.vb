@@ -25,12 +25,12 @@
         PLAYBUTT.BackColor = StandardBUTT
         PAUSEBUTT.BackColor = StandardBUTT
         RPBUTT.BackColor = StandardBUTT
-        If AudioControl.MusicPlayer.Active = True Or AudioControl.MusicRunning = True Then
+        If AudioControl.MusicPlayer.isActive = True Or AudioControl.MusicRunning = True Then
             PLAYBUTT.BackgroundImage = My.Resources._STOP
         Else
             PLAYBUTT.BackgroundImage = My.Resources.play
         End If
-        If AudioControl.MusicPlayer.Pause = True Then
+        If AudioControl.MusicPlayer.isPaused = True Then
             PAUSEBUTT.BackgroundImage = My.Resources.play
         Else
             PAUSEBUTT.BackgroundImage = My.Resources.pause
@@ -48,7 +48,7 @@
 
     Private Sub PLAYBUTT_Click(sender As Object, e As EventArgs) Handles PLAYBUTT.Click
         PLAYBUTT.BackColor = ActiveBUTT
-        If AudioControl.MusicPlayer.Active = True Then
+        If AudioControl.MusicPlayer.isActive = True Then
             AudioControl.StopMusic()
         Else
             AudioControl.PlayMusic()
@@ -59,7 +59,7 @@
         AudioControl.PlayMusic(True)
     End Sub
     Private Sub PAUSEBUTT_Click(sender As Object, e As EventArgs) Handles PAUSEBUTT.Click
-        If AudioControl.MusicPlayer.Active = True Then
+        If AudioControl.MusicPlayer.isActive = True Then
             PAUSEBUTT.BackColor = ActiveBUTT
             AudioControl.PauseMusic()
         End If

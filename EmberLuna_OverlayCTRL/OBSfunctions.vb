@@ -1136,14 +1136,14 @@ Public Module OBSfunctions
             End If
 
             Select Case HandsInt
-                Case 0
-                    Return InputString
                 Case = 1
                     Return Replace(InputString, ".", "_left.")
                 Case = 2
                     Return Replace(InputString, ".", "_right.")
                 Case = 3
                     Return Replace(InputString, ".", "_both.")
+                Case Else
+                    Return InputString
             End Select
         End Function
 
@@ -1190,25 +1190,31 @@ Public Module OBSfunctions
     End Class
 
     Public Class SpeechBubble
-        Public Name As String
-        Public Bubble As VideoPlayer
-        Public Msource As String
+        Private Name As String
+        Private Bubble As String
+        Private Msource As String
+        Private Character As String
+
         Public Event MessageSent(Messenger As String, Message As String)
 
         Public Sub New(CharName As String)
+            Character = CharName
             Name = CharName & "'s Speech Bubble"
-            Bubble = New VideoPlayer(CharName & " Messenger", CharName, "sfx_drip.wav",,,,,, SoundSource.BeepBoop)
+            Bubble = CharName & "MessengerGIF"
             Msource = CharName & " Mtext"
         End Sub
 
         Public Async Function SendMessage(MessageText As String) As Task
             RaiseEvent MessageSent(Name, MessageText)
-            Dim BubbleTask As Task = Bubble.Show
+            SetSourceVisibility(0, Character, True, True, Bubble)
+            AudioControl.SoundPlayer.PlaySound("sfx_drip.wav", SoundSource.BeepBoop)
             Await Task.Delay(220)
             Call SetOBSsourceText(Msource, MessageText)
-            Await Task.Delay(3900)
+            Await Task.Delay(3700)
             Call SetOBSsourceText(Msource, "")
-            Await BubbleTask
+            Await Task.Delay(500)
+            SetSourceVisibility(0, Character, False, True, Bubble)
+            'Bubble.Hide()
         End Function
     End Class
 
@@ -2663,7 +2669,7 @@ FoundIt:
         End Sub
 
         Public Sub PlayMusic(Optional Replay As Boolean = False)
-            If MusicPlayer.Active = False Or Replay = True Then
+            If MusicPlayer.isActive = False Or Replay = True Then
                 If SongList(SongIndex) <> "" Then
                     MusicPlayer.Play(SongList(SongIndex))
                     MusicRunning = True
@@ -2672,14 +2678,14 @@ FoundIt:
         End Sub
 
         Public Sub StopMusic()
-            If MusicPlayer.Active = True Then
+            If MusicPlayer.isActive = True Then
                 MusicRunning = False
                 MusicPlayer.Stopp()
             End If
         End Sub
 
         Public Sub PauseMusic()
-            If MusicPlayer.Active = True Then
+            If MusicPlayer.isActive = True Then
                 MusicPlayer.Pausing()
             End If
         End Sub
@@ -2765,7 +2771,7 @@ FoundIt:
             Next
 FoundPlayer:
             If SoundIndex > -1 Then
-                SoundPlayers(SoundIndex).Path = Path
+                SoundPlayers(SoundIndex).ChangePath(Path)
                 SoundTasks(SoundIndex) = Play(SoundIndex, SoundFile)
                 If Source <> "" Then
                     RaiseEvent SoundPlayed(Source & " Played " & SoundFile & " (SB_INDEX# " & SoundIndex & ")")
@@ -2813,6 +2819,9 @@ FoundPlayer:
         Private MySound As Integer
         Private Path As String
         Private Controller As String
+        Private MyMutex As Mutex
+        Private WaitForStop As Boolean
+        Private Stopped As TaskCompletionSource(Of Boolean)
         Public Event SoundStarted()
         Public Event SoundStopped()
         'Private StoppingSound As Boolean
@@ -2822,17 +2831,22 @@ FoundPlayer:
             MySound = -1
             Path = Source
             Controller = FormName
+            MyMutex = New Mutex
         End Sub
 
         Public Async Function StopSound() As Task
-            If IsActive() Then
+            If MySound > -1 Then
+                MyMutex.WaitOne()
                 AudioControl.SoundPlayer.StopSounds({MySound})
-                Await AudioControl.SoundPlayer.SoundTasks(MySound)
+                WaitForStop = True
+                Stopped = New TaskCompletionSource(Of Boolean)
+                MyMutex.ReleaseMutex()
+                WaitForStop = Await Stopped.Task
             End If
         End Function
 
         Public Async Function PlaySound(SoundFile As String) As Task
-            If IsActive() Then
+            If MySound > -1 Then
                 Await StopSound()
                 Await Task.Delay(10)
             End If
@@ -2849,7 +2863,10 @@ FoundPlayer:
                 RaiseEvent SoundStarted()
                 Await AudioControl.SoundPlayer.SoundTasks(MySound)
                 RaiseEvent SoundStopped()
+                MyMutex.WaitOne()
                 MySound = -1
+                If WaitForStop Then Stopped.SetResult(False)
+                MyMutex.ReleaseMutex()
             End If
         End Function
 
@@ -3096,10 +3113,11 @@ FoundPlayer:
     Public Class AudioPlayer
 
         Public Name As String
-        Public Path As String
-        Public Active As Boolean
-        Public Pause As Boolean
-        Public Access As Mutex
+        Private Path As String
+        Private Active As Boolean
+        Private IsStarted As Boolean
+        Private Pause As Boolean
+        Private Access As Mutex
         Public Current As String
         Private AsyncTrigg As Boolean
         Private KeepFile As Boolean = False
@@ -3114,13 +3132,34 @@ FoundPlayer:
             Name = SourceName
             Path = SourcePath
             Active = False
+
             Pause = False
             Access.ReleaseMutex()
             AsyncTrigg = False
             KeepFile = IKeepFile
+            AddHandler OBS.MediaInputPlaybackStarted, AddressOf MediaStartTriggered
             AddHandler OBS.MediaInputPlaybackEnded, AddressOf mediastopped
             AddHandler OBS.MediaInputActionTriggered, AddressOf MediaTriggered
             'SyncState()
+        End Sub
+
+        Public Function isActive() As Boolean
+            Access.WaitOne()
+            Dim Output As Boolean = Active
+            Access.ReleaseMutex()
+            Return Output
+        End Function
+        Public Function isPaused() As Boolean
+            Access.WaitOne()
+            Dim Output As Boolean = Pause
+            Access.ReleaseMutex()
+            Return Output
+        End Function
+
+        Public Sub ChangePath(NewPath As String)
+            Access.WaitOne()
+            Path = NewPath
+            Access.ReleaseMutex()
         End Sub
 
         Public Sub SyncState()
@@ -3131,17 +3170,22 @@ FoundPlayer:
                 SendMessage(InputState)
                 Select Case InputState
                     Case MediaActions.Playing, MediaActions.Openning, MediaActions.Bufferring
-                        'OBSmutex.ReleaseMutex()
+                        Access.WaitOne()
                         Active = True
                         Pause = False
+                        Access.ReleaseMutex()
                     Case MediaActions.Paused
                         'OBSmutex.ReleaseMutex()
+                        Access.WaitOne()
                         Active = True
                         Pause = True
+                        Access.ReleaseMutex()
                     Case Else
                         'OBSmutex.ReleaseMutex()
+                        Access.WaitOne()
                         Active = False
                         Pause = False
+                        Access.ReleaseMutex()
                 End Select
             Else
                 Active = False
@@ -3152,42 +3196,46 @@ FoundPlayer:
 
         Private Sub MediaTriggered(Sender As Object, E As Events.MediaInputActionTriggeredEventArgs)
             If E.InputName = Name Then
+                Access.WaitOne()
                 Select Case E.MediaAction
-                    Case MediaActions.Restart, MediaActions.Play
+                    Case MediaActions.Restart
+                        If IsStarted = False Then
+                            mediastarted()
+                        End If
+                        Access.ReleaseMutex()
+                        RaiseEvent Started()
+                        Exit Sub
+                    Case MediaActions.Play
                         mediastarted()
+                        Access.ReleaseMutex()
+                        RaiseEvent Started()
+                        Exit Sub
                     Case MediaActions.Pause
-                        mediapaused()
+                        Pause = True
+                        Access.ReleaseMutex()
+                        RaiseEvent Paused()
+                        Exit Sub
                 End Select
+                Access.ReleaseMutex()
             End If
         End Sub
         Private Sub mediastopped(Sender As Object, E As Events.MediaInputPlaybackEndedEventArgs)
             If E.InputName = Name Then
-                'Access.WaitOne()
-                If AsyncTrigg = True Then
-                    AsyncSigg.SetResult(False)
-                Else
-                    'Access.WaitOne()
-                    If KeepFile = False Then ResetMediaSource(Name)
-                    Active = False
-                    Pause = False
-                    RaiseEvent Stopped()
-                    'Access.ReleaseMutex()
-                End If
-                'Access.ReleaseMutex()
+                Dim StopTask As Task = StopMe()
+            End If
+        End Sub
+        Private Sub MediaStartTriggered(Sender As Object, E As Events.MediaInputPlaybackStartedEventArgs)
+            If E.InputName = Name Then
+                Access.WaitOne()
+                If IsStarted = False Then mediastarted()
+                Access.ReleaseMutex()
             End If
         End Sub
 
         Private Sub mediastarted()
-            'SendMessage(Name & "Started")
+            IsStarted = True
             Pause = False
             Active = True
-            RaiseEvent Started()
-        End Sub
-
-        Private Sub mediapaused()
-            'SendMessage(Name & "Paused")
-            Pause = True
-            RaiseEvent Paused()
         End Sub
 
         Public Sub Stopp()
@@ -3220,6 +3268,20 @@ FoundPlayer:
             Access.ReleaseMutex()
         End Sub
 
+        Private Async Function WaitForStart() As Task(Of Boolean)
+            Dim WaitCount As Integer
+            Do Until IsStarted = True
+                Await Task.Delay(2)
+                WaitCount = WaitCount + 2
+                If WaitCount > 100 Then
+                    AsyncTrigg = False
+                    Await StopMe()
+                    Return False
+                End If
+            Loop
+            Return True
+        End Function
+
         Public Async Function PlayAsync(FileName As String) As Task
             Access.WaitOne()
             Active = True
@@ -3230,27 +3292,44 @@ FoundPlayer:
             Else
                 Current = MediaSourceChange(Name, , FileName)
             End If
-            If InStr(Current, "(RND) ") Then
-                Dim SplitString() As String = Current.Split("\")
-                Current = SplitString(0)
-            End If
             Access.ReleaseMutex()
-            AsyncTrigg = Await AsyncSigg.Task
-            If KeepFile = False Then ResetMediaSource(Name)
-            Await Task.Delay(10)
-            Pause = False
-            Active = False
-            RaiseEvent Stopped()
+            If Await WaitForStart() = True Then
+                AsyncTrigg = Await AsyncSigg.Task
+                Await Task.Delay(5)
+                Dim StopTask As Task = StopMe()
+            End If
         End Function
 
+        Private Async Function StopMe() As Task
+            Dim ImDone As New TaskCompletionSource(Of Boolean)
+            Dim StopThread As New Thread(
+            Sub()
+                Access.WaitOne()
+                If AsyncTrigg = True Then
+                    AsyncSigg.SetResult(False)
+                    Thread.Sleep(5)
+                Else
+                    If KeepFile = False Then ResetMediaSource(Name)
+                    Thread.Sleep(25)
+                    Pause = False
+                    Active = False
+                    IsStarted = False
+                End If
+                Access.ReleaseMutex()
+                RaiseEvent Stopped()
+            End Sub)
+            StopThread.Start()
+            Await ImDone.Task
+        End Function
 
         Public Sub Play(FileName As String)
-            If AsyncTrigg = True Then AsyncSigg.SetResult(False)
             Access.WaitOne()
-            If Path <> "" Then
-                Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
-            Else
-                Current = MediaSourceChange(Name, , FileName)
+            If Active = False Then
+                If Path <> "" Then
+                    Current = Replace(MediaSourceChange(Name, , Path & FileName), Path, "")
+                Else
+                    Current = MediaSourceChange(Name, , FileName)
+                End If
             End If
             Access.ReleaseMutex()
         End Sub
@@ -3262,7 +3341,7 @@ FoundPlayer:
     '/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Public Class VideoPlayer
-        Private Player As AudioPlayer
+        Private WithEvents Player As AudioPlayer
         Private Audio As SoundController
         Private SceneName As String
         Private FileList() As String
@@ -3292,7 +3371,7 @@ FoundPlayer:
                 Audio = New SoundController(SFXsource, SourceName)
             End If
 
-            AddHandler Player.Stopped, AddressOf Hide
+            'AddHandler Player.Stopped, AddressOf Hide
             If InputFileList IsNot Nothing Then
                 FileList = InputFileList
             Else
@@ -3316,7 +3395,7 @@ FoundPlayer:
             'SetSourceVisibility(Player.Name, SceneName, False, True)
         End Sub
 
-        Public Sub Hide()
+        Public Sub Hide() Handles Player.Stopped
             Dim StopThread As New Thread(
                 Sub()
                     If GroupName = "" Then
@@ -3329,6 +3408,20 @@ FoundPlayer:
                 End Sub)
             StopThread.Start()
         End Sub
+
+        Private Sub VideoStarted() Handles Player.Started
+            AmStarted = True
+        End Sub
+
+        Private AmStarted As Boolean = False
+
+        Private Async Function waitforstart() As Task
+            AmStarted = False
+            Await Task.Delay(250)
+            If AmStarted = False Then
+                Hide()
+            End If
+        End Function
 
         Public Function IsActive() As Boolean
             Return MediaActive
@@ -3347,6 +3440,7 @@ FoundPlayer:
                 If FileIndex > -1 And FileIndex < FileList.Length Then
                     MediaSourceChange(Player.Name, , FileList(FileIndex))
                 End If
+                Dim StartWait As Task = waitforstart()
                 If GroupName = "" Then
                     SetSourceVisibility(0, SceneName, True, True, Player.Name)
                 Else

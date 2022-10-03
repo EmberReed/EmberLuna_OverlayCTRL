@@ -93,7 +93,7 @@ Public Class MainWindow
         OBStimerObject(TimerIDs.Ember).State = False
         OBStimerObject(TimerIDs.Luna).State = False
         OBStimerObject(TimerIDs.GlobalCC).State = False
-        If AudioControl.MusicPlayer.Active = True Then AudioControl.StopMusic()
+        If AudioControl.MusicPlayer.isActive Then AudioControl.StopMusic()
 
         Await Task.Delay(500)
 
